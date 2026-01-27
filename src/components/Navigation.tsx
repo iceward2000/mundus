@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
@@ -11,28 +11,50 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
+// Easing function for smooth interpolation
+const easeOutExpo = (t: number): number => {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+};
+
 export default function Navigation() {
-  const [isSidebar, setIsSidebar] = useState(false);
   const [activeId, setActiveId] = useState<string>("");
+  const [scrollProgress, setScrollProgress] = useState(0);
   const navRef = useRef<HTMLElement>(null);
+  const counterRef = useRef<HTMLSpanElement>(null);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  // Derived states for different modes
+  const isSidebarMode = scrollProgress > 0.9;
+  const isCenterMode = scrollProgress < 0.1;
+
   useEffect(() => {
-    // Initial active state
     setActiveId(SECTIONS[0].id);
 
-    // ScrollTrigger for Nav Morphing
-    // We want the nav to move to sidebar after scrolling past the hero (or a bit into it)
-    const trigger = ScrollTrigger.create({
+    // Main scroll progress trigger - morphs nav from center to sidebar
+    const morphTrigger = ScrollTrigger.create({
       trigger: "#hero",
-      start: "bottom top+=20%", // When hero bottom passes 20% from top
-      end: "bottom top",
-      onLeave: () => setIsSidebar(true),
-      onEnterBack: () => setIsSidebar(false),
+      start: "top top",
+      end: "70% top",
+      scrub: prefersReducedMotion ? false : 0.3,
+      onUpdate: (self) => {
+        setScrollProgress(easeOutExpo(self.progress));
+      },
     });
 
-    // ScrollTrigger for Active Section Highlighting
+    // Global scroll percentage counter
+    const progressTrigger = ScrollTrigger.create({
+      trigger: "body",
+      start: "top top",
+      end: "bottom bottom",
+      onUpdate: (self) => {
+        if (counterRef.current) {
+          counterRef.current.innerText = Math.round(self.progress * 100).toString();
+        }
+      },
+    });
+
+    // Active section highlighting
     SECTIONS.forEach((section) => {
       ScrollTrigger.create({
         trigger: `#${section.id}`,
@@ -47,12 +69,13 @@ export default function Navigation() {
     });
 
     return () => {
-      trigger.kill();
+      morphTrigger.kill();
+      progressTrigger.kill();
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
-  const handleScrollTo = (id: string) => {
+  const handleScrollTo = useCallback((id: string) => {
     if (prefersReducedMotion) {
       const element = document.getElementById(id);
       element?.scrollIntoView({ behavior: "auto" });
@@ -64,79 +87,218 @@ export default function Navigation() {
       scrollTo: { y: `#${id}`, autoKill: false },
       ease: "power3.inOut",
     });
-  };
+  }, [prefersReducedMotion]);
 
-  // Mobile Nav (Simplified)
+  // Mobile Navigation - Bottom pill with dots
   if (isMobile) {
     return (
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-black/80 backdrop-blur-md px-6 py-3 rounded-full border border-white/10">
-        <div className="flex gap-4">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-black/90 backdrop-blur-lg px-5 py-3 rounded-full border border-white/10 shadow-2xl shadow-black/50">
+        <div className="flex gap-3 items-center">
           {SECTIONS.map((section) => (
             <button
               key={section.id}
               onClick={() => handleScrollTo(section.id)}
               className={clsx(
-                "w-2 h-2 rounded-full transition-all duration-300",
-                activeId === section.id ? "bg-primary scale-125" : "bg-white/20"
+                "relative w-2.5 h-2.5 rounded-full transition-all duration-300",
+                activeId === section.id 
+                  ? "bg-primary scale-125" 
+                  : "bg-white/20 hover:bg-white/40"
               )}
               aria-label={`Scroll to ${section.label}`}
-            />
+            >
+              {activeId === section.id && (
+                <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-50" />
+              )}
+            </button>
           ))}
         </div>
       </nav>
     );
   }
 
+  // Calculate interpolated values based on scroll progress
+  const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
+  
+  // Container position: center (50%) -> left (0%) for flush alignment
+  const containerLeft = lerp(50, 0, scrollProgress);
+  const containerTranslateX = lerp(-50, 0, scrollProgress);
+  
+  // Content padding: 0 -> 48px to offset text from left edge when docked
+  const contentPadding = lerp(0, 48, scrollProgress);
+  
+  // Background opacity for sidebar (only visible after 60% progress)
+  const bgProgress = Math.max(0, (scrollProgress - 0.6) / 0.4);
+  const bgOpacity = lerp(0, 0.95, bgProgress);
+
   return (
-    <nav
-      ref={navRef}
-      className={clsx(
-        "fixed z-50 transition-all duration-700 ease-in-out",
-        isSidebar
-          ? "top-0 left-0 h-screen w-64 flex flex-col justify-center pl-8 border-r border-white/5 bg-black/20 backdrop-blur-sm"
-          : "top-8 left-1/2 -translate-x-1/2 w-auto flex flex-row items-center justify-center bg-transparent"
-      )}
-    >
-      <ul
-        className={clsx(
-          "flex gap-6 transition-all duration-700",
-          isSidebar ? "flex-col items-start gap-4" : "flex-row items-center"
-        )}
+    <>
+      <nav
+        ref={navRef}
+        className="fixed z-50 top-1/2 -translate-y-1/2 pointer-events-none"
+        style={{
+          left: `${containerLeft}%`,
+          transform: `translateX(${containerTranslateX}%) translateY(-50%)`,
+        }}
       >
-        {SECTIONS.map((section) => (
-          <li key={section.id} className="group relative">
-            <button
-              onClick={() => handleScrollTo(section.id)}
-              className={clsx(
-                "flex items-center gap-3 text-sm tracking-widest uppercase transition-colors duration-300",
-                activeId === section.id ? "text-primary" : "text-white/40 hover:text-white"
-              )}
-            >
-              <span className="font-serif italic opacity-50 text-xs">
-                {section.label}
-              </span>
-              <span
-                className={clsx(
-                  "font-bold transition-all duration-500",
-                  isSidebar ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 hidden"
-                )}
+        {/* Sidebar background - aligned to left edge */}
+        <div 
+          className="absolute -top-[50vh] -bottom-[50vh] left-0 w-80 border-r border-white/5"
+          style={{ 
+            opacity: bgOpacity,
+            background: `linear-gradient(90deg, 
+              rgba(10,10,10,${bgOpacity}) 0%, 
+              rgba(10,10,10,${bgOpacity * 0.8}) 60%,
+              transparent 100%)`,
+            backdropFilter: bgOpacity > 0.1 ? `blur(${12 * bgOpacity}px)` : 'none',
+            WebkitBackdropFilter: bgOpacity > 0.1 ? `blur(${12 * bgOpacity}px)` : 'none',
+          }}
+        />
+
+        {/* Navigation list */}
+        <ul 
+          className="relative flex flex-col pointer-events-auto"
+          style={{ paddingLeft: `${contentPadding}px` }}
+        >
+          {SECTIONS.map((section, index) => {
+            const isActive = activeId === section.id;
+            
+            // Staggered animation for each item
+            const staggerDelay = index * 0.05;
+            const itemProgress = Math.max(0, Math.min(1, (scrollProgress - staggerDelay) / (0.9 - staggerDelay)));
+            
+            // Individual item transforms
+            const itemScale = lerp(1.1, 1, itemProgress);
+            
+            // Spacing between items: more generous in center, tighter in sidebar
+            const itemMargin = lerp(20, 12, scrollProgress);
+            
+            // Label (01, 02, etc) - always visible but changes size
+            const labelSize = lerp(16, 12, itemProgress);
+            const labelOpacity = lerp(0.5, 0.7, itemProgress);
+            
+            // Line indicator - fades out during transition
+            const lineOpacity = lerp(1, 0, itemProgress);
+            const lineWidth = isActive ? lerp(48, 0, itemProgress) : 0;
+            
+            // Title - fades in during transition
+            const titleProgress = Math.max(0, (itemProgress - 0.2) / 0.8);
+            const titleOpacity = lerp(0, 1, titleProgress);
+            const titleTranslateX = lerp(-16, 0, titleProgress);
+            
+            // Subtitle - fades in later
+            const subtitleProgress = Math.max(0, (itemProgress - 0.5) / 0.5);
+            const subtitleOpacity = lerp(0, 0.5, subtitleProgress);
+            
+            // Active dot indicator - appears in sidebar mode
+            const dotOpacity = isActive ? bgProgress : 0;
+
+            return (
+              <li
+                key={section.id}
+                className="nav-item relative"
+                style={{
+                  transform: `scale(${itemScale})`,
+                  marginBottom: `${itemMargin}px`,
+                }}
               >
-                {section.title}
-              </span>
-              
-              {/* Center mode indicator */}
-              {!isSidebar && (
+                {/* Active indicator dot for sidebar mode */}
                 <span
-                  className={clsx(
-                    "block h-[1px] bg-current transition-all duration-300",
-                    activeId === section.id ? "w-8" : "w-0 group-hover:w-4"
-                  )}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary transition-transform duration-300"
+                  style={{
+                    opacity: dotOpacity,
+                    left: `${contentPadding - 16}px`, // Adjust position relative to content padding
+                    transform: `translateY(-50%) scale(${isActive ? 1 : 0})`,
+                  }}
                 />
-              )}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
+                
+                <button
+                  onClick={() => handleScrollTo(section.id)}
+                  className={clsx(
+                    "group flex items-center gap-3 transition-colors duration-300 text-left",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg px-2 py-1 -mx-2 -my-1",
+                    isActive ? "text-primary" : "text-white/40 hover:text-white/70"
+                  )}
+                >
+                  {/* Section number/label */}
+                  <span 
+                    className="font-serif italic tracking-wide transition-all duration-300 min-w-[2rem]"
+                    style={{ 
+                      fontSize: `${labelSize}px`,
+                      opacity: labelOpacity,
+                    }}
+                  >
+                    {section.label}
+                  </span>
+
+                  {/* Center mode: Line indicator */}
+                  <span
+                    className="h-[1px] bg-current transition-all duration-300"
+                    style={{
+                      width: `${lineWidth}px`,
+                      opacity: lineOpacity,
+                    }}
+                  />
+
+                  {/* Title - slides in during transition */}
+                  <span
+                    className="font-medium tracking-wide text-sm uppercase whitespace-nowrap"
+                    style={{
+                      opacity: titleOpacity,
+                      transform: `translateX(${titleTranslateX}px)`,
+                    }}
+                  >
+                    {section.title}
+                  </span>
+
+                  {/* Separator dot */}
+                  <span 
+                    className="w-1 h-1 rounded-full bg-current"
+                    style={{
+                      opacity: subtitleOpacity * 0.5,
+                    }}
+                  />
+
+                  {/* Subtitle */}
+                  <span
+                    className="text-xs font-light tracking-wider text-white/40 whitespace-nowrap"
+                    style={{
+                      opacity: subtitleOpacity,
+                    }}
+                  >
+                    {section.subtitle}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Scroll indicator - only visible in center mode */}
+        <div 
+          className="absolute -bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+          style={{ 
+            opacity: lerp(1, 0, scrollProgress * 2),
+            pointerEvents: isCenterMode ? 'auto' : 'none',
+          }}
+        >
+          <div className="relative w-5 h-8 border border-white/20 rounded-full overflow-hidden">
+            <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-2 bg-white/50 rounded-full animate-bounce" />
+          </div>
+          <span className="text-[9px] tracking-[0.4em] uppercase text-white/30 font-light">
+            Scroll
+          </span>
+        </div>
+      </nav>
+
+      {/* Percentage Counter - Fixed bottom right */}
+      {!isMobile && (
+        <div className="fixed bottom-8 right-8 z-50 mix-blend-difference pointer-events-none">
+          <div className="flex items-baseline gap-1 font-serif text-primary/80">
+            <span ref={counterRef} className="text-4xl font-light tabular-nums leading-none">0</span>
+            <span className="text-sm opacity-60">%</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

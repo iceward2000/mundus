@@ -11,6 +11,10 @@
   
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Playfair Display', serif;
+  
+  /* Navigation transition timing */
+  --nav-transition-duration: 0.6s;
+  --nav-transition-ease: cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 body {
@@ -48,6 +52,42 @@ html.lenis, html.lenis body {
   text-wrap: balance;
 }
 
+/* Navigation Item Styles */
+.nav-item {
+  will-change: transform, opacity;
+  transform-origin: left center;
+}
+
+.nav-item button {
+  transition: color var(--nav-transition-duration) var(--nav-transition-ease);
+}
+
+/* Smooth transitions for navigation elements */
+@media (prefers-reduced-motion: no-preference) {
+  .nav-item {
+    transition: 
+      transform 0.1s linear,
+      margin-bottom 0.3s ease-out;
+  }
+  
+  .nav-item span {
+    transition: 
+      opacity 0.1s linear,
+      transform 0.1s linear;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .nav-item,
+  .nav-item span,
+  .nav-item button {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Grain overlay */
 .grain-overlay {
   position: fixed;
   top: 0;
@@ -73,4 +113,61 @@ html.lenis, html.lenis body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Custom cursor glow effect for navigation */
+@supports (backdrop-filter: blur(1px)) {
+  .nav-glow {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Hero section specific styles */
+#hero {
+  min-height: 150vh; /* Extended height for scroll transition */
+}
+
+/* Ensure smooth rendering during scroll animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Text rendering optimizations */
+h1, h2, h3 {
+  text-rendering: optimizeLegibility;
+}
+
+/* Focus visible styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Selection colors */
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+  color: white;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0.6));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Sidebar transition background */
+.sidebar-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(10, 10, 10, 0.95) 0%,
+    rgba(10, 10, 10, 0.8) 70%,
+    transparent 100%
+  );
 }

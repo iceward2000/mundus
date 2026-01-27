@@ -5,6 +5,8 @@ import Services from "@/components/sections/Services";
 import Differentiators from "@/components/sections/Differentiators";
 import Process from "@/components/sections/Process";
 import Proof from "@/components/sections/Proof";
+import GlobeSection from "@/components/sections/GlobeSection";
+import CocktailDemo from "@/components/sections/CocktailDemo";
 import Footer from "@/components/sections/Footer";
 
 export default function Home() {
@@ -18,6 +20,8 @@ export default function Home() {
       <Differentiators />
       <Process />
       <Proof />
+      <GlobeSection />
+      <CocktailDemo />
       <Footer />
     </main>
   );
