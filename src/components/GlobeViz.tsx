@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { getCheersForCountry } from "@/lib/cheersData";
 
 // Dynamically import Globe to avoid SSR issues
 const Globe = dynamic(() => import("react-globe.gl"), {
@@ -14,20 +15,61 @@ const Globe = dynamic(() => import("react-globe.gl"), {
 });
 
 interface GlobeVizProps {
-  markers?: {
-    lat: number;
-    lng: number;
-    label: string;
-    description: string;
-    color?: string;
-  }[];
+  markers?: any[];
 }
+
+// Static colors for stable rendering
+const PATH_COLORS = [
+  "#d4af37", // Gold
+  "#FF0080", // Neon Pink
+  "#00FFEA", // Cyan
+  "#7000FF"  // Violet
+];
 
 export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const globeEl = useRef<any>(undefined);
   const [countries, setCountries] = useState({ features: [] });
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredPolygon, setHoveredPolygon] = useState<any>(null);
+  const [ready, setReady] = useState(false);
+
+  // Stable color accessor to prevent re-renders breaking the lines
+  const getPathColor = useCallback(() => PATH_COLORS, []);
+
+  // 1. Safe Initialization & Cleanup Strategy
+  useEffect(() => {
+    // Delay mounting to avoid conflict with transitions/Strict Mode double-mount
+    const timer = setTimeout(() => {
+      setReady(true);
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      setReady(false);
+      
+      // CRITICAL FIX: Manually dispose of the WebGL context
+      if (globeEl.current) {
+        try {
+          // Attempt to find and dispose the renderer to free WebGL context
+          const renderer = globeEl.current.renderer();
+          if (renderer) {
+            renderer.dispose();
+            renderer.forceContextLoss();
+            renderer.domElement = null;
+          }
+          
+          // Also try to pause the controls
+          const controls = globeEl.current.controls();
+          if (controls) {
+            controls.dispose();
+          }
+        } catch (e) {
+          // Ignore disposal errors if instance is already gone
+        }
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // Load country data
@@ -49,21 +91,25 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize();
+    const timer = setTimeout(handleResize, 100);
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
-    if (globeEl.current) {
-      // Auto-rotate
+    if (ready && globeEl.current) {
+      // Auto-rotate configuration
       globeEl.current.controls().autoRotate = true;
       globeEl.current.controls().autoRotateSpeed = 0.5;
+      globeEl.current.controls().enableZoom = true;
       
       // Adjust camera distance
       globeEl.current.pointOfView({ altitude: 2.5 });
     }
-  }, []);
+  }, [ready]);
 
   // Process GeoJSON features into paths for animated borders
   const borderPaths = useMemo(() => {
@@ -72,17 +118,19 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       const { geometry, properties } = feature;
       if (!geometry) return;
 
-      if (geometry.type === 'Polygon') {
-        paths.push({
-          coords: geometry.coordinates[0], // Outer ring
+      // Extract coordinates for paths
+      const extractCoords = (coords: any[]) => {
+        return {
+          coords: coords,
           properties
-        });
+        };
+      };
+
+      if (geometry.type === 'Polygon') {
+        paths.push(extractCoords(geometry.coordinates[0]));
       } else if (geometry.type === 'MultiPolygon') {
         geometry.coordinates.forEach((polygon: any) => {
-          paths.push({
-            coords: polygon[0], // Outer ring
-            properties
-          });
+          paths.push(extractCoords(polygon[0]));
         });
       }
     });
@@ -91,79 +139,66 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
 
   return (
     <div ref={containerRef} className="w-full h-full min-h-[500px] relative overflow-hidden">
-      <Globe
-        ref={globeEl}
-        width={dimensions.width}
-        height={dimensions.height}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
-        bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-        backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-        
-        // Hex Polygons
-        hexPolygonsData={countries.features}
-        hexPolygonResolution={3}
-        hexPolygonMargin={0.3}
-        hexPolygonColor={useCallback(() => "#1d4ed8", [])} // Primary blue-ish
-        hexPolygonLabel={({ properties: d }: any) => `
-          <div style="background: #333; color: white; padding: 4px 8px; border-radius: 4px;">
-            <b>${d.ADMIN}</b> (${d.ISO_A2})
-          </div>
-        `}
+      {ready && (
+        <Globe
+          ref={globeEl}
+          width={dimensions.width}
+          height={dimensions.height}
+          // Strict minimal configuration to ensure context creation succeeds
+          rendererConfig={{ 
+            antialias: false, 
+            alpha: true, 
+            failIfMajorPerformanceCaveat: false,
+            powerPreference: "default" 
+          }}
+          globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
+          bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+          
+          // Tiled Countries
+          polygonsData={countries.features}
+          polygonCapColor={(d: any) => 
+              d === hoveredPolygon 
+                  ? "rgba(212, 175, 55, 0.3)" // Gold tint on hover
+                  : "rgba(20, 30, 50, 0.6)"   // Dark transparent blue for countries
+          }
+          polygonSideColor={() => "rgba(0, 0, 0, 0.2)"}
+          polygonStrokeColor={() => "transparent"}
+          
+          // Hover Label with "Cheers" info
+          polygonLabel={({ properties: d }: any) => {
+            const cheers = getCheersForCountry(d.ADMIN);
+            return `
+              <div style="background: rgba(15, 23, 42, 0.9); color: white; padding: 12px 16px; border-radius: 8px; font-family: sans-serif; backdrop-filter: blur(8px); border: 1px solid rgba(212, 175, 55, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                <h3 style="font-weight: bold; font-size: 1.2em; margin: 0 0 4px 0; color: #d4af37;">${d.ADMIN}</h3>
+                ${cheers ? `<div style="font-size: 1.1em; color: #e2e8f0; font-style: italic;">"${cheers}"</div>` : ''}
+              </div>
+            `;
+          }}
+          onPolygonHover={setHoveredPolygon}
+          polygonAltitude={0.01}
 
-        // Animated Borders (using pathsData)
-        pathsData={borderPaths}
-        pathPoints={(d: any) => d.coords}
-        pathPointLat={(p: any) => p[1]}
-        pathPointLng={(p: any) => p[0]}
-        pathColor={() => "#60a5fa"} // Light blue color for the path
-        pathDashLength={0.5} // Length of the colored dash
-        pathDashGap={0.2}    // Length of the gap
-        pathDashAnimateTime={2000} // Animation duration in ms - creates the "moving" effect
-        pathResolution={2}
-
-        // Clickable Dots (Points)
-        pointsData={markers}
-        pointLat={(d: any) => d.lat}
-        pointLng={(d: any) => d.lng}
-        pointColor={(d: any) => d.color || "#facc15"} // Yellow default
-        pointRadius={0.5} // Size of the dot
-        pointAltitude={0.01} // Slightly above surface
-        pointResolution={12} // Smoothness
-        
-        onPointClick={(d: any) => {
-            if (globeEl.current) {
-                globeEl.current.pointOfView({ lat: d.lat, lng: d.lng, altitude: 1.5 }, 1000);
-            }
-        }}
-        
-        // Labels for markers (Clickable Text)
-        labelsData={markers}
-        labelLat={(d: any) => d.lat}
-        labelLng={(d: any) => d.lng}
-        labelText={(d: any) => d.label}
-        labelLabel={(d: any) => `
-          <div style="background: rgba(0,0,0,0.8); color: white; padding: 8px; border-radius: 4px; font-family: sans-serif; min-width: 150px;">
-            <div style="font-weight: bold; margin-bottom: 4px;">${d.label}</div>
-            <div style="font-size: 0.9em; line-height: 1.4;">${d.description}</div>
-          </div>
-        `}
-        labelColor={() => "white"}
-        labelDotRadius={0.2} // Tiny dot for label anchor, mostly hidden by point
-        labelSize={1.5}
-        labelResolution={2}
-        
-        // Tooltip interaction for labels
-        onLabelClick={(d: any) => {
-            if (globeEl.current) {
-                globeEl.current.pointOfView({ lat: d.lat, lng: d.lng, altitude: 1.5 }, 1000);
-            }
-        }}
-      />
+          // Animated Borders
+          pathsData={borderPaths}
+          pathPoints={(d: any) => d.coords}
+          pathPointLat={(p: any) => p[1]}
+          pathPointLng={(p: any) => p[0]}
+          pathPointAlt={0.02} 
+          
+          // Bold, Beautiful Colors for Borders
+          pathColor={getPathColor}
+          
+          pathStroke={1} 
+          pathDashLength={2} // Longer dashes to show more border simultaneously
+          pathDashGap={0.1}  // Smaller gaps
+          pathDashAnimateTime={12000} // Slower animation speed
+          pathResolution={3} // Optimize performance
+        />
+      )}
       
-      {/* Overlay info box if needed */}
       <div className="absolute bottom-4 left-4 p-4 pointer-events-none">
-        <h3 className="text-white text-xl font-bold drop-shadow-md">Global Presence</h3>
-        <p className="text-slate-300 text-sm drop-shadow-md">Interactive Visualization</p>
+        <h3 className="text-white text-xl font-bold drop-shadow-md">Global Celebration</h3>
+        <p className="text-slate-300 text-sm drop-shadow-md">How the world says "Cheers"</p>
       </div>
     </div>
   );

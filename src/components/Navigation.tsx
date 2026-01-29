@@ -8,6 +8,7 @@ import { SECTIONS } from "@/lib/constants";
 import clsx from "clsx";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import MusicPlayer from "@/components/MusicPlayer";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -18,28 +19,25 @@ const easeOutExpo = (t: number): number => {
 
 export default function Navigation() {
   const [activeId, setActiveId] = useState<string>("");
-  const [scrollProgress, setScrollProgress] = useState(0);
   const navRef = useRef<HTMLElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
 
   // Derived states for different modes
-  const isSidebarMode = scrollProgress > 0.9;
-  const isCenterMode = scrollProgress < 0.1;
+  const [isSidebar, setIsSidebar] = useState(false);
+  const [transitionProgress, setTransitionProgress] = useState(0);
 
   useEffect(() => {
     setActiveId(SECTIONS[0].id);
 
-    // Main scroll progress trigger - morphs nav from center to sidebar
+    // Main scroll trigger - switches mode based on threshold
     const morphTrigger = ScrollTrigger.create({
-      trigger: "#hero",
-      start: "top top",
-      end: "70% top",
-      scrub: prefersReducedMotion ? false : 0.3,
-      onUpdate: (self) => {
-        setScrollProgress(easeOutExpo(self.progress));
-      },
+      trigger: "body",
+      start: "top top-=100", // Trigger after 100px scroll
+      end: "bottom bottom",
+      onEnter: () => setIsSidebar(true),
+      onLeaveBack: () => setIsSidebar(false),
     });
 
     // Global scroll percentage counter
@@ -74,6 +72,44 @@ export default function Navigation() {
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, [prefersReducedMotion]);
+
+  // Animate transition between modes
+  useEffect(() => {
+    const targetProgress = isSidebar ? 1 : 0;
+    
+    // Animate the transitionProgress state
+    const tween = gsap.to({}, {
+      duration: 0.8,
+      ease: "power2.inOut",
+      onUpdate: function() {
+        // Manually interpolate transitionProgress for smoother React updates
+        // However, setting state in onUpdate is fine for this number of elements
+        // We calculate the value based on the tween's progress
+        const currentVal = isSidebar 
+          ? this.progress() 
+          : 1 - this.progress();
+        // Since we can't easily get the 'value' from an empty object tween without a property
+        // Let's use a proxy object
+      }
+    });
+    
+    // Better approach: tween a proxy object
+    const proxy = { value: transitionProgress };
+    gsap.to(proxy, {
+      value: targetProgress,
+      duration: 0.8,
+      ease: "power3.inOut",
+      onUpdate: () => {
+        setTransitionProgress(proxy.value);
+      }
+    });
+
+    return () => {
+      gsap.killTweensOf(proxy);
+    };
+  }, [isSidebar]); // Removed transitionProgress from deps to avoid loop, but we need start value. 
+  // Actually simpler: just let GSAP handle the value from current state.
+
 
   const handleScrollTo = useCallback((id: string) => {
     if (prefersReducedMotion) {
@@ -120,29 +156,30 @@ export default function Navigation() {
   const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
   
   // Container position: center (50%) -> left (0%) for flush alignment
-  const containerLeft = lerp(50, 0, scrollProgress);
-  const containerTranslateX = lerp(-50, 0, scrollProgress);
+  const containerLeft = lerp(50, 0, transitionProgress);
+  const containerTranslateX = lerp(-50, 0, transitionProgress);
+  const containerTranslateY = lerp(-50, 0, transitionProgress); // -50% (center) to 0% (sidebar start)
   
-  // Content padding: 0 -> 48px to offset text from left edge when docked
-  const contentPadding = lerp(0, 48, scrollProgress);
+  // Content padding: 0 -> 32px to offset text from left edge when docked
+  const contentPadding = lerp(0, 32, transitionProgress);
   
   // Background opacity for sidebar (only visible after 60% progress)
-  const bgProgress = Math.max(0, (scrollProgress - 0.6) / 0.4);
+  const bgProgress = Math.max(0, (transitionProgress - 0.6) / 0.4);
   const bgOpacity = lerp(0, 0.95, bgProgress);
 
   return (
     <>
       <nav
         ref={navRef}
-        className="fixed z-50 top-1/2 -translate-y-1/2 pointer-events-none"
+        className="fixed z-50 top-1/2 pointer-events-none"
         style={{
           left: `${containerLeft}%`,
-          transform: `translateX(${containerTranslateX}%) translateY(-50%)`,
+          transform: `translateX(${containerTranslateX}%) translateY(${containerTranslateY}%)`,
         }}
       >
         {/* Sidebar background - aligned to left edge */}
         <div 
-          className="absolute -top-[50vh] -bottom-[50vh] left-0 w-80 border-r border-white/5"
+          className="absolute -top-[50vh] -bottom-[50vh] left-0 w-64"
           style={{ 
             opacity: bgOpacity,
             background: `linear-gradient(90deg, 
@@ -164,13 +201,13 @@ export default function Navigation() {
             
             // Staggered animation for each item
             const staggerDelay = index * 0.05;
-            const itemProgress = Math.max(0, Math.min(1, (scrollProgress - staggerDelay) / (0.9 - staggerDelay)));
+            const itemProgress = Math.max(0, Math.min(1, (transitionProgress - staggerDelay) / (0.9 - staggerDelay)));
             
             // Individual item transforms
             const itemScale = lerp(1.1, 1, itemProgress);
             
             // Spacing between items: more generous in center, tighter in sidebar
-            const itemMargin = lerp(20, 12, scrollProgress);
+            const itemMargin = lerp(20, 32, transitionProgress);
             
             // Label (01, 02, etc) - always visible but changes size
             const labelSize = lerp(16, 12, itemProgress);
@@ -180,10 +217,9 @@ export default function Navigation() {
             const lineOpacity = lerp(1, 0, itemProgress);
             const lineWidth = isActive ? lerp(48, 0, itemProgress) : 0;
             
-            // Title - fades in during transition
-            const titleProgress = Math.max(0, (itemProgress - 0.2) / 0.8);
-            const titleOpacity = lerp(0, 1, titleProgress);
-            const titleTranslateX = lerp(-16, 0, titleProgress);
+            // Title - always visible now
+            const titleOpacity = 1;
+            const titleTranslateX = 0;
             
             // Subtitle - fades in later
             const subtitleProgress = Math.max(0, (itemProgress - 0.5) / 0.5);
@@ -277,8 +313,8 @@ export default function Navigation() {
         <div 
           className="absolute -bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
           style={{ 
-            opacity: lerp(1, 0, scrollProgress * 2),
-            pointerEvents: isCenterMode ? 'auto' : 'none',
+            opacity: lerp(1, 0, transitionProgress * 2),
+            pointerEvents: !isSidebar ? 'auto' : 'none',
           }}
         >
           <div className="relative w-5 h-8 border border-white/20 rounded-full overflow-hidden">
@@ -290,9 +326,10 @@ export default function Navigation() {
         </div>
       </nav>
 
-      {/* Percentage Counter - Fixed bottom right */}
+      {/* Percentage Counter - Fixed top right */}
       {!isMobile && (
-        <div className="fixed bottom-8 right-8 z-50 mix-blend-difference pointer-events-none">
+        <div className="fixed top-8 right-8 z-50 mix-blend-difference pointer-events-none flex items-center gap-6">
+          <MusicPlayer />
           <div className="flex items-baseline gap-1 font-serif text-primary/80">
             <span ref={counterRef} className="text-4xl font-light tabular-nums leading-none">0</span>
             <span className="text-sm opacity-60">%</span>

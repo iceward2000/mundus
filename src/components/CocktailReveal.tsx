@@ -185,7 +185,7 @@ export default function CocktailReveal() {
       // Simple React implementation for the static view
       return (
         <div 
-            className="relative w-full h-[600px] bg-neutral-100 overflow-hidden flex items-center justify-center"
+            className="relative w-full h-[940px] bg-neutral-100 overflow-hidden flex items-center justify-center"
         >
              <StaticFallback />
         </div>
@@ -195,12 +195,8 @@ export default function CocktailReveal() {
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[600px] bg-neutral-100 overflow-hidden touch-none"
-      aria-label="Move cursor to reveal cocktails"
+      className="relative w-full h-[940px] bg-neutral-100 overflow-hidden touch-none"
     >
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-neutral-400 font-mono text-sm">
-        MOVE CURSOR TO REVEAL
-      </div>
     </div>
   );
 }

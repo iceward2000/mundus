@@ -27,6 +27,7 @@ const MARKERS = [
   { lat: 60.1282, lng: 18.6435, label: "Sweden", description: "Nordic Innovation" },
   { lat: 46.8182, lng: 8.2275, label: "Switzerland", description: "Finance & Strategy" },
   { lat: 51.9194, lng: 19.1451, label: "Poland", description: "Eastern Europe Support" },
+  { lat: 39.9194, lng: 32.8663, label: "Turkiye", description: "Eastern Europe Support" },
 
   // Asia
   { lat: 36.2048, lng: 138.2529, label: "Japan", description: "APAC HQ" },
@@ -76,7 +77,7 @@ export default function GlobeSection() {
       {/* Interactive Hint */}
       <div className="absolute bottom-10 w-full text-center z-10 pointer-events-none">
         <p className="text-slate-500 text-sm bg-black/30 inline-block px-4 py-2 rounded-full backdrop-blur-sm">
-          Drag to rotate • Click markers for details • Scroll to zoom
+          Drag to rotate • Hover countries to celebrate • Scroll to zoom
         </p>
       </div>
     </SectionWrapper>

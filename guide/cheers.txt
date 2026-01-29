@@ -1,0 +1,82 @@
+the below content is the informations that you need to add for each country. you can ignore the continents.
+Avrupa 
+Almanya/Avusturya: Prost 
+Fransa: Santé 
+İtalya: Salute 
+İspanya/ Meksika: Salud 
+Yunanistan: Yamas 
+Rusya: Za Zdorovye 
+Polonya: Na zdrowie 
+İskandinav Ülkeleri (İsveç, Norveç, Danimarka, İzlanda): Skål İrlanda: Sláinte 
+Hollanda: Proost 
+İngiltere/ABD: Cheers 
+Türkiye: Şerefe 
+Macaristan: Egészségedre 
+Romanya: Noroc 
+Hırvatistan/Sırbistan/Bosna Hersek: Živjeli 
+Arnavutluk: Gëzuar 
+Slovakya: Na zdravie 
+Ukrayna: Budmo 
+Bask Bölgesi (İspanya): Osasuna 
+Çek Cumhuriyeti: Na zdraví 
+Slovenya: Na zdravje 
+Letonya: Uz veselību 
+Litvanya: Į sveikatą 
+Finlandiya: Kippis 
+Estonya: Terviseks 
+Lüksemburg: Prost 
+Malta: Evviva 
+Galler (Galce): Iechyd da 
+İskoçya (İskoç Galcesi): Slàinte mhath 
+Katalonya (İspanya): Salut
+Andorra (Katalanca): Salut Belarus: Budzma 
+Bulgaristan: Nazdrave 
+Kıbrıs (Rum Kesimi): Stin iyia mas Liechtenstein: Prost 
+Moldova: Noroc 
+Monako: Santé 
+San Marino: Salute 
+Vatikan (Latince): Bene tibi Asya ve Pasifik 
+Japonya: Kanpai 
+Çin: Gānbēi 
+Kore: Geonbae 
+Tayland: Chok di 
+Vietnam: Một, hai, ba, dô 
+Filipinler: Tagay 
+Hindistan (Hintçe): Chakh De Yeni Zelanda (Maorice): Kia ora Kazakistan: Densawlığıñız üşin Moğolistan: Erööl makh 
+Özbekistan: Salomat bo'ling Kamboçya: Choul mouy 
+Malezya/Singapur: Yum seng Tayvan: Hō-la 
+Laos: Tam de 
+Sri Lanka (Seylanca): Sira Kırgızistan: Den-sooluk üchün Tacikistan: Ba salomati 
+Afganistan (Peştuca): Pa de kher Bangladeş (Bengalce): Joy Bhutan (Dzongkha): Gyu gyu
+Burma/Myanmar: Aung myin par say Kuzey Kore: Chukbae 
+Maldivler (Divehi): Ufauveri hifumek Nepal: Shuva kamana 
+Pakistan (Urduca): Salami 
+Papua Yeni Gine: Cheers 
+Singapur: Yum Seng 
+Fiji: Bula 
+Samoa: Manuia 
+Tonga: Malo e lelei 
+Orta Doğu ve Kafkasya 
+İsrail: L'chaim 
+Lübnan/Mısır (Arapça): Fi sahetak/ Fi sihatik Gürcistan: Gaumarjos! 
+Ermenistan: Genatzt 
+İran (Farsça): Ba salamati 
+Azerbaycan: Sizin sağlığınıza! veya Nuş olsun! Afrika 
+Afrikaans (Güney Afrika): Gesondheid Kenya/Tanzanya (Svahili): Maisha marefu! Güney Afrika (Zuluca/Xhosaca): Bajabule! Nijerya (İgboca): Mma mma nụ 
+Fas (Arapça Lehçesi): Bssaha 
+Etiyopya (Amharca): L'tenachin 
+Angola/Mozambik (Portekizce): Saúde Botsvana (Setsvana): Pula 
+Cezayir/Tunus: Saha 
+Gana (Twi dili): Akwaaba 
+Madagaskar: Ho fahasalamana 
+Ruanda (Kinyarwanda): Turye 
+Uganda (Luganda): Bulamu
+Amerika ve Karayipler 
+Portekiz/Brezilya: Saúde 
+Haiti (Kreyol): Ochan 
+Kosta Rika: Pura vida 
+Grönland: Kasugta 
+Hawaii: Okole maluna 
+Bahamalar/Barbados/Jamaika: Cheers Belize: Cheers veya Salud 
+Bolivya/Ekvador/Peru (Keçuva Dili): Kawsaypa Guyana/Surinam: Proost 
+Paraguay (Guarani Dili): Vy'apave

@@ -1,0 +1,10 @@
+Form alanları:
+Ad 
+Soyad
+Şirket
+Pozisyon
+Telefon
+E-posta
+Danışmanlık Talebi
+
+Gönder butonu yerine paper plane will be animated through user screen as a send button, make sure that the section is responsive and has great ux. you can disable the hardloaded or hard to achieve animations on mobile.

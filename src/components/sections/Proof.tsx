@@ -48,7 +48,7 @@ export default function Proof() {
         
         <div className="mt-24 p-12 border border-white/10 bg-black/40 backdrop-blur-md rounded-sm relative">
            <div className="text-2xl md:text-3xl font-serif italic text-white/80 leading-relaxed">
-             "Mundus didn't just help us launch; they helped us define who we are. Their strategic insight is unmatched in the industry."
+             &quot;Mundus didn&apos;t just help us launch; they helped us define who we are. Their strategic insight is unmatched in the industry.&quot;
            </div>
            <div className="mt-8 flex items-center gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-full" />
