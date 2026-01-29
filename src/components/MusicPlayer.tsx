@@ -7,8 +7,9 @@ export default function MusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // Placeholder audio
-  const audioSrc = "https://cdn.pixabay.com/audio/2022/02/07/audio_1808fbf07a.mp3"; 
+  // Use a reliable audio source. 
+  // Using local file moved to public/audio/loop.wav
+  const audioSrc = "/audio/loop.wav"; 
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -16,14 +17,22 @@ export default function MusicPlayer() {
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch((err) => {
-        console.warn("Audio playback failed:", err);
-      });
+      // Explicitly set volume to ensure it's audible
+      audioRef.current.volume = 0.5;
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.error("Audio playback failed:", error);
+          // Optional: Show UI error state here
+        });
+      }
     }
     setIsPlaying(!isPlaying);
   };
 
   useEffect(() => {
+    // Cleanup on unmount
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -31,17 +40,29 @@ export default function MusicPlayer() {
     };
   }, []);
 
+  // SVG Data URI for the wave pattern
+  // Single cycle sine wave: M0 12 Q 25 2, 50 12 T 100 12
+  // ViewBox 0 0 100 24
+  // We use this as a mask
+  const waveSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E`;
+
   return (
     <div className="pointer-events-auto flex items-center">
-      <audio ref={audioRef} src={audioSrc} loop />
+      <audio 
+        ref={audioRef} 
+        src={audioSrc} 
+        loop 
+        onError={(e) => console.error("Audio error:", e)}
+      />
       
       <button
         onClick={togglePlay}
         className="group relative flex items-center justify-center w-12 h-6 focus:outline-none cursor-pointer"
         aria-label={isPlaying ? "Pause music" : "Play music"}
       >
-        {/* Container for the lines */}
+        {/* Container for the visualizer */}
         <div className="relative w-full h-full flex items-center overflow-hidden">
+          
           {/* Static Line (visible when paused) */}
           <div
             className={clsx(
@@ -51,48 +72,22 @@ export default function MusicPlayer() {
           />
 
           {/* Animated Wave (visible when playing) */}
+          {/* Using Mask Image technique for seamless looping without layout glitches */}
           <div
             className={clsx(
-              "absolute inset-0 flex items-center transition-opacity duration-300 ease-out",
-              isPlaying ? "opacity-100" : "opacity-0"
+              "absolute inset-0 bg-primary transition-opacity duration-300 ease-out",
+              isPlaying ? "opacity-80" : "opacity-0",
+              isPlaying && "animate-audio-wave animate-mask-scroll" // Vertical heartbeat + Horizontal scroll
             )}
-          >
-            {/* 
-                Structure:
-                - Outer wrapper handles the "Audio Wave" amplitude animation (up/down scaling)
-                - Inner wrapper handles the "Scroll Left" movement
-            */}
-            <div className={clsx("w-full h-full flex items-center", isPlaying && "animate-audio-wave")}>
-              <div className="w-[200%] flex animate-scroll-left will-change-transform">
-                 {/* Two identical SVGs for seamless looping. 
-                     Adjusted path for fewer waves (lower frequency). 
-                     Using preserveAspectRatio="none" to stretch filling the width.
-                 */}
-                 {[0, 1].map((i) => (
-                  <svg
-                    key={i}
-                    width="50%"
-                    height="24"
-                    viewBox="0 0 100 24"
-                    preserveAspectRatio="none"
-                    className="stroke-primary fill-none opacity-80 flex-shrink-0"
-                    style={{ display: "block" }} 
-                  >
-                    {/* 
-                       New Path: Single Sine Wave cycle per SVG
-                       Start: (0, 12) -> Peak: (25, 2) -> Cross: (50, 12) -> Trough: (75, 22) -> End: (100, 12)
-                       M0 12 Q 25 2, 50 12 T 100 12
-                    */}
-                    <path
-                      d="M0 12 Q 25 2, 50 12 T 100 12"
-                      strokeWidth="1.5"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  </svg>
-                 ))}
-              </div>
-            </div>
-          </div>
+            style={{
+              maskImage: `url("${waveSvg}")`,
+              WebkitMaskImage: `url("${waveSvg}")`,
+              maskRepeat: "repeat-x",
+              WebkitMaskRepeat: "repeat-x",
+              maskSize: "50px 100%", 
+              WebkitMaskSize: "50px 100%",
+            }}
+          />
         </div>
       </button>
     </div>

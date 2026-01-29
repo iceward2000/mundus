@@ -33,8 +33,13 @@ const config: Config = {
         "zoom-in": "zoomIn 0.2s ease-out",
         "scroll-left": "scrollLeft 2s linear infinite",
         "audio-wave": "audioWave 1.2s ease-in-out infinite",
+        "mask-scroll": "maskScroll 2s linear infinite",
       },
       keyframes: {
+        maskScroll: {
+          "0%": { maskPosition: "0 0", webkitMaskPosition: "0 0" },
+          "100%": { maskPosition: "-50px 0", webkitMaskPosition: "-50px 0" },
+        },
         scrollLeft: {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
