@@ -39,7 +39,7 @@ export default function Problem() {
 
   return (
     <SectionWrapper id="problem" className="grid md:grid-cols-2 gap-12 items-center">
-      <div ref={textRef} className="space-y-8">
+      <div ref={textRef} className="space-y-8 relative z-10">
         <span className="text-primary text-sm tracking-widest uppercase">01 / The Reality</span>
         <h2 className="text-4xl md:text-6xl font-serif font-medium leading-tight">
           The Market is <span className="italic text-white/60">Saturated.</span>
@@ -51,7 +51,7 @@ export default function Problem() {
         </p>
       </div>
 
-      <div ref={visualRef} className="relative h-[400px] w-full flex items-center justify-center">
+      <div ref={visualRef} className="relative h-[400px] w-full flex items-center justify-center z-10">
         {/* Abstract Visual */}
         <div className="w-64 h-64 border border-white/20 rounded-full relative overflow-hidden backdrop-blur-sm">
            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />

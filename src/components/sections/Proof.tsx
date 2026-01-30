@@ -26,7 +26,7 @@ export default function Proof() {
 
   return (
     <SectionWrapper id="proof" className="bg-white/5">
-      <div ref={containerRef} className="max-w-6xl mx-auto w-full">
+      <div ref={containerRef} className="max-w-6xl mx-auto w-full relative z-10">
         <div className="mb-16 text-center md:text-left">
            <span className="text-primary text-sm tracking-widest uppercase">05 / Impact</span>
            <h2 className="text-4xl md:text-5xl font-serif mt-4">Proven Results</h2>

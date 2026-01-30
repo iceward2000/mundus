@@ -41,12 +41,12 @@ export default function Process() {
 
   return (
     <SectionWrapper id="process" className="flex flex-col items-center">
-      <div className="text-center mb-20">
+      <div className="text-center mb-20 relative z-10">
         <span className="text-primary text-sm tracking-widest uppercase">04 / Process</span>
         <h2 className="text-4xl md:text-5xl font-serif mt-4">The Journey</h2>
       </div>
 
-      <div ref={trackRef} className="relative w-full max-w-3xl">
+      <div ref={trackRef} className="relative w-full max-w-3xl z-10">
         <div className="process-line absolute left-[15px] md:left-1/2 top-0 w-[1px] bg-primary h-0 -translate-x-1/2" />
         
         {[

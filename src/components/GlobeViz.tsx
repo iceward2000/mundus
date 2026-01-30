@@ -198,7 +198,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       
       <div className="absolute bottom-4 left-4 p-4 pointer-events-none">
         <h3 className="text-white text-xl font-bold drop-shadow-md">Global Celebration</h3>
-        <p className="text-slate-300 text-sm drop-shadow-md">How the world says "Cheers"</p>
+        <p className="text-slate-300 text-sm drop-shadow-md">How the world says &quot;Cheers&quot;</p>
       </div>
     </div>
   );

@@ -4,9 +4,9 @@ import CocktailReveal from "@/components/CocktailReveal";
 
 export default function CocktailDemo() {
   return (
-    <SectionWrapper id="cocktail-demo" fullHeight={false}>
+    <SectionWrapper id="cocktail-demo" fullHeight={false} className="!px-0">
       <div className="w-full mx-auto space-y-8">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 px-4 md:px-12 lg:px-24">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
             Our Cocktails
           </h2>
@@ -15,7 +15,7 @@ export default function CocktailDemo() {
           </p>
         </div>
         
-        <div className="border border-neutral-200 rounded-2xl overflow-hidden shadow-sm -mr-4 md:-mr-12 lg:-mr-12 xl:-mr-24 rounded-r-none border-r-0">
+        <div className="border-y border-neutral-200 overflow-hidden shadow-sm w-full">
           <CocktailReveal />
         </div>
       </div>

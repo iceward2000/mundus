@@ -30,6 +30,13 @@ export default function Navigation() {
 
   useEffect(() => {
     setActiveId(SECTIONS[0].id);
+    
+    // Check if page is already scrolled on mount
+    const isScrolled = window.scrollY > 100;
+    if (isScrolled) {
+      setIsSidebar(true);
+      setTransitionProgress(1);
+    }
 
     // Main scroll trigger - switches mode based on threshold
     const morphTrigger = ScrollTrigger.create({
@@ -77,27 +84,10 @@ export default function Navigation() {
   useEffect(() => {
     const targetProgress = isSidebar ? 1 : 0;
     
-    // Animate the transitionProgress state
-    const tween = gsap.to({}, {
-      duration: 0.8,
-      ease: "power2.inOut",
-      onUpdate: function() {
-        // Manually interpolate transitionProgress for smoother React updates
-        // However, setting state in onUpdate is fine for this number of elements
-        // We calculate the value based on the tween's progress
-        const currentVal = isSidebar 
-          ? this.progress() 
-          : 1 - this.progress();
-        // Since we can't easily get the 'value' from an empty object tween without a property
-        // Let's use a proxy object
-      }
-    });
-    
-    // Better approach: tween a proxy object
     const proxy = { value: transitionProgress };
     gsap.to(proxy, {
       value: targetProgress,
-      duration: 0.8,
+      duration: 1.5,
       ease: "power3.inOut",
       onUpdate: () => {
         setTransitionProgress(proxy.value);
@@ -155,10 +145,8 @@ export default function Navigation() {
   // Calculate interpolated values based on scroll progress
   const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
   
-  // Container position: center (50%) -> left (0%) for flush alignment
-  const containerLeft = lerp(50, 0, transitionProgress);
-  const containerTranslateX = lerp(-50, 0, transitionProgress);
-  const containerTranslateY = lerp(-50, 0, transitionProgress); // -50% (center) to 0% (sidebar start)
+  // Container position: fixed left-0, vertically centered
+  // We remove the container-level horizontal translation to stagger items individually
   
   // Content padding: 0 -> 32px to offset text from left edge when docked
   const contentPadding = lerp(0, 32, transitionProgress);
@@ -171,43 +159,40 @@ export default function Navigation() {
     <>
       <nav
         ref={navRef}
-        className="fixed z-50 top-1/2 pointer-events-none"
-        style={{
-          left: `${containerLeft}%`,
-          transform: `translateX(${containerTranslateX}%) translateY(${containerTranslateY}%)`,
-        }}
+        className="fixed z-50 top-1/2 left-0 w-full pointer-events-none mix-blend-exclusion -translate-y-1/2"
       >
-        {/* Sidebar background - aligned to left edge */}
-        <div 
-          className="absolute -top-[50vh] -bottom-[50vh] left-0 w-64"
-          style={{ 
-            opacity: bgOpacity,
-            background: `linear-gradient(90deg, 
-              rgba(10,10,10,${bgOpacity}) 0%, 
-              rgba(10,10,10,${bgOpacity * 0.8}) 60%,
-              transparent 100%)`,
-            backdropFilter: bgOpacity > 0.1 ? `blur(${12 * bgOpacity}px)` : 'none',
-            WebkitBackdropFilter: bgOpacity > 0.1 ? `blur(${12 * bgOpacity}px)` : 'none',
-          }}
-        />
-
         {/* Navigation list */}
         <ul 
-          className="relative flex flex-col pointer-events-auto"
+          className="relative flex flex-col w-full pointer-events-auto items-start"
           style={{ paddingLeft: `${contentPadding}px` }}
         >
           {SECTIONS.map((section, index) => {
             const isActive = activeId === section.id;
             
             // Staggered animation for each item
-            const staggerDelay = index * 0.05;
-            const itemProgress = Math.max(0, Math.min(1, (transitionProgress - staggerDelay) / (0.9 - staggerDelay)));
+            // We use a fixed duration for each item's animation (in normalized 0-1 time) to ensure consistent speed.
+            // Total time approx 2.0s. 
+            // Normalized stagger: 0.075 (~0.15s real time)
+            // Normalized duration: 0.5 (~1.0s real time)
+            // Last item ends at: 6 * 0.075 + 0.5 = 0.95 (fits in 0-1)
+            
+            const staggerDelay = index * 0.075;
+            const itemDuration = 0.5;
+            const itemProgress = Math.max(0, Math.min(1, (transitionProgress - staggerDelay) / itemDuration));
             
             // Individual item transforms
+            // Start (0): Center (50vw - 50% shift to center item)
+            // End (1): Left aligned (with padding) and moved to bottom
+            
             const itemScale = lerp(1.1, 1, itemProgress);
             
-            // Spacing between items: more generous in center, tighter in sidebar
-            const itemMargin = lerp(20, 32, transitionProgress);
+            // Vertical movement: 
+            // Center mode: 0 (relative to vertically centered container)
+            // Sidebar mode: Move down to bottom-left (~35vh down)
+            const verticalOffset = lerp(0, 35, itemProgress); // 0vh -> 35vh
+
+            // Spacing between items: Constant now for better UX
+            const itemMargin = 24;
             
             // Label (01, 02, etc) - always visible but changes size
             const labelSize = lerp(16, 12, itemProgress);
@@ -221,28 +206,24 @@ export default function Navigation() {
             const titleOpacity = 1;
             const titleTranslateX = 0;
             
-            // Subtitle - fades in later
-            const subtitleProgress = Math.max(0, (itemProgress - 0.5) / 0.5);
-            const subtitleOpacity = lerp(0, 0.5, subtitleProgress);
-            
             // Active dot indicator - appears in sidebar mode
             const dotOpacity = isActive ? bgProgress : 0;
 
             return (
               <li
                 key={section.id}
-                className="nav-item relative"
+                className="nav-item relative will-change-transform"
                 style={{
-                  transform: `scale(${itemScale})`,
+                  transform: `translateX(calc((50vw - 50%) * ${1 - itemProgress})) translateY(${verticalOffset}vh) scale(${itemScale})`,
                   marginBottom: `${itemMargin}px`,
                 }}
               >
                 {/* Active indicator dot for sidebar mode */}
                 <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary transition-transform duration-300"
+                  className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary transition-transform duration-300"
                   style={{
                     opacity: dotOpacity,
-                    left: `${contentPadding - 16}px`, // Adjust position relative to content padding
+                    left: "-16px",
                     transform: `translateY(-50%) scale(${isActive ? 1 : 0})`,
                   }}
                 />
@@ -252,7 +233,7 @@ export default function Navigation() {
                   className={clsx(
                     "group flex items-center gap-3 transition-colors duration-300 text-left",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg px-2 py-1 -mx-2 -my-1",
-                    isActive ? "text-primary" : "text-white/40 hover:text-white/70"
+                    isActive ? "text-primary font-extrabold" : "text-neutral-400 hover:text-white font-bold"
                   )}
                 >
                   {/* Section number/label */}
@@ -284,24 +265,6 @@ export default function Navigation() {
                     }}
                   >
                     {section.title}
-                  </span>
-
-                  {/* Separator dot */}
-                  <span 
-                    className="w-1 h-1 rounded-full bg-current"
-                    style={{
-                      opacity: subtitleOpacity * 0.5,
-                    }}
-                  />
-
-                  {/* Subtitle */}
-                  <span
-                    className="text-xs font-light tracking-wider text-white/40 whitespace-nowrap"
-                    style={{
-                      opacity: subtitleOpacity,
-                    }}
-                  >
-                    {section.subtitle}
                   </span>
                 </button>
               </li>

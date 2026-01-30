@@ -56,9 +56,9 @@ export default function GlobeSection() {
   return (
     <SectionWrapper 
       id="global-presence" 
-      className="bg-slate-950 py-20 relative overflow-hidden !pr-0 md:!pr-0 lg:!pr-0 xl:!pr-0"
+      className="bg-slate-950 py-20 relative overflow-hidden !px-0"
     >
-      <div className="container mx-auto px-4 mb-10 relative z-10 pr-4 md:pr-12 lg:pr-12 xl:pr-24">
+      <div className="container mx-auto px-4 mb-10 relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Connecting the World
@@ -70,7 +70,7 @@ export default function GlobeSection() {
         </div>
       </div>
 
-      <div className="w-full h-[600px] md:h-[700px] relative z-0">
+      <div className="w-full h-[600px] md:h-[700px] relative z-[2]">
         <GlobeViz markers={MARKERS} />
       </div>
       

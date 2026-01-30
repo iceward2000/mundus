@@ -62,6 +62,17 @@ export default function CocktailReveal() {
       
       // Get container bounds to ensure we calculate position relative to it
       const rect = container.getBoundingClientRect();
+      
+      // Check if mouse is within container bounds (plus padding/margin if desired)
+      // This allows interaction even if navigation is overlaying
+      const isInside = 
+        clientX >= rect.left && 
+        clientX <= rect.right && 
+        clientY >= rect.top && 
+        clientY <= rect.bottom;
+
+      if (!isInside) return;
+
       const x = clientX - rect.left;
       const y = clientY - rect.top;
 
@@ -163,9 +174,9 @@ export default function CocktailReveal() {
       }
     };
 
-    container.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointermove", handlePointerMove);
     return () => {
-      container.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointermove", handlePointerMove);
       // Cleanup all images on unmount
       state.current.activeLayers.forEach(img => img.remove());
       state.current.activeLayers = [];

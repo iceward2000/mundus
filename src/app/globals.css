@@ -11,6 +11,7 @@
   
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Playfair Display', serif;
+  font-weight: 500;
   
   /* Navigation transition timing */
   --nav-transition-duration: 0.6s;
@@ -182,4 +183,232 @@ textarea:-webkit-autofill:focus {
   -webkit-text-fill-color: white !important;
   -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
   transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* 
+  Consent Logo Animation (V5 - Snake Retraction)
+  
+  Behavior:
+  1. Expansion (0-3s).
+  2. "Snake" Retraction (3.2s-4.2s).
+     - Squares follow the chain path: 6->5->4->3->2->1.
+     - Sq1 (Head) stays put relative to container (but container moves).
+  3. Reposition (3.2s-4.4s).
+     - Container moves to Top Left.
+*/
+
+.ConsentLogo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* Start centered, rotated, scaled 2.5x */
+  transform: translate(-50%, -50%) rotate(45deg) scale(2.5);
+  transform-origin: center center;
+  
+  color: white;
+  z-index: 50;
+  mix-blend-mode: difference;
+  pointer-events: none; /* Let clicks pass through if needed */
+  
+  /* Reposition Animation */
+  animation: logo-reposition 2.0s cubic-bezier(0.19, 1, 0.22, 1) 3.2s forwards;
+}
+
+@keyframes logo-reposition {
+  to {
+    top: 2rem;
+    left: 2rem;
+    /* Reset translate (since top/left handles pos) and scale to 1 */
+    transform: translate(0, 0) rotate(45deg) scale(1);
+  }
+}
+
+.ConsentLogo .logo-square {
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  border-radius: 2px;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: forwards;
+  opacity: 0; 
+}
+
+/* 
+  Multi-step Animations:
+  1. Expansion (3s)
+  2. Snake Retraction (Staggered starts)
+     Base time: 3.2s
+     Stagger step: 0.2s
+*/
+
+/* -- PHASE 1 -- */
+/* 3: NW Anchor */
+.ConsentLogo .sq-3 {
+  z-index: 10;
+  opacity: 1;
+  animation: 
+    anim-sq3 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    snake-sq3 0.6s linear 4.6s forwards; /* 2 steps x 0.3s */
+}
+/* 4: SE Anchor */
+.ConsentLogo .sq-4 {
+  z-index: 10;
+  opacity: 1;
+  animation: 
+    anim-sq4 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    snake-sq4 0.9s linear 4.3s forwards; /* 3 steps x 0.3s */
+}
+
+/* -- PHASE 2 -- */
+/* 2: SW of 3 */
+.ConsentLogo .sq-2 {
+  z-index: 20;
+  animation: 
+    anim-sq2 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    snake-sq2 0.3s linear 4.9s forwards; /* 1 step x 0.3s */
+}
+/* 5: NE of 4 */
+.ConsentLogo .sq-5 {
+  z-index: 20;
+  animation: 
+    anim-sq5 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    snake-sq5 1.2s linear 4.0s forwards; /* 4 steps x 0.3s */
+}
+
+/* -- PHASE 3 -- */
+/* 1: NW of 2 */
+.ConsentLogo .sq-1 {
+  z-index: 30;
+  animation: 
+    anim-sq1 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* 6: SE of 5 */
+.ConsentLogo .sq-6 {
+  z-index: 30;
+  animation: 
+    anim-sq6 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    snake-sq6 1.5s linear 3.7s forwards; /* 5 steps x 0.3s */
+}
+
+
+/* Keyframes (Expansion - Unchanged) */
+
+@keyframes anim-sq3 {
+  0% { transform: translate(0, 0) scale(1, 1); }
+  15% { transform: translate(0, 0) scale(2.2, 1); } 
+  30% { transform: translate(-60%, 0) scale(1, 1); } 
+  100% { transform: translate(-60%, 0) scale(1, 1); }
+}
+
+@keyframes anim-sq4 {
+  0% { transform: translate(0, 0) scale(1, 1); }
+  15% { transform: translate(0, 0) scale(2.2, 1); }
+  30% { transform: translate(60%, 0) scale(1, 1); }
+  100% { transform: translate(60%, 0) scale(1, 1); }
+}
+
+@keyframes anim-sq2 {
+  0%, 29% { opacity: 0; transform: translate(-60%, 0) scale(1, 1); }
+  30% { opacity: 1; transform: translate(-60%, 0) scale(1, 1); }
+  45% { opacity: 1; transform: translate(-60%, 60%) scale(1, 2.2); }
+  60% { opacity: 1; transform: translate(-60%, 120%) scale(1, 1); }
+  100% { opacity: 1; transform: translate(-60%, 120%) scale(1, 1); }
+}
+
+@keyframes anim-sq5 {
+  0%, 29% { opacity: 0; transform: translate(60%, 0) scale(1, 1); }
+  30% { opacity: 1; transform: translate(60%, 0) scale(1, 1); }
+  45% { opacity: 1; transform: translate(60%, -60%) scale(1, 2.2); }
+  60% { opacity: 1; transform: translate(60%, -120%) scale(1, 1); }
+  100% { opacity: 1; transform: translate(60%, -120%) scale(1, 1); }
+}
+
+@keyframes anim-sq1 {
+  0%, 59% { opacity: 0; transform: translate(-60%, 120%) scale(1, 1); }
+  60% { opacity: 1; transform: translate(-60%, 120%) scale(1, 1); }
+  75% { opacity: 1; transform: translate(-120%, 120%) scale(2.2, 1); }
+  90% { opacity: 1; transform: translate(-180%, 120%) scale(1, 1); }
+  100% { opacity: 1; transform: translate(-180%, 120%) scale(1, 1); }
+}
+
+@keyframes anim-sq6 {
+  0%, 59% { opacity: 0; transform: translate(60%, -120%) scale(1, 1); }
+  60% { opacity: 1; transform: translate(60%, -120%) scale(1, 1); }
+  75% { opacity: 1; transform: translate(120%, -120%) scale(2.2, 1); }
+  90% { opacity: 1; transform: translate(180%, -120%) scale(1, 1); }
+  100% { opacity: 1; transform: translate(180%, -120%) scale(1, 1); }
+}
+
+/* 
+  Snake Retraction Keyframes 
+  Target: All converge to P1 (-60%, 120%)?
+  Wait, P1 is sq-1's pos (-180, 120).
+  Sq6 Path: P6 -> P5 -> P4 -> P3 -> P2 -> P1.
+*/
+
+/* Sq2 -> P1 */
+@keyframes snake-sq2 {
+  0% { transform: translate(-60%, 120%) scale(1, 1); }
+  66% { transform: translate(-180%, 120%) scale(1, 1); } /* Move */
+  100% { transform: translate(-180%, 120%) scale(1, 1); } /* Wait */
+}
+
+/* Sq3 -> P2 -> P1 */
+@keyframes snake-sq3 {
+  0% { transform: translate(-60%, 0) scale(1, 1); }
+  33% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
+  50% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
+  83% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
+  100% { transform: translate(-180%, 120%) scale(1, 1); } /* Wait */
+}
+
+/* Sq4 -> P3 -> P2 -> P1 */
+@keyframes snake-sq4 {
+  0% { transform: translate(60%, 0) scale(1, 1); }
+  22% { transform: translate(-60%, 0) scale(1, 1); } /* P3 */
+  33% { transform: translate(-60%, 0) scale(1, 1); } /* Wait */
+  55% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
+  66% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
+  88% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
+  100% { transform: translate(-180%, 120%) scale(1, 1); }
+}
+
+/* Sq5 -> P4 -> P3 -> P2 -> P1 */
+@keyframes snake-sq5 {
+  0% { transform: translate(60%, -120%) scale(1, 1); }
+  16% { transform: translate(60%, 0) scale(1, 1); } /* P4 */
+  25% { transform: translate(60%, 0) scale(1, 1); } /* Wait */
+  41% { transform: translate(-60%, 0) scale(1, 1); } /* P3 */
+  50% { transform: translate(-60%, 0) scale(1, 1); } /* Wait */
+  66% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
+  75% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
+  91% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
+  100% { transform: translate(-180%, 120%) scale(1, 1); }
+}
+
+/* Sq6 -> P5 -> P4 -> P3 -> P2 -> P1 */
+@keyframes snake-sq6 {
+  0% { transform: translate(180%, -120%) scale(1, 1); }
+  13% { transform: translate(60%, -120%) scale(1, 1); } /* P5 */
+  20% { transform: translate(60%, -120%) scale(1, 1); } /* Wait */
+  33% { transform: translate(60%, 0) scale(1, 1); } /* P4 */
+  40% { transform: translate(60%, 0) scale(1, 1); } /* Wait */
+  53% { transform: translate(-60%, 0) scale(1, 1); } /* P3 */
+  60% { transform: translate(-60%, 0) scale(1, 1); } /* Wait */
+  73% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
+  80% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
+  93% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
+  100% { transform: translate(-180%, 120%) scale(1, 1); }
+}
+
+
+/* Content Reveal Animation */
+.overlay-content-reveal {
+  opacity: 0;
+  animation: content-fade-in 1.2s ease-out 5.2s forwards;
+}
+
+@keyframes content-fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

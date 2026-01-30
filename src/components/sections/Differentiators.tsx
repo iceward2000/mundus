@@ -45,7 +45,7 @@ export default function Differentiators() {
 
   return (
     <SectionWrapper id="differentiators" className="grid md:grid-cols-2 gap-12 items-start bg-white/5">
-      <div className="diff-visual order-2 md:order-1 relative h-[50vh] md:h-screen w-full sticky top-0 flex items-center justify-center overflow-hidden">
+      <div className="diff-visual order-2 md:order-1 relative h-[50vh] md:h-screen w-full sticky top-0 flex items-center justify-center overflow-hidden z-0">
          {/* Visual */}
          <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-black to-black opacity-50" />
@@ -57,7 +57,7 @@ export default function Differentiators() {
          </div>
       </div>
       
-      <div className="order-1 md:order-2 py-20 md:py-40">
+      <div className="order-1 md:order-2 py-20 md:py-40 relative z-10">
         <span className="text-primary text-sm tracking-widest uppercase">03 / Why Us</span>
         <h2 className="text-4xl md:text-5xl font-serif mt-4 mb-12">The Mundus Edge</h2>
         

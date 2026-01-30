@@ -22,10 +22,22 @@ const SketchReveal = () => {
     smoothing: 0.3, // Controls how quickly the line width changes (0-1)
   };
 
+  const lastScrollY = useRef(0);
+  const hueRef = useRef(0);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
+
+    // Initialize lastScrollY to avoid jump on reload
+    lastScrollY.current = window.scrollY;
+
+    // Initialize CSS variables
+    gsap.set(canvas, { 
+      "--hue-rotate": 0,
+      "--blur": 0
+    });
 
     // Initialize lastWidth
     lastWidth.current = config.maxWidth;
@@ -139,18 +151,33 @@ const SketchReveal = () => {
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
       
+      // Calculate scroll delta for hue rotation
+      const deltaY = Math.abs(scrollY - lastScrollY.current);
+      lastScrollY.current = scrollY;
+      
       const progress = Math.min(scrollY / viewportHeight, 1);
       
       const scale = 1 + progress; 
       const blur = progress * 6;
-      const hueRotate = progress * 180;
       
+      // Accumulate hue based on scroll movement
+      hueRef.current += deltaY * 0.5;
+      
+      // Animate the CSS variables
+      // Scale is immediate/absolute
       gsap.to(canvas, {
         scale: scale,
-        filter: `blur(${blur}px) hue-rotate(${hueRotate}deg)`,
+        "--blur": blur,
         duration: 0.5,
         ease: "power2.out",
         overwrite: "auto"
+      });
+
+      // Hue has a longer duration for the "lag" effect
+      gsap.to(canvas, {
+        "--hue-rotate": hueRef.current,
+        duration: 1.2, 
+        ease: "power2.out",
       });
     };
 
@@ -168,12 +195,13 @@ const SketchReveal = () => {
   return (
     <div 
       ref={containerRef} 
-      className="fixed top-0 left-0 w-full h-screen z-20 pointer-events-none mix-blend-screen"
+      className="fixed top-0 left-0 w-full h-screen z-[1] pointer-events-none mix-blend-screen opacity-50"
       style={{ isolation: "isolate" }}
     >
       <canvas 
         ref={canvasRef} 
         className="w-full h-full block"
+        style={{ filter: "blur(calc(var(--blur) * 1px)) hue-rotate(calc(var(--hue-rotate) * 1deg))" }}
       />
     </div>
   );

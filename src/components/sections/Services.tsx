@@ -33,7 +33,7 @@ export default function Services() {
 
   return (
     <SectionWrapper id="services" className="flex flex-col justify-center">
-      <div ref={containerRef} className="w-full max-w-6xl mx-auto">
+      <div ref={containerRef} className="w-full max-w-6xl mx-auto relative z-10">
         <div className="mb-16">
            <span className="text-primary text-sm tracking-widest uppercase">02 / Expertise</span>
            <h2 className="text-4xl md:text-5xl font-serif mt-4">Holistic Guidance</h2>
