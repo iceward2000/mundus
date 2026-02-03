@@ -138,7 +138,11 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   }, [countries]);
 
   return (
-    <div ref={containerRef} className="w-full h-full min-h-[500px] relative overflow-hidden">
+    <div 
+      ref={containerRef} 
+      className="w-full h-full min-h-[500px] relative overflow-hidden touch-none"
+      data-lenis-prevent // Prevents Lenis from hijacking scroll/drag events on the globe
+    >
       {ready && (
         <Globe
           ref={globeEl}

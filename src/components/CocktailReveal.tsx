@@ -6,24 +6,33 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 // Configuration
 const COCKTAIL_IMAGES = [
-  { name: "Red", file: "kirmizi.png", color: "#EF4444" },
-  { name: "Orange", file: "turuncu.png", color: "#F97316" },
-  { name: "Yellow", file: "sari.png", color: "#EAB308" },
-  { name: "Green", file: "yesil.png", color: "#22C55E" },
-  { name: "Light Blue", file: "acikmavi.png", color: "#0EA5E9" },
-  { name: "Dark Blue", file: "koyumavi.png", color: "#1E3A8A" },
-  { name: "Purple", file: "mor.png", color: "#A855F7" },
+  // Colored Background Loop
+  { name: "Red", file: "COLOREDBG-COCKTAIL-1.png", color: "#EF4444" },
+  { name: "Orange", file: "COLOREDBG-COCKTAIL-2.png", color: "#F97316" },
+  { name: "Yellow", file: "COLOREDBG-COCKTAIL-3.png", color: "#EAB308" },
+  { name: "Green", file: "COLOREDBG-COCKTAIL-4.png", color: "#22C55E" },
+  { name: "Light Blue", file: "COLOREDBG-COCKTAIL-5.png", color: "#0EA5E9" },
+  { name: "Dark Blue", file: "COLOREDBG-COCKTAIL-6.png", color: "#1E3A8A" },
+  { name: "Purple", file: "COLOREDBG-COCKTAIL-7.png", color: "#A855F7" },
+  // No Background Loop
+  { name: "Red NoBg", file: "NOBG-COCKTAIL-1.png", color: "#EF4444" },
+  { name: "Orange NoBg", file: "NOBG-COCKTAIL-2.png", color: "#F97316" },
+  { name: "Yellow NoBg", file: "NOBG-COCKTAIL-3.png", color: "#EAB308" },
+  { name: "Green NoBg", file: "NOBG-COCKTAIL-4.png", color: "#22C55E" },
+  { name: "Light Blue NoBg", file: "NOBG-COCKTAIL-5.png", color: "#0EA5E9" },
+  { name: "Dark Blue NoBg", file: "NOBG-COCKTAIL-6.png", color: "#1E3A8A" },
+  { name: "Purple NoBg", file: "NOBG-COCKTAIL-7.png", color: "#A855F7" },
 ];
 
 const CONFIG = {
   // Distance threshold in pixels
-  spawnThreshold: 45, 
+  spawnThreshold: 30, 
   // Throttle time in ms
-  throttleInterval: 100, 
+  throttleInterval: 15, 
   // Max active layers to keep in DOM
-  maxLayers: 8,
+  maxLayers: 50,
   // Fade duration in ms
-  fadeDuration: 1000,
+  fadeDuration: 1500,
   // Image path prefix
   pathPrefix: "/cocktail-images/",
 };
@@ -90,15 +99,26 @@ export default function CocktailReveal() {
         return;
       }
 
+      // Calculate velocity
+      const timeDelta = Math.max(1, now - state.current.lastSpawnTime);
+      const velocity = dist / timeDelta;
+
       // Update state
       state.current.lastSpawnTime = now;
       state.current.lastMousePos = { x, y };
 
       // 3. Spawn Image
-      spawnImage(x, y);
+      spawnImage(x, y, velocity);
     };
 
-    const spawnImage = (x: number, y: number) => {
+    const spawnImage = (x: number, y: number, velocity: number) => {
+      // Calculate dynamic scale
+      const maxVelocity = 4; 
+      const minScale = 0.8; 
+      const maxScale = 1.5; 
+      const normVel = Math.min(Math.max(velocity, 0), maxVelocity) / maxVelocity;
+      const targetScale = minScale + (normVel * (maxScale - minScale));
+
       const imgData = COCKTAIL_IMAGES[state.current.currentIndex];
       
       // Advance index (loop)
@@ -133,9 +153,9 @@ export default function CocktailReveal() {
       targetX = Math.max(0, Math.min(targetX, maxX));
       targetY = Math.max(0, Math.min(targetY, maxY));
       
-      img.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(0.98)`;
+      img.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(${targetScale * 0.9})`;
       img.style.opacity = "1";
-      img.style.transition = `transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity ${CONFIG.fadeDuration}ms ease-out`;
+      img.style.transition = `transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity ${CONFIG.fadeDuration}ms ease-out`;
       img.style.pointerEvents = "none";
       img.style.zIndex = "10";
       img.style.boxShadow = "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"; // Shadow for depth
@@ -148,12 +168,12 @@ export default function CocktailReveal() {
       requestAnimationFrame(() => {
         // Force reflow
         void img.offsetWidth;
-        img.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(1)`;
+        img.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(${targetScale})`;
         
         // Schedule fade out
         setTimeout(() => {
              img.style.opacity = "0";
-        }, 100);
+        }, 300);
       });
 
       // Cleanup after animation

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useLayoutEffect, useRef, useState, useCallback, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
@@ -12,11 +12,6 @@ import MusicPlayer from "@/components/MusicPlayer";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
-// Easing function for smooth interpolation
-const easeOutExpo = (t: number): number => {
-  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
-};
-
 export default function Navigation() {
   const [activeId, setActiveId] = useState<string>("");
   const navRef = useRef<HTMLElement>(null);
@@ -25,81 +20,93 @@ export default function Navigation() {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   // Derived states for different modes
-  const [isSidebar, setIsSidebar] = useState(false);
   const [transitionProgress, setTransitionProgress] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     setActiveId(SECTIONS[0].id);
-    
     // Check if page is already scrolled on mount
     const isScrolled = window.scrollY > 100;
     if (isScrolled) {
-      setIsSidebar(true);
       setTransitionProgress(1);
     }
+  }, []);
 
-    // Main scroll trigger - switches mode based on threshold
-    const morphTrigger = ScrollTrigger.create({
-      trigger: "body",
-      start: "top top-=100", // Trigger after 100px scroll
-      end: "bottom bottom",
-      onEnter: () => setIsSidebar(true),
-      onLeaveBack: () => setIsSidebar(false),
-    });
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const proxy = { value: transitionProgress };
 
-    // Global scroll percentage counter
-    const progressTrigger = ScrollTrigger.create({
-      trigger: "body",
-      start: "top top",
-      end: "bottom bottom",
-      onUpdate: (self) => {
-        if (counterRef.current) {
-          counterRef.current.innerText = Math.round(self.progress * 100).toString();
-        }
-      },
-    });
+      // If we start scrolled, ensure we start at the end state visually
+      if (window.scrollY > 100) {
+        proxy.value = 1;
+        setTransitionProgress(1);
+      }
 
-    // Active section highlighting
-    SECTIONS.forEach((section) => {
+      function animateToState(targetVal: number) {
+        gsap.to(proxy, {
+          value: targetVal,
+          duration: 1.0, // Fixed fast duration
+          ease: "power3.inOut",
+          onStart: () => setIsAnimating(true),
+          onUpdate: () => {
+            setTransitionProgress(proxy.value);
+          },
+          onComplete: () => setIsAnimating(false)
+        });
+      }
+
+      // 1. Pinning Trigger - Pins the hero section but does NOT scrub the animation
       ScrollTrigger.create({
-        trigger: `#${section.id}`,
-        start: "top center",
-        end: "bottom center",
-        onToggle: (self) => {
-          if (self.isActive) {
-            setActiveId(section.id);
-          }
+        trigger: "body",
+        start: "top top-=1", // Add a tiny offset so it doesn't trigger immediately at 0
+        end: "+=500", // Distance to hold the pin
+        pin: "#hero",
+        scrub: false, // Don't scrub, we use callbacks to trigger animation
+        onEnter: () => {
+          // Trigger animation to sidebar only when we actually cross the start threshold
+          animateToState(1);
         },
+        onLeaveBack: () => {
+          // Trigger animation back to center
+          animateToState(0);
+        }
       });
     });
 
-    return () => {
-      morphTrigger.kill();
-      progressTrigger.kill();
-      ScrollTrigger.getAll().forEach((t) => t.kill());
-    };
-  }, [prefersReducedMotion]);
+    return () => ctx.revert();
+  }, []); // Run once on mount
 
-  // Animate transition between modes
-  useEffect(() => {
-    const targetProgress = isSidebar ? 1 : 0;
-    
-    const proxy = { value: transitionProgress };
-    gsap.to(proxy, {
-      value: targetProgress,
-      duration: 1.5,
-      ease: "power3.inOut",
-      onUpdate: () => {
-        setTransitionProgress(proxy.value);
-      }
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      // Global scroll percentage counter
+      ScrollTrigger.create({
+        trigger: "body",
+        start: "top top",
+        end: "bottom bottom",
+        onUpdate: (self) => {
+          if (counterRef.current) {
+            counterRef.current.innerText = Math.round(self.progress * 100).toString();
+          }
+        },
+      });
+
+      // Active section highlighting
+      SECTIONS.forEach((section) => {
+        ScrollTrigger.create({
+          trigger: `#${section.id}`,
+          start: "top center",
+          end: "bottom center",
+          onToggle: (self) => {
+            if (self.isActive) {
+              setActiveId(section.id);
+            }
+          },
+        });
+      });
     });
-
-    return () => {
-      gsap.killTweensOf(proxy);
-    };
-  }, [isSidebar]); // Removed transitionProgress from deps to avoid loop, but we need start value. 
-  // Actually simpler: just let GSAP handle the value from current state.
-
+    return () => ctx.revert();
+  }, []);
 
   const handleScrollTo = useCallback((id: string) => {
     if (prefersReducedMotion) {
@@ -163,7 +170,10 @@ export default function Navigation() {
       >
         {/* Navigation list */}
         <ul 
-          className="relative flex flex-col w-full pointer-events-auto items-start"
+          className={clsx(
+            "relative flex flex-col w-full items-start transition-none",
+            isAnimating ? "pointer-events-none" : "pointer-events-auto"
+          )}
           style={{ paddingLeft: `${contentPadding}px` }}
         >
           {SECTIONS.map((section, index) => {
@@ -194,9 +204,9 @@ export default function Navigation() {
             // Spacing between items: Constant now for better UX
             const itemMargin = 24;
             
-            // Label (01, 02, etc) - always visible but changes size
-            const labelSize = lerp(16, 12, itemProgress);
-            const labelOpacity = lerp(0.5, 0.7, itemProgress);
+            // Label (01, 02, etc) - REMOVED
+            // const labelSize = lerp(16, 12, itemProgress);
+            // const labelOpacity = lerp(0.5, 0.7, itemProgress);
             
             // Line indicator - fades out during transition
             const lineOpacity = lerp(1, 0, itemProgress);
@@ -236,8 +246,8 @@ export default function Navigation() {
                     isActive ? "text-primary font-extrabold" : "text-neutral-400 hover:text-white font-bold"
                   )}
                 >
-                  {/* Section number/label */}
-                  <span 
+                  {/* Section number/label - REMOVED */}
+                  {/* <span 
                     className="font-serif italic tracking-wide transition-all duration-300 min-w-[2rem]"
                     style={{ 
                       fontSize: `${labelSize}px`,
@@ -245,7 +255,7 @@ export default function Navigation() {
                     }}
                   >
                     {section.label}
-                  </span>
+                  </span> */}
 
                   {/* Center mode: Line indicator */}
                   <span
@@ -277,7 +287,7 @@ export default function Navigation() {
           className="absolute -bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
           style={{ 
             opacity: lerp(1, 0, transitionProgress * 2),
-            pointerEvents: !isSidebar ? 'auto' : 'none',
+            pointerEvents: transitionProgress < 0.5 ? 'auto' : 'none',
           }}
         >
           <div className="relative w-5 h-8 border border-white/20 rounded-full overflow-hidden">

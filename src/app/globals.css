@@ -248,7 +248,7 @@ textarea:-webkit-autofill:focus {
   opacity: 1;
   animation: 
     anim-sq3 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq3 0.6s linear 4.6s forwards; /* 2 steps x 0.3s */
+    snake-sq3 0.8s linear 4.0s forwards;
 }
 /* 4: SE Anchor */
 .ConsentLogo .sq-4 {
@@ -256,7 +256,7 @@ textarea:-webkit-autofill:focus {
   opacity: 1;
   animation: 
     anim-sq4 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq4 0.9s linear 4.3s forwards; /* 3 steps x 0.3s */
+    snake-sq4 1.2s linear 4.2s forwards;
 }
 
 /* -- PHASE 2 -- */
@@ -265,14 +265,14 @@ textarea:-webkit-autofill:focus {
   z-index: 20;
   animation: 
     anim-sq2 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq2 0.3s linear 4.9s forwards; /* 1 step x 0.3s */
+    snake-sq2 0.4s linear 3.8s forwards;
 }
 /* 5: NE of 4 */
 .ConsentLogo .sq-5 {
   z-index: 20;
   animation: 
     anim-sq5 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq5 1.2s linear 4.0s forwards; /* 4 steps x 0.3s */
+    snake-sq5 1.6s linear 4.4s forwards;
 }
 
 /* -- PHASE 3 -- */
@@ -280,14 +280,15 @@ textarea:-webkit-autofill:focus {
 .ConsentLogo .sq-1 {
   z-index: 30;
   animation: 
-    anim-sq1 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    anim-sq1 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    snake-sq1 0.4s linear 3.6s forwards;
 }
 /* 6: SE of 5 */
 .ConsentLogo .sq-6 {
   z-index: 30;
   animation: 
     anim-sq6 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq6 1.5s linear 3.7s forwards; /* 5 steps x 0.3s */
+    snake-sq6 2.0s linear 4.6s forwards;
 }
 
 
@@ -346,66 +347,73 @@ textarea:-webkit-autofill:focus {
   Sq6 Path: P6 -> P5 -> P4 -> P3 -> P2 -> P1.
 */
 
-/* Sq2 -> P1 */
+/* Sq1 -> P0 */
+@keyframes snake-sq1 {
+  0% { transform: translate(-180%, 120%) scale(1, 1); }
+  50% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
+  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Wait */
+}
+
+/* Sq2 -> P1 -> P0 */
 @keyframes snake-sq2 {
   0% { transform: translate(-60%, 120%) scale(1, 1); }
-  66% { transform: translate(-180%, 120%) scale(1, 1); } /* Move */
-  100% { transform: translate(-180%, 120%) scale(1, 1); } /* Wait */
+  50% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
+  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 (No wait at P1) */
 }
 
-/* Sq3 -> P2 -> P1 */
+/* Sq3 -> P2 -> P1 -> P0 */
 @keyframes snake-sq3 {
   0% { transform: translate(-60%, 0) scale(1, 1); }
-  33% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
-  50% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
-  83% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
-  100% { transform: translate(-180%, 120%) scale(1, 1); } /* Wait */
+  25% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
+  50% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
+  75% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
+  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
 }
 
-/* Sq4 -> P3 -> P2 -> P1 */
+/* Sq4 -> P3 -> P2 -> P1 -> P0 */
 @keyframes snake-sq4 {
   0% { transform: translate(60%, 0) scale(1, 1); }
-  22% { transform: translate(-60%, 0) scale(1, 1); } /* P3 */
-  33% { transform: translate(-60%, 0) scale(1, 1); } /* Wait */
-  55% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
-  66% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
-  88% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
-  100% { transform: translate(-180%, 120%) scale(1, 1); }
+  16% { transform: translate(-60%, 0) scale(1, 1); } /* Move P3 */
+  33% { transform: translate(-60%, 0) scale(1, 1); } /* Wait P3 */
+  50% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
+  66% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
+  83% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
+  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
 }
 
-/* Sq5 -> P4 -> P3 -> P2 -> P1 */
+/* Sq5 -> P4 -> P3 -> P2 -> P1 -> P0 */
 @keyframes snake-sq5 {
   0% { transform: translate(60%, -120%) scale(1, 1); }
-  16% { transform: translate(60%, 0) scale(1, 1); } /* P4 */
-  25% { transform: translate(60%, 0) scale(1, 1); } /* Wait */
-  41% { transform: translate(-60%, 0) scale(1, 1); } /* P3 */
-  50% { transform: translate(-60%, 0) scale(1, 1); } /* Wait */
-  66% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
-  75% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
-  91% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
-  100% { transform: translate(-180%, 120%) scale(1, 1); }
+  12% { transform: translate(60%, 0) scale(1, 1); } /* Move P4 */
+  25% { transform: translate(60%, 0) scale(1, 1); } /* Wait P4 */
+  37% { transform: translate(-60%, 0) scale(1, 1); } /* Move P3 */
+  50% { transform: translate(-60%, 0) scale(1, 1); } /* Wait P3 */
+  62% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
+  75% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
+  87% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
+  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
 }
 
-/* Sq6 -> P5 -> P4 -> P3 -> P2 -> P1 */
+/* Sq6 -> P5 -> P4 -> P3 -> P2 -> P1 -> P0 */
 @keyframes snake-sq6 {
   0% { transform: translate(180%, -120%) scale(1, 1); }
-  13% { transform: translate(60%, -120%) scale(1, 1); } /* P5 */
-  20% { transform: translate(60%, -120%) scale(1, 1); } /* Wait */
-  33% { transform: translate(60%, 0) scale(1, 1); } /* P4 */
-  40% { transform: translate(60%, 0) scale(1, 1); } /* Wait */
-  53% { transform: translate(-60%, 0) scale(1, 1); } /* P3 */
-  60% { transform: translate(-60%, 0) scale(1, 1); } /* Wait */
-  73% { transform: translate(-60%, 120%) scale(1, 1); } /* P2 */
-  80% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait */
-  93% { transform: translate(-180%, 120%) scale(1, 1); } /* P1 */
-  100% { transform: translate(-180%, 120%) scale(1, 1); }
+  10% { transform: translate(60%, -120%) scale(1, 1); } /* Move P5 */
+  20% { transform: translate(60%, -120%) scale(1, 1); } /* Wait P5 */
+  30% { transform: translate(60%, 0) scale(1, 1); } /* Move P4 */
+  40% { transform: translate(60%, 0) scale(1, 1); } /* Wait P4 */
+  50% { transform: translate(-60%, 0) scale(1, 1); } /* Move P3 */
+  60% { transform: translate(-60%, 0) scale(1, 1); } /* Wait P3 */
+  70% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
+  80% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
+  90% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
+  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
 }
 
 
 /* Content Reveal Animation */
 .overlay-content-reveal {
   opacity: 0;
-  animation: content-fade-in 1.2s ease-out 5.2s forwards;
+  animation: content-fade-in 1.2s ease-out 6.5s forwards;
 }
 
 @keyframes content-fade-in {
