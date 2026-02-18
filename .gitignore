@@ -32,3 +32,8 @@ ts-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# media assets (keep repo code-only; don't push large binaries)
+public/audio/
+public/cocktail-images/
+public/hikaye-images/

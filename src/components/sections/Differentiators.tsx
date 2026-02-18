@@ -58,15 +58,15 @@ export default function Differentiators() {
       </div>
       
       <div className="order-1 md:order-2 py-20 md:py-40 relative z-10">
-        <span className="text-primary text-sm tracking-widest uppercase">03 / Why Us</span>
-        <h2 className="text-4xl md:text-5xl font-serif mt-4 mb-12">The Mundus Edge</h2>
+        <span className="text-primary text-sm tracking-widest uppercase">03 / Neden Biz</span>
+        <h2 className="text-4xl md:text-5xl font-serif mt-4 mb-12">Mundus Farkı</h2>
         
         <ul ref={listRef} className="space-y-16">
           {[
-            { title: "Global Network Access", desc: "Direct lines to the world's most exclusive distributors." },
-            { title: "Data-Driven Insights", desc: "Proprietary analytics that predict market shifts before they happen." },
-            { title: "Sustainable Practices", desc: "Building brands that respect the earth and the craft." },
-            { title: "Artisan Partnership", desc: "Connecting you with the masters of distillation." }
+            { title: "Küresel Ağ Erişimi", desc: "Dünyanın en seçkin distribütörlerine doğrudan hatlar." },
+            { title: "Veri Odaklı İçgörüler", desc: "Pazar değişimlerini gerçekleşmeden önce tahmin eden özel analizler." },
+            { title: "Sürdürülebilir Uygulamalar", desc: "Dünyaya ve zanaata saygı duyan markalar inşa etmek." },
+            { title: "Zanaatkar Ortaklığı", desc: "Sizi damıtma ustalarıyla buluşturuyoruz." }
           ].map((item, i) => (
             <li key={i} className="diff-item flex flex-col gap-2 border-b border-white/10 pb-8">
               <span className="text-primary text-sm mb-2">0{i + 1}</span>

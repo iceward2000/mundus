@@ -1,0 +1,17 @@
+- 18+ POP-UP
+- LOGO ANIMATION
+- NAVIGATION ON MIDDLE
+- NAVIGATION ON LEFT
+- COCKTAIL COLOR WILL BE FILLED TO BACKGROUND COLOR
+- HIKAYE
+- MATEMATIK - clickable 4 cards animated elements of maths
+- GLOBE
+- 3 kadeh verticalda hareket eden - köpüklü bardağı dikey hareket
+- HAYAL
+- COCKTAIL REVEAL
+- MUVAFFAKIYET
+- RAKI TOKUŞTURMA
+- RAKI boş bardak video
+- PARTNERSHIPS
+- FORM
+- FOOTER sözleşmelerin kvkk falan olduğu yerin altında rengi sürekli değişen deniz gibi dalgalanan sıvı akışı

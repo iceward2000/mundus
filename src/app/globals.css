@@ -16,6 +16,10 @@
   /* Navigation transition timing */
   --nav-transition-duration: 0.6s;
   --nav-transition-ease: cubic-bezier(0.19, 1, 0.22, 1);
+  
+  /* Logo Animation Vars */
+  --tl-x: calc(-50vw + 4rem);
+  --tl-y: calc(-50vh + 2rem);
 }
 
 body {
@@ -33,7 +37,7 @@ html.lenis, html.lenis body {
 }
 
 .lenis.lenis-smooth {
-  scroll-behavior: auto !important;
+  scroll-behavior: auto;
 }
 
 .lenis.lenis-smooth [data-lenis-prevent] {
@@ -68,7 +72,8 @@ html.lenis, html.lenis body {
   .nav-item {
     transition: 
       transform 0.1s linear,
-      margin-bottom 0.3s ease-out;
+      margin-bottom 0.3s ease-out,
+      opacity 0.35s ease-out;
   }
   
   .nav-item span {
@@ -83,8 +88,8 @@ html.lenis, html.lenis body {
   .nav-item,
   .nav-item span,
   .nav-item button {
-    transition: none !important;
-    animation: none !important;
+    transition: none;
+    animation: none;
   }
 }
 
@@ -180,47 +185,29 @@ input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: white !important;
-  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
-  transition: background-color 5000s ease-in-out 0s !important;
+  -webkit-text-fill-color: white;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* 
-  Consent Logo Animation (V5 - Snake Retraction)
-  
-  Behavior:
-  1. Expansion (0-3s).
-  2. "Snake" Retraction (3.2s-4.2s).
-     - Squares follow the chain path: 6->5->4->3->2->1.
-     - Sq1 (Head) stays put relative to container (but container moves).
-  3. Reposition (3.2s-4.4s).
-     - Container moves to Top Left.
+  Consent Logo Animation (Snake Fly V3 - No Rotation)
 */
 
 .ConsentLogo {
   position: fixed;
   top: 50%;
   left: 50%;
-  /* Start centered, rotated, scaled 2.5x */
   transform: translate(-50%, -50%) rotate(45deg) scale(2.5);
   transform-origin: center center;
-  
   color: white;
   z-index: 50;
-  mix-blend-mode: difference;
-  pointer-events: none; /* Let clicks pass through if needed */
-  
-  /* Reposition Animation */
-  animation: logo-reposition 2.0s cubic-bezier(0.19, 1, 0.22, 1) 3.2s forwards;
+  mix-blend-mode: normal;
+  pointer-events: none;
 }
 
-@keyframes logo-reposition {
-  to {
-    top: 2rem;
-    left: 2rem;
-    /* Reset translate (since top/left handles pos) and scale to 1 */
-    transform: translate(0, 0) rotate(45deg) scale(1);
-  }
+.ConsentLogo.blend-active {
+  mix-blend-mode: normal; /* Container remains normal to allow squares to diff with background */
 }
 
 .ConsentLogo .logo-square {
@@ -231,69 +218,205 @@ textarea:-webkit-autofill:focus {
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   animation-fill-mode: forwards;
   opacity: 0; 
+  mix-blend-mode: normal;
 }
 
-/* 
-  Multi-step Animations:
-  1. Expansion (3s)
-  2. Snake Retraction (Staggered starts)
-     Base time: 3.2s
-     Stagger step: 0.2s
-*/
+.ConsentLogo.blend-active .logo-square {
+  mix-blend-mode: normal;
+}
 
-/* -- PHASE 1 -- */
-/* 3: NW Anchor */
+/* Static Logo State (After Verification) */
+.ConsentLogo.logo-static .logo-square {
+  animation: none;
+  opacity: 1;
+  transition: none;
+}
+
+/* Manually applying final transforms for static state - Adjusted for tighter spacing */
+.ConsentLogo.logo-static .sq-1 {
+  transform: translate(calc(-14.2vw - 14.2vh + 2.02rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+}
+.ConsentLogo.logo-static .sq-2 {
+  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+}
+.ConsentLogo.logo-static .sq-3 {
+  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem), calc(14.2vw - 14.2vh)) scale(0.4);
+}
+.ConsentLogo.logo-static .sq-4 {
+  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem), calc(14.2vw - 14.2vh)) scale(0.4);
+}
+.ConsentLogo.logo-static .sq-5 {
+  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+}
+.ConsentLogo.logo-static .sq-6 {
+  transform: translate(calc(-14.2vw - 14.2vh + 4.18rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+}
+
+/* Positions relative to center (0deg grid) */
+/* P1: (-180%, 120%) */
+/* P2: (-60%, 120%) */
+/* P3: (-60%, 0%) */
+/* P4: (60%, 0%) */
+/* P5: (60%, -120%) */
+/* P6: (180%, -120%) */
+
+/* Expansion Animations (0-3s) - Same as before */
 .ConsentLogo .sq-3 {
   z-index: 10;
   opacity: 1;
   animation: 
     anim-sq3 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq3 0.8s linear 4.0s forwards;
+    snake-fly-sq3 1.6s linear 3.2s forwards;
 }
-/* 4: SE Anchor */
 .ConsentLogo .sq-4 {
   z-index: 10;
   opacity: 1;
   animation: 
     anim-sq4 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq4 1.2s linear 4.2s forwards;
+    snake-fly-sq4 2.0s linear 3.2s forwards;
 }
-
-/* -- PHASE 2 -- */
-/* 2: SW of 3 */
 .ConsentLogo .sq-2 {
   z-index: 20;
   animation: 
     anim-sq2 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq2 0.4s linear 3.8s forwards;
+    snake-fly-sq2 1.2s linear 3.2s forwards;
 }
-/* 5: NE of 4 */
 .ConsentLogo .sq-5 {
   z-index: 20;
   animation: 
     anim-sq5 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq5 1.6s linear 4.4s forwards;
+    snake-fly-sq5 2.4s linear 3.2s forwards;
 }
-
-/* -- PHASE 3 -- */
-/* 1: NW of 2 */
 .ConsentLogo .sq-1 {
   z-index: 30;
   animation: 
     anim-sq1 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq1 0.4s linear 3.6s forwards;
+    snake-fly-sq1 0.8s linear 3.2s forwards;
 }
-/* 6: SE of 5 */
 .ConsentLogo .sq-6 {
   z-index: 30;
   animation: 
     anim-sq6 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    snake-sq6 2.0s linear 4.6s forwards;
+    snake-fly-sq6 2.8s linear 3.2s forwards;
 }
 
+/* 
+   Corrected Fly Logic with Vector Projection:
+   Target: Top-Left of Viewport (-50vw + 2rem, -50vh + 2rem).
+   Current Frame: Rotated +45deg AND Scaled 2.5x.
+   
+   Transformation from Local to Global:
+   V_global = S(2.5) * R(45deg) * V_local
+   
+   We want to solve for V_local:
+   V_local = R(-45deg) * S(1/2.5) * V_global
+   
+   V_global approx (-50vw, -50vh)
+   S(1/2.5) = 0.4
+   V_scaled = (-20vw, -20vh)
+   
+   Apply Rotation (-45deg):
+   Vx = -20vw * 0.707 - (-20vh) * (-0.707) = -14.14vw - 14.14vh
+   Vy = -20vw * (-0.707) + (-20vh) * 0.707 = 14.14vw - 14.14vh
+   
+   We use 14.2vw/vh for round numbers.
+   Offsets are also scaled by 0.4.
+*/
 
-/* Keyframes (Expansion - Unchanged) */
+/* Sq1 */
+@keyframes snake-fly-sq1 {
+  0% { transform: translate(-180%, 120%); }
+  100% { 
+    transform: 
+      translate(
+        calc(-14.2vw - 14.2vh + 2.52rem), 
+        calc(14.2vw - 14.2vh + 0.72rem)
+      ) 
+      scale(0.4); 
+  }
+}
 
+/* Sq2 */
+@keyframes snake-fly-sq2 {
+  0% { transform: translate(-60%, 120%); }
+  33% { transform: translate(-180%, 120%); }
+  100% { 
+    transform: 
+      translate(
+        calc(-14.2vw - 14.2vh + 3.24rem), 
+        calc(14.2vw - 14.2vh + 0.72rem)
+      ) 
+      scale(0.4); 
+  }
+}
+
+/* Sq3 */
+@keyframes snake-fly-sq3 {
+  0% { transform: translate(-60%, 0%); }
+  25% { transform: translate(-60%, 120%); }
+  50% { transform: translate(-180%, 120%); }
+  100% { 
+    transform: 
+      translate(
+        calc(-14.2vw - 14.2vh + 3.24rem), 
+        calc(14.2vw - 14.2vh)
+      ) 
+      scale(0.4); 
+  }
+}
+
+/* Sq4 */
+@keyframes snake-fly-sq4 {
+  0% { transform: translate(60%, 0%); }
+  20% { transform: translate(-60%, 0%); }
+  40% { transform: translate(-60%, 120%); }
+  60% { transform: translate(-180%, 120%); }
+  100% { 
+    transform: 
+      translate(
+        calc(-14.2vw - 14.2vh + 3.96rem), 
+        calc(14.2vw - 14.2vh)
+      ) 
+      scale(0.4); 
+  }
+}
+
+/* Sq5 */
+@keyframes snake-fly-sq5 {
+  0% { transform: translate(60%, -120%); }
+  16.66% { transform: translate(60%, 0%); }
+  33.33% { transform: translate(-60%, 0%); }
+  50% { transform: translate(-60%, 120%); }
+  66.66% { transform: translate(-180%, 120%); }
+  100% { 
+    transform: 
+      translate(
+        calc(-14.2vw - 14.2vh + 3.96rem), 
+        calc(14.2vw - 14.2vh - 0.72rem)
+      ) 
+      scale(0.4); 
+  }
+}
+
+/* Sq6 */
+@keyframes snake-fly-sq6 {
+  0% { transform: translate(180%, -120%); }
+  14.28% { transform: translate(60%, -120%); }
+  28.57% { transform: translate(60%, 0%); }
+  42.85% { transform: translate(-60%, 0%); }
+  57.14% { transform: translate(-60%, 120%); }
+  71.42% { transform: translate(-180%, 120%); }
+  100% { 
+    transform: 
+      translate(
+        calc(-14.2vw - 14.2vh + 4.68rem), 
+        calc(14.2vw - 14.2vh - 0.72rem)
+      ) 
+      scale(0.4); 
+  }
+}
+
+/* Expansion Keyframes (Unchanged) */
 @keyframes anim-sq3 {
   0% { transform: translate(0, 0) scale(1, 1); }
   15% { transform: translate(0, 0) scale(2.2, 1); } 
@@ -340,75 +463,27 @@ textarea:-webkit-autofill:focus {
   100% { opacity: 1; transform: translate(180%, -120%) scale(1, 1); }
 }
 
-/* 
-  Snake Retraction Keyframes 
-  Target: All converge to P1 (-60%, 120%)?
-  Wait, P1 is sq-1's pos (-180, 120).
-  Sq6 Path: P6 -> P5 -> P4 -> P3 -> P2 -> P1.
-*/
-
-/* Sq1 -> P0 */
-@keyframes snake-sq1 {
-  0% { transform: translate(-180%, 120%) scale(1, 1); }
-  50% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
-  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Wait */
+/* Responsive logo adjustments for smaller viewports */
+@media (max-width: 1024px) {
+  .ConsentLogo.logo-static .sq-1 {
+    transform: translate(calc(-14.2vw - 14.2vh + 3.02rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+  }
+  .ConsentLogo.logo-static .sq-2 {
+    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+  }
+  .ConsentLogo.logo-static .sq-3 {
+    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem), calc(14.2vw - 14.2vh)) scale(0.4);
+  }
+  .ConsentLogo.logo-static .sq-4 {
+    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem), calc(14.2vw - 14.2vh)) scale(0.4);
+  }
+  .ConsentLogo.logo-static .sq-5 {
+    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+  }
+  .ConsentLogo.logo-static .sq-6 {
+    transform: translate(calc(-14.2vw - 14.2vh + 5.18rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+  }
 }
-
-/* Sq2 -> P1 -> P0 */
-@keyframes snake-sq2 {
-  0% { transform: translate(-60%, 120%) scale(1, 1); }
-  50% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
-  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 (No wait at P1) */
-}
-
-/* Sq3 -> P2 -> P1 -> P0 */
-@keyframes snake-sq3 {
-  0% { transform: translate(-60%, 0) scale(1, 1); }
-  25% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
-  50% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
-  75% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
-  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
-}
-
-/* Sq4 -> P3 -> P2 -> P1 -> P0 */
-@keyframes snake-sq4 {
-  0% { transform: translate(60%, 0) scale(1, 1); }
-  16% { transform: translate(-60%, 0) scale(1, 1); } /* Move P3 */
-  33% { transform: translate(-60%, 0) scale(1, 1); } /* Wait P3 */
-  50% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
-  66% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
-  83% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
-  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
-}
-
-/* Sq5 -> P4 -> P3 -> P2 -> P1 -> P0 */
-@keyframes snake-sq5 {
-  0% { transform: translate(60%, -120%) scale(1, 1); }
-  12% { transform: translate(60%, 0) scale(1, 1); } /* Move P4 */
-  25% { transform: translate(60%, 0) scale(1, 1); } /* Wait P4 */
-  37% { transform: translate(-60%, 0) scale(1, 1); } /* Move P3 */
-  50% { transform: translate(-60%, 0) scale(1, 1); } /* Wait P3 */
-  62% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
-  75% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
-  87% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
-  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
-}
-
-/* Sq6 -> P5 -> P4 -> P3 -> P2 -> P1 -> P0 */
-@keyframes snake-sq6 {
-  0% { transform: translate(180%, -120%) scale(1, 1); }
-  10% { transform: translate(60%, -120%) scale(1, 1); } /* Move P5 */
-  20% { transform: translate(60%, -120%) scale(1, 1); } /* Wait P5 */
-  30% { transform: translate(60%, 0) scale(1, 1); } /* Move P4 */
-  40% { transform: translate(60%, 0) scale(1, 1); } /* Wait P4 */
-  50% { transform: translate(-60%, 0) scale(1, 1); } /* Move P3 */
-  60% { transform: translate(-60%, 0) scale(1, 1); } /* Wait P3 */
-  70% { transform: translate(-60%, 120%) scale(1, 1); } /* Move P2 */
-  80% { transform: translate(-60%, 120%) scale(1, 1); } /* Wait P2 */
-  90% { transform: translate(-180%, 120%) scale(1, 1); } /* Move P1 */
-  100% { transform: translate(-300%, 120%) scale(1, 1); } /* Move P0 */
-}
-
 
 /* Content Reveal Animation */
 .overlay-content-reveal {

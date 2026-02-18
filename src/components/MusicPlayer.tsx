@@ -8,8 +8,8 @@ export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Use a reliable audio source. 
-  // Using local file moved to public/audio/loop.wav
-  const audioSrc = "/audio/loop.wav"; 
+  // Using local file moved to public/audio/loop.mp3
+  const audioSrc = "/audio/loop.mp3"; 
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -58,7 +58,7 @@ export default function MusicPlayer() {
       <button
         onClick={togglePlay}
         className="group relative flex items-center justify-center w-12 h-6 focus:outline-none cursor-pointer"
-        aria-label={isPlaying ? "Pause music" : "Play music"}
+        aria-label={isPlaying ? "Müziği Durdur" : "Müziği Oynat"}
       >
         {/* Container for the visualizer */}
         <div className="relative w-full h-full flex items-center overflow-hidden">

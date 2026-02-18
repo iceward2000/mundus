@@ -42,18 +42,18 @@ export default function Process() {
   return (
     <SectionWrapper id="process" className="flex flex-col items-center">
       <div className="text-center mb-20 relative z-10">
-        <span className="text-primary text-sm tracking-widest uppercase">04 / Process</span>
-        <h2 className="text-4xl md:text-5xl font-serif mt-4">The Journey</h2>
+        <span className="text-primary text-sm tracking-widest uppercase">04 / Süreç</span>
+        <h2 className="text-4xl md:text-5xl font-serif mt-4">Yolculuk</h2>
       </div>
 
       <div ref={trackRef} className="relative w-full max-w-3xl z-10">
         <div className="process-line absolute left-[15px] md:left-1/2 top-0 w-[1px] bg-primary h-0 -translate-x-1/2" />
         
         {[
-          { title: "Discovery", desc: "Unearthing the roots of your vision." },
-          { title: "Strategy", desc: "Charting the course through market complexities." },
-          { title: "Execution", desc: "Bringing the liquid to life with precision." },
-          { title: "Growth", desc: "Scaling with integrity and momentum." }
+          { title: "Keşif", desc: "Vizyonunuzun köklerini ortaya çıkarma." },
+          { title: "Strateji", desc: "Pazar karmaşıklıkları arasında rota belirleme." },
+          { title: "Uygulama", desc: "Sıvıyı hassasiyetle hayata geçirme." },
+          { title: "Büyüme", desc: "Bütünlük ve ivme ile ölçeklendirme." }
         ].map((step, i) => (
           <div key={i} className={`process-step relative flex flex-col md:flex-row gap-8 mb-16 ${i % 2 === 0 ? 'md:text-right' : 'md:flex-row-reverse md:text-left'}`}>
             <div className={`flex-1 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'} pl-12 md:pl-0`}>

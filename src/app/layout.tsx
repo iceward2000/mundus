@@ -5,13 +5,14 @@ import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import GrainOverlay from "@/components/GrainOverlay";
 import AgeVerificationOverlay from "@/components/AgeVerificationOverlay";
+import AssetPreloader from "@/components/AssetPreloader";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-serif" });
 
 export const metadata: Metadata = {
-  title: "Mundus | Premium Beverage Consultancy",
-  description: "Elevating spirits brands through strategic excellence.",
+  title: "Mundus | Premium İçecek Danışmanlığı",
+  description: "Stratejik mükemmellikle içki markalarını yükseltiyoruz.",
 };
 
 export default function RootLayout({
@@ -20,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="tr" className={`${inter.variable} ${playfair.variable}`}>
       <body className="bg-background text-foreground antialiased selection:bg-primary/30 selection:text-white">
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-YLZZPRW69T"
@@ -35,6 +36,7 @@ export default function RootLayout({
             gtag('config', 'G-YLZZPRW69T');
           `}
         </Script>
+        <AssetPreloader />
         <AgeVerificationOverlay />
         <SmoothScroll>
           <GrainOverlay />

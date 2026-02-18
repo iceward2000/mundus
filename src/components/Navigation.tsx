@@ -8,7 +8,6 @@ import { SECTIONS } from "@/lib/constants";
 import clsx from "clsx";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import MusicPlayer from "@/components/MusicPlayer";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -22,6 +21,9 @@ export default function Navigation() {
   // Derived states for different modes
   const [transitionProgress, setTransitionProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+
+  const isSidebarMode = transitionProgress > 0.95;
 
   useEffect(() => {
     setActiveId(SECTIONS[0].id);
@@ -108,7 +110,43 @@ export default function Navigation() {
     return () => ctx.revert();
   }, []);
 
+  // Close accordion when leaving sidebar mode
+  useEffect(() => {
+    if (transitionProgress < 0.5) {
+      setIsAccordionOpen(false);
+    }
+  }, [transitionProgress]);
+
+  // Close accordion on outside click or ESC key
+  useEffect(() => {
+    if (!isAccordionOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setIsAccordionOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsAccordionOpen(false);
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 10);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isAccordionOpen]);
+
   const handleScrollTo = useCallback((id: string) => {
+    setIsAccordionOpen(false);
     if (prefersReducedMotion) {
       const element = document.getElementById(id);
       element?.scrollIntoView({ behavior: "auto" });
@@ -162,16 +200,62 @@ export default function Navigation() {
   const bgProgress = Math.max(0, (transitionProgress - 0.6) / 0.4);
   const bgOpacity = lerp(0, 0.95, bgProgress);
 
+  // First item's transition progress (for accordion toggle positioning)
+  const firstItemProgress = Math.max(0, Math.min(1, transitionProgress / 0.5));
+
   return (
     <>
       <nav
         ref={navRef}
-        className="fixed z-50 top-1/2 left-0 w-full pointer-events-none mix-blend-exclusion -translate-y-1/2"
+        className="fixed z-50 top-1/2 left-0 pointer-events-none mix-blend-difference -translate-y-1/2"
       >
+        {/* Sidebar Accordion Toggle — only mounted near/in sidebar mode */}
+        {transitionProgress > 0.8 && (
+          <div
+            className="absolute top-0"
+            style={{
+              left: `${contentPadding}px`,
+              transform: `translateX(calc((50vw - 50%) * ${1 - firstItemProgress})) translateY(calc(${lerp(0, 35, firstItemProgress)}vh - 2.5rem))`,
+              opacity: isSidebarMode ? 1 : 0,
+              visibility: isSidebarMode ? 'visible' : 'hidden',
+              pointerEvents: isSidebarMode ? 'auto' : 'none',
+              transition: 'opacity 0.4s cubic-bezier(0.19, 1, 0.22, 1), visibility 0.4s',
+            }}
+          >
+            <button
+              onClick={() => setIsAccordionOpen(prev => !prev)}
+              className={clsx(
+                "group flex items-center justify-center",
+                "min-w-[48px] min-h-[48px] w-12 h-12 -m-2 p-2",
+                "text-white/70 hover:text-white transition-colors duration-300",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-xl",
+                "touch-manipulation"
+              )}
+              aria-label={isAccordionOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={isAccordionOpen}
+            >
+              <div className="relative w-6 h-6 flex-shrink-0">
+                <span
+                  className={clsx(
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[2px] bg-current transition-all duration-300 ease-[cubic-bezier(0.19,1,0.22,1)]",
+                    isAccordionOpen ? "w-4 rotate-45" : "w-6"
+                  )}
+                />
+                <span
+                  className={clsx(
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[2px] bg-current transition-all duration-300 ease-[cubic-bezier(0.19,1,0.22,1)]",
+                    isAccordionOpen ? "w-4 -rotate-45 opacity-100" : "w-0 opacity-0"
+                  )}
+                />
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* Navigation list */}
         <ul 
           className={clsx(
-            "relative flex flex-col w-full items-start transition-none",
+            "relative flex flex-col w-fit items-start transition-none",
             isAnimating ? "pointer-events-none" : "pointer-events-auto"
           )}
           style={{ paddingLeft: `${contentPadding}px` }}
@@ -226,11 +310,16 @@ export default function Navigation() {
                 style={{
                   transform: `translateX(calc((50vw - 50%) * ${1 - itemProgress})) translateY(${verticalOffset}vh) scale(${itemScale})`,
                   marginBottom: `${itemMargin}px`,
+                  ...(isSidebarMode ? {
+                    opacity: isAccordionOpen ? 1 : 0,
+                    transition: `opacity 0.35s cubic-bezier(0.19, 1, 0.22, 1) ${isAccordionOpen ? index * 60 : (SECTIONS.length - 1 - index) * 30}ms`,
+                    pointerEvents: (isAccordionOpen ? 'auto' : 'none') as React.CSSProperties['pointerEvents'],
+                  } : {}),
                 }}
               >
                 {/* Active indicator dot for sidebar mode */}
                 <span
-                  className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary transition-transform duration-300"
+                  className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white transition-transform duration-300"
                   style={{
                     opacity: dotOpacity,
                     left: "-16px",
@@ -243,7 +332,7 @@ export default function Navigation() {
                   className={clsx(
                     "group flex items-center gap-3 transition-colors duration-300 text-left",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg px-2 py-1 -mx-2 -my-1",
-                    isActive ? "text-primary font-extrabold" : "text-neutral-400 hover:text-white font-bold"
+                    isActive ? "text-white font-black" : "text-neutral-400 hover:text-white font-extrabold"
                   )}
                 >
                   {/* Section number/label - REMOVED */}
@@ -268,7 +357,7 @@ export default function Navigation() {
 
                   {/* Title - slides in during transition */}
                   <span
-                    className="font-medium tracking-wide text-sm uppercase whitespace-nowrap"
+                    className="tracking-wide text-sm uppercase whitespace-nowrap"
                     style={{
                       opacity: titleOpacity,
                       transform: `translateX(${titleTranslateX}px)`,
@@ -294,15 +383,14 @@ export default function Navigation() {
             <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-2 bg-white/50 rounded-full animate-bounce" />
           </div>
           <span className="text-[9px] tracking-[0.4em] uppercase text-white/30 font-light">
-            Scroll
+            KAYDIR
           </span>
         </div>
       </nav>
 
-      {/* Percentage Counter - Fixed top right */}
+      {/* Scroll Percentage Counter - Fixed top right */}
       {!isMobile && (
-        <div className="fixed top-8 right-8 z-50 mix-blend-difference pointer-events-none flex items-center gap-6">
-          <MusicPlayer />
+        <div className="fixed top-8 right-8 z-50 mix-blend-difference pointer-events-none">
           <div className="flex items-baseline gap-1 font-serif text-primary/80">
             <span ref={counterRef} className="text-4xl font-light tabular-nums leading-none">0</span>
             <span className="text-sm opacity-60">%</span>

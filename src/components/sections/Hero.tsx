@@ -80,17 +80,19 @@ export default function Hero() {
     <SectionWrapper id="hero" className="items-center text-center relative overflow-hidden">
       {/* Main content - positioned to work with centered nav */}
       <div ref={containerRef} className="relative z-10 flex flex-col items-center pt-[45vh]">
-        <h1
-          ref={titleRef}
-          className="font-serif text-6xl md:text-8xl lg:text-[10rem] xl:text-[12rem] font-bold tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/50 leading-[0.85]"
-        >
-          MUNDUS
+        <h1 ref={titleRef} className="w-[260px] md:w-[400px] lg:w-[580px] xl:w-[720px]">
+          <img
+            src="/mundus-text-logo.svg"
+            alt="MUNDUS"
+            className="w-full h-auto select-none [mask-image:linear-gradient(to_bottom,white_40%,rgba(255,255,255,0.5))] [-webkit-mask-image:linear-gradient(to_bottom,white_40%,rgba(255,255,255,0.5))]"
+            draggable={false}
+          />
         </h1>
         <p
           ref={subtitleRef}
           className="mt-8 text-base md:text-lg lg:text-xl font-light tracking-[0.25em] text-primary/90 uppercase"
         >
-          Beverage Business Consultancy
+          İçecek İşletme Danışmanlığı
         </p>
       </div>
 

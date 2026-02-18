@@ -62,7 +62,7 @@ const FloatingInput = ({
   return (
     <div 
       ref={containerRef} 
-      className="relative w-full group border-b border-white/20 transition-colors duration-300 focus-within:border-primary overflow-hidden"
+      className="relative w-full group border-b border-white/20 transition-colors duration-300 focus-within:border-primary overflow-hidden pt-6"
     >
       {/* Hidden span to measure text width */}
       <span 
@@ -111,8 +111,8 @@ const FloatingInput = ({
       <label
         htmlFor={id}
         className={clsx(
-          "absolute left-0 pointer-events-none transition-all duration-300 ease-out text-white/50",
-          (isFocused || hasValue) ? "-top-2 text-xs text-primary" : "top-3 text-base"
+          "absolute left-0 pointer-events-none transition-all duration-300 ease-out",
+          isFocused ? "top-0 text-xs text-primary" : "top-9 text-base text-white/50"
         )}
       >
         {label}
@@ -123,10 +123,8 @@ const FloatingInput = ({
 
 export default function Contact() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     company: "",
-    position: "",
     phone: "",
     email: "",
     message: "",
@@ -143,11 +141,24 @@ export default function Contact() {
     setSubmitStatus("idle");
 
     try {
+      // Split fullName for API compatibility
+      const nameParts = formData.fullName.trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
       // API call
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          company: formData.company,
+          position: "", // No longer collected
+          phone: formData.phone,
+          email: formData.email,
+          message: formData.message,
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to send");
@@ -178,10 +189,8 @@ export default function Contact() {
 
       setSubmitStatus("success");
       setFormData({
-        firstName: "",
-        lastName: "",
+        fullName: "",
         company: "",
-        position: "",
         phone: "",
         email: "",
         message: "",
@@ -203,28 +212,19 @@ export default function Contact() {
     <SectionWrapper id="contact" className="min-h-screen py-20 relative overflow-hidden">
       <div className="max-w-2xl mx-auto w-full px-4 md:px-0 z-10 relative">
         <div className="text-center mb-12 space-y-4">
-          <span className="text-primary text-sm tracking-widest uppercase">06 / Contact</span>
-          <h2 className="text-4xl md:text-6xl font-serif">Let&apos;s Work Together</h2>
+          <span className="text-primary text-sm tracking-widest uppercase">06 / İletişim</span>
+          <h2 className="text-4xl md:text-6xl font-serif">Birlikte Çalışalım</h2>
           <p className="text-white/60 max-w-xl mx-auto">
-            Ready to elevate your brand? Fill out the form below.
+            Markanızı yükseltmeye hazır mısınız? Aşağıdaki formu doldurun.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8 md:space-y-10 p-6">
           <FloatingInput
-            id="firstName"
-            name="firstName"
-            label="Ad"
-            value={formData.firstName}
-            onChange={handleChange}
-            required
-          />
-
-          <FloatingInput
-            id="lastName"
-            name="lastName"
-            label="Soyad"
-            value={formData.lastName}
+            id="fullName"
+            name="fullName"
+            label="Ad Soyad"
+            value={formData.fullName}
             onChange={handleChange}
             required
           />
@@ -232,16 +232,8 @@ export default function Contact() {
           <FloatingInput
             id="company"
             name="company"
-            label="Şirket"
+            label="Şirket (isteğe bağlı)"
             value={formData.company}
-            onChange={handleChange}
-          />
-
-          <FloatingInput
-            id="position"
-            name="position"
-            label="Pozisyon"
-            value={formData.position}
             onChange={handleChange}
           />
 
@@ -293,15 +285,15 @@ export default function Contact() {
                 <div className="h-6 w-6 border-2 border-black/30 border-t-black rounded-full animate-spin" />
               ) : submitStatus === 'success' ? (
                 <span className="flex items-center gap-2 font-medium tracking-wide">
-                  <CheckCircle2 size={20} /> Sent Successfully
+                  <CheckCircle2 size={20} /> Başarıyla Gönderildi
                 </span>
               ) : submitStatus === 'error' ? (
                  <span className="flex items-center gap-2 font-medium tracking-wide text-red-600">
-                  <AlertCircle size={20} /> Error
+                  <AlertCircle size={20} /> Hata
                 </span>
               ) : (
                 <span className="flex items-center gap-2 font-medium tracking-widest uppercase">
-                  Send Request <Send size={18} className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                  Talebi Gönder <Send size={18} className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                 </span>
               )}
             </button>
@@ -309,7 +301,7 @@ export default function Contact() {
         </form>
 
         <footer className="mt-20 text-center text-xs text-white/30 uppercase tracking-widest">
-          © {new Date().getFullYear()} Mundus Consultancy. All Rights Reserved.
+          © {new Date().getFullYear()} Mundus Consultancy. Tüm Hakları Saklıdır.
         </footer>
       </div>
     </SectionWrapper>

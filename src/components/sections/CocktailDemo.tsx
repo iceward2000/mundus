@@ -8,10 +8,10 @@ export default function CocktailDemo() {
       <div className="w-full mx-auto space-y-8">
         <div className="text-center space-y-4 px-4 md:px-12 lg:px-24">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-            Our Cocktails
+            Kokteyllerimiz
           </h2>
           <p className="text-neutral-600 max-w-lg mx-auto">
-            Experience our colorful selection.
+            Renkli seçkimizi deneyimleyin.
           </p>
         </div>
         
