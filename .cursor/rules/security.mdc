@@ -1,0 +1,22 @@
+---
+description: Security considerations and safe coding practices
+globs: src/**/*.ts, src/**/*.tsx
+alwaysApply: false
+---
+
+# Security Rules
+
+## Contact API (`/api/contact/route.ts`)
+
+- **XSS risk:** User input (`firstName`, `lastName`, `message`, etc.) is interpolated into HTML. Sanitize or escape before using in `html` template. Consider a sanitization library (e.g. DOMPurify) or text-only encoding
+- **Validation:** Add email format, phone format, max lengths before sending
+- **Rate limiting:** Not implemented — consider per-IP or per-session throttling
+
+## Age Verification
+
+- Stored in `sessionStorage`; easily bypassed via DevTools. Document as UX/compliance layer, not enforcement
+- Do not assume age gate prevents access to content — content loads before verification
+
+## Environment
+
+- Never commit `.env*` — `RESEND_API_KEY` must stay server-side only

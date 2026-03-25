@@ -2,14 +2,14 @@ import Navigation from "@/components/Navigation";
 import SketchReveal from "@/components/SketchReveal";
 import Hero from "@/components/sections/Hero";
 import Hikaye from "@/components/sections/Hikaye";
-import Differentiators from "@/components/sections/Differentiators";
-import Process from "@/components/sections/Process";
-import Proof from "@/components/sections/Proof";
+import Matematik from "@/components/sections/Matematik";
+import RakiFrames from "@/components/sections/RakiFrames";
+import Team from "@/components/sections/Team";
 import GlobeSection from "@/components/sections/GlobeSection";
 import Hayal from "@/components/sections/Hayal";
 import CocktailDemo from "@/components/sections/CocktailDemo";
 import Muvaffakiyet from "@/components/sections/Muvaffakiyet";
-import Matematik from "@/components/sections/Matematik";
+import SparklingFrames from "@/components/sections/SparklingFrames";
 import Contact from "@/components/sections/Contact";
 
 export default function Home() {
@@ -21,13 +21,13 @@ export default function Home() {
       <Hero />
       <Hikaye />
       <Matematik />
-      <Differentiators />
-      <Process />
-      <Proof />
+      <RakiFrames />
       <GlobeSection />
+      <Team />
       <Hayal />
       <CocktailDemo />
       <Muvaffakiyet />
+      <SparklingFrames />
       <Contact />
     </main>
   );

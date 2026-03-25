@@ -8,6 +8,8 @@ import { SECTIONS } from "@/lib/constants";
 import clsx from "clsx";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useLanguage, type Lang, type TranslationKey } from "@/context/LanguageContext";
+import LanguageToggle from "@/components/LanguageToggle";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -15,8 +17,17 @@ export default function Navigation() {
   const [activeId, setActiveId] = useState<string>("");
   const navRef = useRef<HTMLElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
+  const { lang, setLang, t } = useLanguage();
+
+  const [playing, setPlaying] = useState(false);
+  const [showAudioToggle, setShowAudioToggle] = useState(false);
+
+  const LANG_LABELS: Record<Lang, string> = { tr: "TÜRKÇE", en: "ENGLISH" };
+  const nextLang: Lang = lang === "tr" ? "en" : "tr";
+  const langLabel = LANG_LABELS[nextLang];
 
   // Derived states for different modes
   const [transitionProgress, setTransitionProgress] = useState(0);
@@ -27,10 +38,47 @@ export default function Navigation() {
 
   useEffect(() => {
     setActiveId(SECTIONS[0].id);
-    // Check if page is already scrolled on mount
     const isScrolled = window.scrollY > 100;
     if (isScrolled) {
       setTransitionProgress(1);
+    }
+  }, []);
+
+  // ── Audio toggle logic ──────────────────────────────────────────────────
+  const toggleAudio = useCallback(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) {
+      a.pause();
+    } else {
+      a.volume = 0.5;
+      a.play().catch(console.error);
+    }
+    setPlaying((p) => !p);
+  }, [playing]);
+
+  const handleAudioKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleAudio();
+      }
+    },
+    [toggleAudio]
+  );
+
+  useEffect(() => {
+    const desktop =
+      window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768;
+    if (!desktop) return;
+
+    const verified = sessionStorage.getItem("mundus-age-verified") === "true";
+    if (verified) {
+      setShowAudioToggle(true);
+    } else {
+      const handle = () => setShowAudioToggle(true);
+      window.addEventListener("mundus-entered", handle);
+      return () => window.removeEventListener("mundus-entered", handle);
     }
   }, []);
 
@@ -171,17 +219,21 @@ export default function Navigation() {
               onClick={() => handleScrollTo(section.id)}
               className={clsx(
                 "relative w-2.5 h-2.5 rounded-full transition-all duration-300",
-                activeId === section.id 
-                  ? "bg-primary scale-125" 
+                activeId === section.id
+                  ? "bg-primary scale-125"
                   : "bg-white/20 hover:bg-white/40"
               )}
-              aria-label={`Scroll to ${section.label}`}
+              aria-label={t(`nav.${section.id}` as TranslationKey)}
             >
               {activeId === section.id && (
                 <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-50" />
               )}
             </button>
           ))}
+
+          <span className="w-px h-3 bg-white/10 mx-0.5" />
+
+          <LanguageToggle variant="nav" />
         </div>
       </nav>
     );
@@ -200,6 +252,9 @@ export default function Navigation() {
   const bgProgress = Math.max(0, (transitionProgress - 0.6) / 0.4);
   const bgOpacity = lerp(0, 0.95, bgProgress);
 
+  // Sidebar vertical target — how far below center the items dock
+  const sidebarVH = 28;
+
   // First item's transition progress (for accordion toggle positioning)
   const firstItemProgress = Math.max(0, Math.min(1, transitionProgress / 0.5));
 
@@ -212,10 +267,10 @@ export default function Navigation() {
         {/* Sidebar Accordion Toggle — only mounted near/in sidebar mode */}
         {transitionProgress > 0.8 && (
           <div
-            className="absolute top-0"
+            className="absolute top-0 z-10"
             style={{
               left: `${contentPadding}px`,
-              transform: `translateX(calc((50vw - 50%) * ${1 - firstItemProgress})) translateY(calc(${lerp(0, 35, firstItemProgress)}vh - 2.5rem))`,
+              transform: `translateX(calc((50vw - 50%) * ${1 - firstItemProgress})) translateY(calc(${lerp(0, sidebarVH, firstItemProgress)}vh - 2.5rem))`,
               opacity: isSidebarMode ? 1 : 0,
               visibility: isSidebarMode ? 'visible' : 'hidden',
               pointerEvents: isSidebarMode ? 'auto' : 'none',
@@ -231,7 +286,7 @@ export default function Navigation() {
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-xl",
                 "touch-manipulation"
               )}
-              aria-label={isAccordionOpen ? 'Close navigation' : 'Open navigation'}
+              aria-label={isAccordionOpen ? t("nav.close") : t("nav.open")}
               aria-expanded={isAccordionOpen}
             >
               <div className="relative w-6 h-6 flex-shrink-0">
@@ -262,45 +317,21 @@ export default function Navigation() {
         >
           {SECTIONS.map((section, index) => {
             const isActive = activeId === section.id;
-            
-            // Staggered animation for each item
-            // We use a fixed duration for each item's animation (in normalized 0-1 time) to ensure consistent speed.
-            // Total time approx 2.0s. 
-            // Normalized stagger: 0.075 (~0.15s real time)
-            // Normalized duration: 0.5 (~1.0s real time)
-            // Last item ends at: 6 * 0.075 + 0.5 = 0.95 (fits in 0-1)
-            
-            const staggerDelay = index * 0.075;
-            const itemDuration = 0.5;
-            const itemProgress = Math.max(0, Math.min(1, (transitionProgress - staggerDelay) / itemDuration));
-            
-            // Individual item transforms
-            // Start (0): Center (50vw - 50% shift to center item)
-            // End (1): Left aligned (with padding) and moved to bottom
-            
-            const itemScale = lerp(1.1, 1, itemProgress);
-            
-            // Vertical movement: 
-            // Center mode: 0 (relative to vertically centered container)
-            // Sidebar mode: Move down to bottom-left (~35vh down)
-            const verticalOffset = lerp(0, 35, itemProgress); // 0vh -> 35vh
 
-            // Spacing between items: Constant now for better UX
+            const totalNavItems = SECTIONS.length + 1;
+            const itemDuration = 0.5;
+            const staggerStep = (1 - itemDuration) / (totalNavItems - 1);
+            const staggerDelay = index * staggerStep;
+            const itemProgress = Math.max(0, Math.min(1, (transitionProgress - staggerDelay) / itemDuration));
+
+            const itemScale = lerp(1.1, 1, itemProgress);
+            const verticalOffset = lerp(0, sidebarVH, itemProgress);
             const itemMargin = 24;
-            
-            // Label (01, 02, etc) - REMOVED
-            // const labelSize = lerp(16, 12, itemProgress);
-            // const labelOpacity = lerp(0.5, 0.7, itemProgress);
-            
-            // Line indicator - fades out during transition
+
             const lineOpacity = lerp(1, 0, itemProgress);
             const lineWidth = isActive ? lerp(48, 0, itemProgress) : 0;
-            
-            // Title - always visible now
             const titleOpacity = 1;
             const titleTranslateX = 0;
-            
-            // Active dot indicator - appears in sidebar mode
             const dotOpacity = isActive ? bgProgress : 0;
 
             return (
@@ -317,7 +348,6 @@ export default function Navigation() {
                   } : {}),
                 }}
               >
-                {/* Active indicator dot for sidebar mode */}
                 <span
                   className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white transition-transform duration-300"
                   style={{
@@ -326,7 +356,7 @@ export default function Navigation() {
                     transform: `translateY(-50%) scale(${isActive ? 1 : 0})`,
                   }}
                 />
-                
+
                 <button
                   onClick={() => handleScrollTo(section.id)}
                   className={clsx(
@@ -335,18 +365,6 @@ export default function Navigation() {
                     isActive ? "text-white font-black" : "text-neutral-400 hover:text-white font-extrabold"
                   )}
                 >
-                  {/* Section number/label - REMOVED */}
-                  {/* <span 
-                    className="font-serif italic tracking-wide transition-all duration-300 min-w-[2rem]"
-                    style={{ 
-                      fontSize: `${labelSize}px`,
-                      opacity: labelOpacity,
-                    }}
-                  >
-                    {section.label}
-                  </span> */}
-
-                  {/* Center mode: Line indicator */}
                   <span
                     className="h-[1px] bg-current transition-all duration-300"
                     style={{
@@ -355,7 +373,6 @@ export default function Navigation() {
                     }}
                   />
 
-                  {/* Title - slides in during transition */}
                   <span
                     className="tracking-wide text-sm uppercase whitespace-nowrap"
                     style={{
@@ -363,12 +380,57 @@ export default function Navigation() {
                       transform: `translateX(${titleTranslateX}px)`,
                     }}
                   >
-                    {section.title}
+                    {t(`nav.${section.id}` as TranslationKey)}
                   </span>
                 </button>
               </li>
             );
           })}
+
+          {/* Language switcher — last nav item, identical structure to section items */}
+          {(() => {
+            const langIndex = SECTIONS.length;
+            const totalNavItems = SECTIONS.length + 1;
+            const itemDuration = 0.5;
+            const staggerStep = (1 - itemDuration) / (totalNavItems - 1);
+            const staggerDelay = langIndex * staggerStep;
+            const langProgress = Math.max(0, Math.min(1, (transitionProgress - staggerDelay) / itemDuration));
+            const langScale = lerp(1.1, 1, langProgress);
+            const langVertical = lerp(0, sidebarVH, langProgress);
+            const langLineOpacity = lerp(1, 0, langProgress);
+
+            return (
+              <li
+                className="nav-item relative will-change-transform"
+                style={{
+                  transform: `translateX(calc((50vw - 50%) * ${1 - langProgress})) translateY(${langVertical}vh) scale(${langScale})`,
+                  marginBottom: 0,
+                  ...(isSidebarMode ? {
+                    opacity: isAccordionOpen ? 1 : 0,
+                    transition: `opacity 0.35s cubic-bezier(0.19, 1, 0.22, 1) ${isAccordionOpen ? langIndex * 60 : 0}ms`,
+                    pointerEvents: (isAccordionOpen ? 'auto' : 'none') as React.CSSProperties['pointerEvents'],
+                  } : {}),
+                }}
+              >
+                <button
+                  onClick={() => setLang(nextLang)}
+                  className={clsx(
+                    "group flex items-center gap-3 transition-colors duration-300 text-left",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg px-2 py-1 -mx-2 -my-1",
+                    "text-neutral-400 hover:text-white font-extrabold"
+                  )}
+                >
+                  <span
+                    className="h-[1px] bg-current transition-all duration-300"
+                    style={{ width: 0, opacity: langLineOpacity }}
+                  />
+                  <span className="tracking-wide text-sm whitespace-nowrap">
+                    {langLabel}
+                  </span>
+                </button>
+              </li>
+            );
+          })()}
         </ul>
 
         {/* Scroll indicator - only visible in center mode */}
@@ -383,20 +445,59 @@ export default function Navigation() {
             <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-2 bg-white/50 rounded-full animate-bounce" />
           </div>
           <span className="text-[9px] tracking-[0.4em] uppercase text-white/30 font-light">
-            KAYDIR
+            {t("nav.scroll")}
           </span>
         </div>
       </nav>
 
-      {/* Scroll Percentage Counter - Fixed top right */}
+      {/* Top-right HUD: audio toggle + scroll percentage — single aligned row */}
       {!isMobile && (
-        <div className="fixed top-8 right-8 z-50 mix-blend-difference pointer-events-none">
-          <div className="flex items-baseline gap-1 font-serif text-primary/80">
+        <div className="fixed top-8 right-8 z-[70] pointer-events-none flex items-center gap-5">
+          <audio ref={audioRef} src="/audio/loop.mp3" loop preload="auto" />
+
+          {showAudioToggle && (
+            <button
+              className="relative flex items-center justify-center w-12 h-6 focus:outline-none cursor-pointer pointer-events-auto shrink-0"
+              style={{ animation: "audioToggleReveal 0.5s ease-out both" }}
+              onClick={toggleAudio}
+              onKeyDown={handleAudioKeyDown}
+              aria-label={playing ? "Müziği Durdur" : "Müziği Oynat"}
+              tabIndex={0}
+            >
+              <div className="relative w-full h-full flex items-center overflow-hidden">
+                {/* Flat line — paused state */}
+                <div
+                  className={`absolute left-0 right-0 h-[1px] bg-primary transition-all duration-300 ease-out ${
+                    playing ? "opacity-0 scale-x-50" : "opacity-80 scale-x-100"
+                  }`}
+                />
+                {/* Scrolling sine-wave — playing state */}
+                <div
+                  className={`absolute inset-0 bg-primary transition-opacity duration-300 ease-out ${
+                    playing
+                      ? "opacity-80 animate-audio-wave animate-mask-scroll"
+                      : "opacity-0"
+                  }`}
+                  style={{
+                    maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
+                    WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
+                    maskRepeat: "repeat-x",
+                    WebkitMaskRepeat: "repeat-x",
+                    maskSize: "50px 100%",
+                    WebkitMaskSize: "50px 100%",
+                  }}
+                />
+              </div>
+            </button>
+          )}
+
+          <div className="flex items-baseline gap-1 font-serif text-[color:var(--foreground)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
             <span ref={counterRef} className="text-4xl font-light tabular-nums leading-none">0</span>
-            <span className="text-sm opacity-60">%</span>
+            <span className="text-sm opacity-70">%</span>
           </div>
         </div>
       )}
+
     </>
   );
 }

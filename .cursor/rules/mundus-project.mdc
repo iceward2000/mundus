@@ -1,0 +1,53 @@
+---
+description: Core project conventions, tech stack, and patterns for Mundus website
+alwaysApply: true
+---
+
+# Mundus Website — Cursor Rules
+
+## Project Overview
+
+- **Type:** Single-page Next.js 14 marketing site for Mundus premium beverage consultancy
+- **Language:** Turkish primary, English optional (LanguageContext)
+- **Domain:** Alcohol-related content — age verification overlay required
+
+## Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **UI:** React 18, Tailwind CSS
+- **Animation:** GSAP (including ScrollTrigger, ScrollToPlugin), Lenis (smooth scroll)
+- **3D/Globe:** three.js, react-globe.gl
+- **Email:** Resend API for contact form
+- **Icons:** lucide-react
+
+## File Conventions
+
+- **Path aliases:** Use `@/` for src imports (e.g. `@/components/Navigation`)
+- **Client components:** Add `"use client"` for components using hooks, browser APIs, or event listeners
+- **Sections:** `src/components/sections/*.tsx` — each section wrapped in `SectionWrapper`
+- **Layout:** `src/app/layout.tsx` — AssetPreloader, AgeVerificationOverlay, SmoothScroll, GrainOverlay
+
+## Key Patterns
+
+1. **Session storage keys (do not rename):**
+   - `mundus-age-verified` — age gate state
+   - `mundus-lang` — TR/EN preference
+
+2. **Custom events:**
+   - `mundus-entered` — dispatched when user passes age verification
+   - `mundus-load-progress` — `{ detail: { progress: 0..100 } }` from AssetPreloader
+
+3. **Section IDs:** Match `SECTIONS` in `src/lib/constants.ts`; used for Navigation scroll-to and anchors
+
+4. **Accessibility:** Use `usePrefersReducedMotion` to skip or simplify animations when user prefers reduced motion
+
+## Styling
+
+- **Design tokens:** `globals.css` — `--background`, `--foreground`, `--primary` (gold #d4af37)
+- **Font:** Custom `Mundus` woff in `/font/mundus-semibold.woff`
+- **Section layout:** `SectionWrapper` provides `min-h-screen`, padding, `overflow-hidden` (or `overflowVisible` for 3D effects)
+
+## API
+
+- **Contact:** `POST /api/contact` — body: `{ firstName, lastName, company?, position?, phone?, email, message }`
+- **Environment:** `RESEND_API_KEY` required for contact API

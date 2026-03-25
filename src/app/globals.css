@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Mundus";
+  src: url("/font/mundus-semibold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #0a0a0a;
   --foreground: #ededed;
@@ -9,8 +17,17 @@
   --secondary: #1a1a1a;
   --accent: #2a2a2a;
   
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: 'Playfair Display', serif;
+  /* Contact section vars for GSAP theme switching */
+  --contact-text: #ffffff;
+  --contact-text-dim: rgba(255, 255, 255, 0.6);
+  --contact-text-muted: rgba(255, 255, 255, 0.5);
+  --contact-border: rgba(255, 255, 255, 0.2);
+  --contact-footer: rgba(255, 255, 255, 0.3);
+  --contact-input-bg: transparent;
+  
+  --font-sans: 'Mundus', sans-serif;
+  --font-serif: 'Mundus', sans-serif;
+  --font-mundus: 'Mundus', sans-serif;
   font-weight: 500;
   
   /* Navigation transition timing */
@@ -26,6 +43,7 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-sans);
+  letter-spacing: 0.07em;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -144,8 +162,9 @@ html.lenis, html.lenis body {
 }
 
 /* Text rendering optimizations */
-h1, h2, h3 {
+h1, h2, h3, h4, h5, h6 {
   text-rendering: optimizeLegibility;
+  letter-spacing: 0.15em;
 }
 
 /* Focus visible styles for accessibility */
@@ -200,6 +219,8 @@ textarea:-webkit-autofill:focus {
   left: 50%;
   transform: translate(-50%, -50%) rotate(45deg) scale(2.5);
   transform-origin: center center;
+  --logo-final-shift-x: -0.9rem;
+  --logo-final-shift-y: -0.35rem;
   color: white;
   z-index: 50;
   mix-blend-mode: normal;
@@ -207,7 +228,7 @@ textarea:-webkit-autofill:focus {
 }
 
 .ConsentLogo.blend-active {
-  mix-blend-mode: normal; /* Container remains normal to allow squares to diff with background */
+  mix-blend-mode: difference;
 }
 
 .ConsentLogo .logo-square {
@@ -234,22 +255,22 @@ textarea:-webkit-autofill:focus {
 
 /* Manually applying final transforms for static state - Adjusted for tighter spacing */
 .ConsentLogo.logo-static .sq-1 {
-  transform: translate(calc(-14.2vw - 14.2vh + 2.02rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 2.02rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-2 {
-  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-3 {
-  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem), calc(14.2vw - 14.2vh)) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-4 {
-  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem), calc(14.2vw - 14.2vh)) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-5 {
-  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-6 {
-  transform: translate(calc(-14.2vw - 14.2vh + 4.18rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 4.18rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 
 /* Positions relative to center (0deg grid) */
@@ -329,8 +350,8 @@ textarea:-webkit-autofill:focus {
   100% { 
     transform: 
       translate(
-        calc(-14.2vw - 14.2vh + 2.52rem), 
-        calc(14.2vw - 14.2vh + 0.72rem)
+        calc(-14.2vw - 14.2vh + 2.52rem + var(--logo-final-shift-x)), 
+        calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))
       ) 
       scale(0.4); 
   }
@@ -343,8 +364,8 @@ textarea:-webkit-autofill:focus {
   100% { 
     transform: 
       translate(
-        calc(-14.2vw - 14.2vh + 3.24rem), 
-        calc(14.2vw - 14.2vh + 0.72rem)
+        calc(-14.2vw - 14.2vh + 3.24rem + var(--logo-final-shift-x)), 
+        calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))
       ) 
       scale(0.4); 
   }
@@ -358,8 +379,8 @@ textarea:-webkit-autofill:focus {
   100% { 
     transform: 
       translate(
-        calc(-14.2vw - 14.2vh + 3.24rem), 
-        calc(14.2vw - 14.2vh)
+        calc(-14.2vw - 14.2vh + 3.24rem + var(--logo-final-shift-x)), 
+        calc(14.2vw - 14.2vh + var(--logo-final-shift-y))
       ) 
       scale(0.4); 
   }
@@ -374,8 +395,8 @@ textarea:-webkit-autofill:focus {
   100% { 
     transform: 
       translate(
-        calc(-14.2vw - 14.2vh + 3.96rem), 
-        calc(14.2vw - 14.2vh)
+        calc(-14.2vw - 14.2vh + 3.96rem + var(--logo-final-shift-x)), 
+        calc(14.2vw - 14.2vh + var(--logo-final-shift-y))
       ) 
       scale(0.4); 
   }
@@ -391,8 +412,8 @@ textarea:-webkit-autofill:focus {
   100% { 
     transform: 
       translate(
-        calc(-14.2vw - 14.2vh + 3.96rem), 
-        calc(14.2vw - 14.2vh - 0.72rem)
+        calc(-14.2vw - 14.2vh + 3.96rem + var(--logo-final-shift-x)), 
+        calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))
       ) 
       scale(0.4); 
   }
@@ -409,8 +430,8 @@ textarea:-webkit-autofill:focus {
   100% { 
     transform: 
       translate(
-        calc(-14.2vw - 14.2vh + 4.68rem), 
-        calc(14.2vw - 14.2vh - 0.72rem)
+        calc(-14.2vw - 14.2vh + 4.68rem + var(--logo-final-shift-x)), 
+        calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))
       ) 
       scale(0.4); 
   }
@@ -465,23 +486,28 @@ textarea:-webkit-autofill:focus {
 
 /* Responsive logo adjustments for smaller viewports */
 @media (max-width: 1024px) {
+  .ConsentLogo {
+    --logo-final-shift-x: -1.25rem;
+    --logo-final-shift-y: -0.5rem;
+  }
+
   .ConsentLogo.logo-static .sq-1 {
-    transform: translate(calc(-14.2vw - 14.2vh + 3.02rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 3.02rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-2 {
-    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem), calc(14.2vw - 14.2vh + 0.72rem)) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-3 {
-    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem), calc(14.2vw - 14.2vh)) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-4 {
-    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem), calc(14.2vw - 14.2vh)) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-5 {
-    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-6 {
-    transform: translate(calc(-14.2vw - 14.2vh + 5.18rem), calc(14.2vw - 14.2vh - 0.72rem)) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 5.18rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
 }
 
@@ -494,4 +520,790 @@ textarea:-webkit-autofill:focus {
 @keyframes content-fade-in {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Audio toggle pop-in */
+@keyframes audioToggleReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ——— Liquid Glass ——— */
+.liquid-glass {
+  position: relative;
+  border-radius: 48px;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 35%,
+    rgba(255, 255, 255, 0.05) 65%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  backdrop-filter: blur(60px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(60px) saturate(180%) brightness(1.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.04),
+    0 25px 80px -12px rgba(0, 0, 0, 0.5),
+    0 8px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-width: 768px) {
+  .liquid-glass {
+    border-radius: 100px;
+  }
+}
+
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: -100%;
+  background: radial-gradient(
+    ellipse 50% 70% at 50% 50%,
+    rgba(255, 255, 255, 0.07) 0%,
+    transparent 60%
+  );
+  animation: liquidGlassFlow 12s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.liquid-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes liquidGlassFlow {
+  0% {
+    transform: translate(-30%, -20%) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(20%, 10%) rotate(3deg) scale(1.1);
+  }
+  66% {
+    transform: translate(-10%, 20%) rotate(-2deg) scale(0.95);
+  }
+  100% {
+    transform: translate(-30%, -20%) rotate(0deg) scale(1);
+  }
+}
+
+.liquid-glass-specular {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.liquid-glass-specular::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -80%;
+  left: -50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 50%
+  );
+  animation: liquidSpecular 8s ease-in-out infinite alternate;
+}
+
+@keyframes liquidSpecular {
+  0% { transform: translate(-10%, 0%) rotate(-5deg); }
+  100% { transform: translate(10%, 5%) rotate(5deg); }
+}
+
+/* Hayal section text reveal */
+.hayal-content-reveal {
+  animation: hayalReveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Subtle idle pulse for inactive Hayal tab labels */
+.hayal-tab-pulse {
+  animation: hayalTabPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes hayalTabPulse {
+  0%,
+  100% {
+    opacity: 0.68;
+  }
+  50% {
+    opacity: 0.92;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hayal-tab-pulse {
+    animation: none;
+  }
+}
+
+@keyframes hayalReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Muvaffakiyet — horizontal scroll carousel */
+.muvaffakiyet-scroll-container {
+  width: 100%;
+}
+
+.muvaffakiyet-scroll-view {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.35) transparent;
+}
+
+.muvaffakiyet-scroll-view::-webkit-scrollbar {
+  height: 6px;
+}
+
+.muvaffakiyet-scroll-view::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.muvaffakiyet-scroll-view::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 3px;
+}
+
+.muvaffakiyet-scroll-view::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.5);
+}
+
+.muvaffakiyet-scroll-track {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.25rem 0.125rem 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .muvaffakiyet-scroll-track {
+    gap: 2rem;
+  }
+}
+
+.muvaffakiyet-card {
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  min-width: 85vw;
+  max-width: 85vw;
+  padding: 1.25rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .muvaffakiyet-card {
+    min-width: 420px;
+    max-width: 420px;
+    padding: 1.5rem 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .muvaffakiyet-card {
+    min-width: 440px;
+    max-width: 440px;
+  }
+}
+
+.muvaffakiyet-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ——— Matematik — Timeline Elements ——— */
+
+/* Timeline glass dots */
+.mat-glass-dot {
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.01) 50%,
+    rgba(212, 175, 55, 0.03) 100%
+  );
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 0.5px 0 0 rgba(255, 255, 255, 0.05),
+    0 2px 8px -2px rgba(0, 0, 0, 0.15);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mat-glass-dot.mat-dot-active {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow:
+    inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1),
+    0 0 10px 2px rgba(212, 175, 55, 0.12),
+    0 2px 8px -2px rgba(0, 0, 0, 0.15);
+  transform: scale(1.15);
+}
+
+.mat-glass-dot.mat-dot-active .mat-dot-core {
+  transform: scale(1.25);
+  filter: drop-shadow(0 0 3px rgba(212, 175, 55, 0.4));
+}
+
+.mat-item:hover .mat-glass-dot {
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow:
+    inset 0 0.5px 0 0 rgba(255, 255, 255, 0.08),
+    0 0 8px 2px rgba(212, 175, 55, 0.1),
+    0 2px 8px -2px rgba(0, 0, 0, 0.15);
+}
+
+.mat-dot-core {
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.4s ease;
+}
+
+/* Guide line (background track) */
+.mat-guide-line {
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.06) 15%,
+    rgba(255, 255, 255, 0.06) 85%,
+    rgba(255, 255, 255, 0.02)
+  );
+}
+
+/* Animated line — glowing gradient beam */
+.mat-line {
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(212, 175, 55, 0.12) 0%,
+    rgba(212, 175, 55, 0.4) 35%,
+    rgba(212, 175, 55, 0.8) 100%
+  );
+}
+
+.mat-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(212, 175, 55, 0.03) 25%,
+    rgba(212, 175, 55, 0.06) 100%
+  );
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.mat-line::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow:
+    0 0 8px 3px rgba(212, 175, 55, 0.3),
+    0 0 18px 6px rgba(212, 175, 55, 0.1);
+  animation: matNodePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes matNodePulse {
+  0%, 100% {
+    box-shadow:
+      0 0 6px 2px rgba(212, 175, 55, 0.25),
+      0 0 14px 4px rgba(212, 175, 55, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 10px 4px rgba(212, 175, 55, 0.4),
+      0 0 22px 8px rgba(212, 175, 55, 0.15);
+  }
+}
+
+@media (max-width: 768px) {
+  .mat-line::before {
+    width: 14px;
+    filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mat-line::after { animation: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Sketch Reveal — Floating Control Panel
+   ═══════════════════════════════════════════════════════════ */
+
+/* Wrapper: fixed, visibility driven by scroll position.
+   Slides in from right when sketch section is in view. */
+.sketch-panel-wrapper {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%) translateX(24px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sketch-panel-wrapper.sketch-panel-in-view {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+  pointer-events: auto;
+}
+
+.sketch-panel {
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 14px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  transition:
+    width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease,
+    padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.sketch-panel-title {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.8);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.sketch-panel-toggle {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 8px;
+  color: rgba(212, 175, 55, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.sketch-panel-toggle:hover {
+  background: rgba(212, 175, 55, 0.12);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+/* ── Slider rows ───────────────────────────────────────────── */
+
+.sketch-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sketch-slider-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  min-width: 78px;
+  width: 78px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sketch-slider-label-text {
+  flex-shrink: 0;
+}
+
+/* Ensures numeric values never clip, with tabular figures for alignment */
+.sketch-slider-value {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(212, 175, 55, 0.85);
+  min-width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.sketch-slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.sketch-slider-input:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sketch-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 2px solid rgba(10, 10, 10, 0.8);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sketch-slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+}
+
+.sketch-slider-input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 2px solid rgba(10, 10, 10, 0.8);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sketch-slider-input::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+}
+
+.sketch-panel-reset {
+  margin-top: 12px;
+  width: 100%;
+  padding: 6px 0;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.sketch-panel-reset:hover {
+  color: #d4af37;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+/* ── Portal Tooltip (rendered at document.body) ────────────── */
+/* Uses position:fixed via inline style so it's never clipped
+   by parent overflow. z-index above everything. */
+
+.sketch-tooltip-anchor {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sketch-tooltip-trigger {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+.sketch-tooltip-trigger:hover,
+.sketch-tooltip-trigger:focus-visible {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.4);
+  color: #d4af37;
+}
+
+.sketch-tooltip-card {
+  position: fixed;
+  width: 200px;
+  padding: 10px 12px;
+  background: rgba(15, 15, 15, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 10px;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 99999;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sketch-tooltip-card.sketch-tooltip-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Shape Selector (card suits) ───────────────────────────── */
+
+.sketch-shape-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.sketch-shape-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+  min-width: 78px;
+  width: 78px;
+  flex-shrink: 0;
+}
+
+.sketch-shape-group {
+  display: flex;
+  gap: 6px;
+}
+
+.sketch-shape-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.sketch-shape-btn svg {
+  fill: rgba(255, 255, 255, 0.3);
+  stroke: none;
+  transition: fill 0.2s ease;
+}
+
+.sketch-shape-btn:hover {
+  background: rgba(212, 175, 55, 0.06);
+  border-color: rgba(212, 175, 55, 0.25);
+  transform: scale(1.08);
+}
+.sketch-shape-btn:hover svg {
+  fill: rgba(212, 175, 55, 0.5);
+}
+
+.sketch-shape-btn.sketch-shape-active {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+}
+.sketch-shape-btn.sketch-shape-active svg {
+  fill: #d4af37;
+}
+
+/* ── Mobile adjustments ────────────────────────────────────── */
+@media (max-width: 640px) {
+  .sketch-panel-wrapper {
+    right: 8px;
+  }
+  .sketch-panel {
+    border-radius: 10px;
+  }
+  .sketch-slider-label {
+    min-width: 60px;
+    width: 60px;
+    font-size: 10px;
+  }
+  .sketch-slider-value {
+    min-width: 32px;
+    font-size: 10px;
+  }
+  .sketch-shape-label {
+    min-width: 60px;
+    width: 60px;
+    font-size: 10px;
+  }
+  .sketch-tooltip-card {
+    width: 170px;
+    font-size: 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Contact Section — Vertical Liquid Glass Container
+   Tall vertical glassmorphism panel for the contact form.
+   Separate from .liquid-glass to avoid affecting other sections.
+   ═══════════════════════════════════════════════════════════ */
+
+.contact-glass {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(255, 255, 255, 0.06) 70%,
+    rgba(255, 255, 255, 0.10) 100%
+  );
+  backdrop-filter: blur(40px) saturate(160%) brightness(1.02);
+  -webkit-backdrop-filter: blur(40px) saturate(160%) brightness(1.02);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.03),
+    0 25px 70px -15px rgba(0, 0, 0, 0.5),
+    0 8px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Top-edge specular highlight */
+.contact-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Slow inner light sweep for living-glass effect */
+.contact-glass::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(
+    ellipse 40% 60% at 50% 50%,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 60%
+  );
+  animation: contactGlassShimmer 10s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes contactGlassShimmer {
+  0%   { transform: translate(-20%, -15%) rotate(0deg); }
+  50%  { transform: translate(15%, 10%) rotate(2deg); }
+  100% { transform: translate(-20%, -15%) rotate(0deg); }
+}
+
+/* Mobile: reduce blur for performance, tighter radius */
+@media (max-width: 640px) {
+  .contact-glass {
+    border-radius: 16px;
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
+}
+
+/* Contact form inputs — autofill override on glass bg */
+#contact input:-webkit-autofill,
+#contact input:-webkit-autofill:hover,
+#contact input:-webkit-autofill:focus,
+#contact textarea:-webkit-autofill,
+#contact textarea:-webkit-autofill:hover,
+#contact textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: white;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.06) inset;
+  transition: background-color 5000s ease-in-out 0s;
 }

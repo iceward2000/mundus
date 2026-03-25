@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Configuration
 // Generate cocktail images array from 7.png to 150.png
-const COLOR_PALETTE = [
-  "#EF4444", "#F97316", "#EAB308", "#22C55E", "#0EA5E9", 
-  "#1E3A8A", "#A855F7", "#EC4899", "#F43F5E", "#FB923C",
-  "#FBBF24", "#34D399", "#3B82F6", "#6366F1", "#8B5CF6",
-  "#D946EF", "#F59E0B", "#10B981", "#06B6D4", "#6366F1"
-];
+
 
 const COCKTAIL_IMAGES = Array.from({ length: 144 }, (_, i) => {
   const imageNumber = i + 7; // Start from 7
@@ -22,18 +18,25 @@ const COCKTAIL_IMAGES = Array.from({ length: 144 }, (_, i) => {
 });
 
 const CONFIG = {
-  // Distance threshold in pixels
-  spawnThreshold: 30, 
-  // Throttle time in ms
-  throttleInterval: 15, 
-  // Max active layers to keep in DOM
-  maxLayers: 50,
-  // Fade duration in ms
-  fadeDuration: 1500,
-  // Image path prefix
+  desktop: {
+    spawnThreshold: 30,
+    throttleInterval: 15,
+    maxLayers: 50,
+    fadeDuration: 1500,
+    minScale: 0.8,
+    maxScale: 1.5,
+    maxVelocity: 4,
+  },
+  mobile: {
+    spawnThreshold: 18,
+    throttleInterval: 22,
+    maxLayers: 20,
+    fadeDuration: 1150,
+    minScale: 0.9,
+    maxScale: 1.28,
+    maxVelocity: 3.2,
+  },
   pathPrefix: "/cocktail-images/",
-  // Queue size before allowing repeat
-  queueSize: 50,
 };
 
 // Shuffle array utility
@@ -50,295 +53,228 @@ export default function CocktailReveal() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
-  const [coloredBgEnabled, setColoredBgEnabled] = useState(false);
-  
+  const { t } = useLanguage();
+  const hasInteractedRef = useRef(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+
   // Refs for mutable state to avoid re-renders
   const state = useRef({
     lastSpawnTime: 0,
-    lastMousePos: { x: 0, y: 0 },
+    lastPointerPos: { x: 0, y: 0 },
     shuffledImages: shuffleArray(COCKTAIL_IMAGES),
     currentIndex: 0,
-    recentQueue: [] as number[], // Track recently shown image indices
     activeLayers: [] as HTMLImageElement[],
+    isDragging: false,
   });
 
   // Images are preloaded by AssetPreloader — no duplicate preload needed
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || isMobile || prefersReducedMotion) return;
+    if (!container || prefersReducedMotion) return;
 
-    const handlePointerMove = (e: PointerEvent) => {
-      const now = Date.now();
-      const { clientX, clientY } = e;
-      
-      // Get container bounds to ensure we calculate position relative to it
-      const rect = container.getBoundingClientRect();
-      
-      // Check if mouse is within container bounds (plus padding/margin if desired)
-      // This allows interaction even if navigation is overlaying
-      const isInside = 
-        clientX >= rect.left && 
-        clientX <= rect.right && 
-        clientY >= rect.top && 
-        clientY <= rect.bottom;
-
-      if (!isInside) return;
-
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
-
-      // 1. Throttle check
-      if (now - state.current.lastSpawnTime < CONFIG.throttleInterval) {
-        return;
+    const getSpawnSize = () => {
+      if (!isMobile) {
+        return { width: 400, height: 600 };
       }
-
-      // 2. Distance check
-      const dx = x - state.current.lastMousePos.x;
-      const dy = y - state.current.lastMousePos.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < CONFIG.spawnThreshold) {
-        return;
-      }
-
-      // Calculate velocity
-      const timeDelta = Math.max(1, now - state.current.lastSpawnTime);
-      const velocity = dist / timeDelta;
-
-      // Update state
-      state.current.lastSpawnTime = now;
-      state.current.lastMousePos = { x, y };
-
-      // 3. Spawn Image
-      spawnImage(x, y, velocity);
+      const width = Math.round(Math.min(Math.max(container.clientWidth * 0.58, 180), 280));
+      return { width, height: Math.round(width * 1.5) };
     };
 
     const spawnImage = (x: number, y: number, velocity: number) => {
-      // Calculate dynamic scale
-      const maxVelocity = 4; 
-      const minScale = 0.8; 
-      const maxScale = 1.5; 
-      const normVel = Math.min(Math.max(velocity, 0), maxVelocity) / maxVelocity;
-      const targetScale = minScale + (normVel * (maxScale - minScale));
+      const runtimeConfig = isMobile ? CONFIG.mobile : CONFIG.desktop;
+      const { width: imgWidth, height: imgHeight } = getSpawnSize();
+      const normVel = Math.min(Math.max(velocity, 0), runtimeConfig.maxVelocity) / runtimeConfig.maxVelocity;
+      const targetScale =
+        runtimeConfig.minScale + ((1 - normVel) * (runtimeConfig.maxScale - runtimeConfig.minScale));
 
       // Get next image from shuffled array
       const imgData = state.current.shuffledImages[state.current.currentIndex];
-      const currentImageIndex = state.current.currentIndex;
-      
+
       // Advance index (loop and reshuffle when needed)
       state.current.currentIndex = (state.current.currentIndex + 1) % state.current.shuffledImages.length;
       if (state.current.currentIndex === 0) {
-        // Reshuffle when we've gone through all images
         state.current.shuffledImages = shuffleArray(COCKTAIL_IMAGES);
       }
 
-      // Update recent queue
-      state.current.recentQueue.push(currentImageIndex);
-      if (state.current.recentQueue.length > CONFIG.queueSize) {
-        state.current.recentQueue.shift();
-      }
+      let targetX = x - (imgWidth / 2) + 20;
+      let targetY = y - (imgHeight / 2) + 20;
+
+      const maxX = container.clientWidth - imgWidth;
+      const maxY = container.clientHeight - imgHeight;
+      targetX = Math.max(0, Math.min(targetX, maxX));
+      targetY = Math.max(0, Math.min(targetY, maxY));
+
+      // animTarget is either a bare <img> or a colored wrapper <div>
+      let animTarget: HTMLElement;
 
       const img = document.createElement("img");
       img.src = `${CONFIG.pathPrefix}${imgData.file}`;
       img.alt = imgData.name;
-      
-      // Container div for optional background
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "absolute";
-      wrapper.style.width = "200px";
-      wrapper.style.height = "300px";
-      wrapper.style.left = "0";
-      wrapper.style.top = "0";
-      wrapper.style.borderRadius = "8px";
-      wrapper.style.overflow = "hidden";
-      wrapper.style.pointerEvents = "none";
-      wrapper.style.zIndex = "10";
-      wrapper.style.boxShadow = "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)";
-      
-      // Add colored background if enabled
-      if (coloredBgEnabled) {
-        const randomColor = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
-        wrapper.style.backgroundColor = randomColor;
-      }
-      
-      // Styling for image
-      img.style.position = "relative";
-      img.style.width = "100%";
-      img.style.height = "100%";
+      img.style.position = "absolute";
+      img.style.width = `${imgWidth}px`;
+      img.style.height = `${imgHeight}px`;
+      img.style.left = "0";
+      img.style.top = "0";
       img.style.objectFit = "contain";
-      img.style.display = "block";
-      
-      // Constrain inside container
-      const imgWidth = 200;
-      const imgHeight = 300;
-      
-      // Initial calculated position (centered on cursor + offset)
-      let targetX = x - (imgWidth / 2) + 20;
-      let targetY = y - (imgHeight / 2) + 20;
+      img.style.pointerEvents = "none";
+      img.style.zIndex = "10";
 
-      // Clamp to container bounds
-      const maxX = container.clientWidth - imgWidth;
-      const maxY = container.clientHeight - imgHeight;
-
-      targetX = Math.max(0, Math.min(targetX, maxX));
-      targetY = Math.max(0, Math.min(targetY, maxY));
-      
-      wrapper.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(${targetScale * 0.9})`;
-      wrapper.style.opacity = "1";
-      wrapper.style.transition = `transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity ${CONFIG.fadeDuration}ms ease-out`;
-
-      wrapper.appendChild(img);
-      container.appendChild(wrapper);
+      container.appendChild(img);
       state.current.activeLayers.push(img);
+      animTarget = img;
 
-      // Trigger animation frame for initial scale up
+      animTarget.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(${targetScale * 0.9})`;
+      animTarget.style.opacity = "1";
+      animTarget.style.transition = `transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity ${runtimeConfig.fadeDuration}ms ease-out`;
+
       requestAnimationFrame(() => {
-        // Force reflow
-        void wrapper.offsetWidth;
-        wrapper.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(${targetScale})`;
-        
-        // Schedule fade out
+        void animTarget.offsetWidth;
+        animTarget.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(${targetScale})`;
         setTimeout(() => {
-             wrapper.style.opacity = "0";
+          animTarget.style.opacity = "0";
         }, 300);
       });
 
-      // Cleanup after animation
       setTimeout(() => {
-        if (wrapper.parentNode === container) {
-          container.removeChild(wrapper);
+        if (animTarget.parentNode === container) {
+          container.removeChild(animTarget);
         }
-        state.current.activeLayers = state.current.activeLayers.filter(l => l !== img);
-      }, CONFIG.fadeDuration + 200);
+        state.current.activeLayers = state.current.activeLayers.filter(l => l !== animTarget);
+      }, runtimeConfig.fadeDuration + 200);
 
-      // Limit max layers
-      if (state.current.activeLayers.length > CONFIG.maxLayers) {
+      if (state.current.activeLayers.length > runtimeConfig.maxLayers) {
         const toRemove = state.current.activeLayers.shift();
-        if (toRemove && toRemove.parentNode) {
-            (toRemove.parentNode as HTMLElement).remove();
+        if (toRemove && toRemove.parentNode === container) {
+          container.removeChild(toRemove);
         }
+      }
+
+      if (isMobile && !hasInteractedRef.current) {
+        hasInteractedRef.current = true;
+        setHasInteracted(true);
       }
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      // Cleanup all images on unmount
-      state.current.activeLayers.forEach(img => img.remove());
-      state.current.activeLayers = [];
+    const maybeSpawn = (x: number, y: number, now: number) => {
+      const runtimeConfig = isMobile ? CONFIG.mobile : CONFIG.desktop;
+      if (now - state.current.lastSpawnTime < runtimeConfig.throttleInterval) {
+        return;
+      }
+
+      const dx = x - state.current.lastPointerPos.x;
+      const dy = y - state.current.lastPointerPos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < runtimeConfig.spawnThreshold) {
+        return;
+      }
+
+      const timeDelta = Math.max(1, now - state.current.lastSpawnTime);
+      const velocity = dist / timeDelta;
+
+      state.current.lastSpawnTime = now;
+      state.current.lastPointerPos = { x, y };
+
+      spawnImage(x, y, velocity);
     };
-  }, [isMobile, prefersReducedMotion, coloredBgEnabled]);
 
-  // Static Mobile / Reduced Motion View
-  if (isMobile || prefersReducedMotion) {
-      // Tap to cycle for mobile
-      const handleTap = () => {
-          if (prefersReducedMotion) return; // No cycling for reduced motion
-          state.current.currentIndex = (state.current.currentIndex + 1) % COCKTAIL_IMAGES.length;
-          // Force update (react way for this part)
-          // We can just use a simpler implementation for this fallback
+    const getRelativePointer = (clientX: number, clientY: number) => {
+      const rect = container.getBoundingClientRect();
+      const isInside =
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom;
+
+      if (!isInside) {
+        return null;
+      }
+
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
       };
+    };
 
-      // Simple React implementation for the static view
-      return (
-        <div 
-            className="relative w-full h-[940px] overflow-hidden flex items-center justify-center"
-        >
-             <StaticFallback />
-        </div>
-      );
-  }
+    const handleDesktopPointerMove = (e: PointerEvent) => {
+      if (isMobile) return;
+      const point = getRelativePointer(e.clientX, e.clientY);
+      if (!point) return;
+      maybeSpawn(point.x, point.y, Date.now());
+    };
+
+    const handleMobilePointerDown = (e: PointerEvent) => {
+      if (!isMobile) return;
+      const point = getRelativePointer(e.clientX, e.clientY);
+      if (!point) return;
+      state.current.isDragging = true;
+      state.current.lastPointerPos = point;
+      state.current.lastSpawnTime = Date.now();
+    };
+
+    const handleMobilePointerMove = (e: PointerEvent) => {
+      if (!isMobile || !state.current.isDragging) return;
+      const point = getRelativePointer(e.clientX, e.clientY);
+      if (!point) return;
+      maybeSpawn(point.x, point.y, Date.now());
+    };
+
+    const stopMobileDrag = () => {
+      state.current.isDragging = false;
+    };
+
+    window.addEventListener("pointermove", handleDesktopPointerMove);
+    container.addEventListener("pointerdown", handleMobilePointerDown);
+    container.addEventListener("pointermove", handleMobilePointerMove);
+    container.addEventListener("pointerup", stopMobileDrag);
+    container.addEventListener("pointercancel", stopMobileDrag);
+    container.addEventListener("pointerleave", stopMobileDrag);
+
+    return () => {
+      window.removeEventListener("pointermove", handleDesktopPointerMove);
+      container.removeEventListener("pointerdown", handleMobilePointerDown);
+      container.removeEventListener("pointermove", handleMobilePointerMove);
+      container.removeEventListener("pointerup", stopMobileDrag);
+      container.removeEventListener("pointercancel", stopMobileDrag);
+      container.removeEventListener("pointerleave", stopMobileDrag);
+      state.current.activeLayers.forEach(el => el.remove());
+      state.current.activeLayers = [];
+      state.current.isDragging = false;
+    };
+  }, [isMobile, prefersReducedMotion]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="relative w-full h-[940px] overflow-hidden touch-none"
+      className={`relative w-full h-full min-h-full overflow-hidden ${
+        isMobile ? "touch-pan-y" : "touch-none"
+      }`}
     >
-      {/* Toggle Button */}
-      <button
-        onClick={() => setColoredBgEnabled(!coloredBgEnabled)}
-        className={`
-          absolute top-6 right-6 z-50 
-          px-4 py-2.5 rounded-full 
-          font-medium text-sm
-          transition-all duration-300 ease-in-out
-          shadow-lg hover:shadow-xl
-          backdrop-blur-sm
-          ${coloredBgEnabled 
-            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600' 
-            : 'bg-white/90 text-gray-700 hover:bg-white border border-gray-200'
-          }
-          md:top-8 md:right-8 md:px-5 md:py-3 md:text-base
-        `}
-        aria-label={coloredBgEnabled ? "Disable colored backgrounds" : "Enable colored backgrounds"}
-      >
-        <span className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${coloredBgEnabled ? 'bg-white' : 'bg-gray-400'} transition-colors`} />
-          <span className="hidden sm:inline">
-            {coloredBgEnabled ? 'Renkli Arka Plan' : 'Şeffaf Arka Plan'}
-          </span>
-          <span className="sm:hidden">
-            {coloredBgEnabled ? 'Renkli' : 'Şeffaf'}
-          </span>
-        </span>
-      </button>
+      {prefersReducedMotion && <ReducedMotionFallback />}
+
+      {isMobile && !prefersReducedMotion && (
+        <div
+          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-24 text-neutral-200 text-xs sm:text-sm px-4 py-2 rounded-full bg-black/45 border border-white/20 backdrop-blur-sm transition-all duration-500 ${
+            hasInteracted ? "opacity-0 translate-y-2" : "opacity-100 animate-pulse"
+          }`}
+        >
+          {t("cocktail.mobileHintDrag")}
+        </div>
+      )}
     </div>
   );
 }
 
-function StaticFallback() {
-    const [index, setIndex] = React.useState(0);
-    const [coloredBgEnabled, setColoredBgEnabled] = React.useState(false);
-    const [shuffledImages] = React.useState(() => shuffleArray(COCKTAIL_IMAGES));
-    const isMobile = useIsMobile();
-    const prefersReducedMotion = usePrefersReducedMotion();
-
-    const handleClick = () => {
-        if (prefersReducedMotion) return;
-        setIndex((prev) => (prev + 1) % shuffledImages.length);
-    };
-
-    const currentImg = shuffledImages[index];
-    const bgColor = coloredBgEnabled ? COLOR_PALETTE[index % COLOR_PALETTE.length] : 'transparent';
-
-    return (
-        <div className="relative w-full h-full flex flex-col items-center justify-center">
-            {/* Toggle Button for Mobile */}
-            <button
-                onClick={() => setColoredBgEnabled(!coloredBgEnabled)}
-                className={`
-                    absolute top-4 right-4 z-50 
-                    px-3 py-2 rounded-full 
-                    font-medium text-xs
-                    transition-all duration-300
-                    shadow-lg
-                    ${coloredBgEnabled 
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' 
-                        : 'bg-white/90 text-gray-700 border border-gray-200'
-                    }
-                `}
-            >
-                {coloredBgEnabled ? '🎨 Renkli' : '✨ Şeffaf'}
-            </button>
-            
-            <div 
-                className="w-64 h-96 rounded-lg shadow-xl overflow-hidden transition-colors duration-300"
-                style={{ backgroundColor: bgColor }}
-                onClick={handleClick}
-            >
-                <img 
-                    src={`${CONFIG.pathPrefix}${currentImg.file}`} 
-                    alt={currentImg.name}
-                    className="w-full h-full object-contain"
-                />
-            </div>
-            
-            {!prefersReducedMotion && isMobile && (
-                <div className="absolute bottom-4 text-neutral-500 text-sm px-4 py-2 bg-white/80 rounded-full backdrop-blur-sm">
-                    Değiştirmek için dokunun
-                </div>
-            )}
-        </div>
-    );
+function ReducedMotionFallback() {
+  return (
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
+      <img
+        src={`${CONFIG.pathPrefix}${COCKTAIL_IMAGES[0].file}`}
+        alt={COCKTAIL_IMAGES[0].name}
+        className="w-[min(72vw,320px)] md:w-[360px] h-auto object-contain opacity-90"
+      />
+    </div>
+  );
 }

@@ -1,3 +1,9 @@
+/**
+ * Contact form API. Sends form data via Resend.
+ *
+ * Security: No rate limiting. User input is interpolated into HTML—sanitize before
+ * sending if Resend or recipient mail client renders HTML. See CODEBASE_ANALYSIS.md.
+ */
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
@@ -9,7 +15,7 @@ export async function POST(request: Request) {
     const { firstName, lastName, company, position, phone, email, message } = body;
 
     // Validate required fields
-    if (!firstName || !lastName || !email || !message) {
+    if (!firstName || !email || !message) {
       return NextResponse.json(
         { error: 'Gerekli alanlar eksik' },
         { status: 400 }

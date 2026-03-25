@@ -1,0 +1,34 @@
+---
+description: React and TypeScript component patterns for Mundus
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# React Component Patterns
+
+## Component Structure
+
+- Use functional components with hooks
+- Prefer `useRef` for DOM nodes, GSAP targets, and mutable values
+- Use `clsx` for conditional class names
+
+## GSAP Usage
+
+- Register plugins at component level: `gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)`
+- Use `gsap.context()` in `useEffect` and return `ctx.revert()` in cleanup to avoid leaks
+- Kill tweens on unmount: `gsap.killTweensOf(ref.current)` when needed
+
+## Form & State
+
+- Contact form: multi-step with `formSteps` array; `fullName` split into `firstName`/`lastName` for API
+- Avoid interpolating raw user input into HTML — sanitize for XSS (see CODEBASE_ANALYSIS.md)
+
+## Internationalization
+
+- Use `useLanguage()` from `@/context/LanguageContext`
+- Keys: `TranslationKey` type; add new keys in both `tr` and `en` in `LanguageContext.tsx`
+
+## Section Components
+
+- Wrap in `SectionWrapper` with `id` matching `SECTIONS`
+- Use `overflowVisible` prop when 3D perspective / tilt effects need to overflow
