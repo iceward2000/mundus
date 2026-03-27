@@ -71,7 +71,7 @@ export default function GlobeSection() {
   return (
     <SectionWrapper
       id="global-presence"
-      className="relative z-0 -mt-[100vh] overflow-hidden bg-black !px-0 !py-0 !min-h-0"
+      className="relative z-0 overflow-hidden bg-black !px-0 !py-0"
     >
       <div
         ref={sectionRef}

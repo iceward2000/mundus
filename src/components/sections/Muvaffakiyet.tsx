@@ -262,13 +262,7 @@ export default function Muvaffakiyet() {
       <div
         aria-hidden="true"
         className="muvaffakiyet-liquid-bridge w-screen relative left-1/2 -translate-x-1/2"
-      >
-        <span className="muvaffakiyet-fluid-flow muvaffakiyet-fluid-flow-top" />
-        <span className="muvaffakiyet-fluid-flow muvaffakiyet-fluid-flow-bottom" />
-        <span className="muvaffakiyet-liquid-drop muvaffakiyet-liquid-drop-a" />
-        <span className="muvaffakiyet-liquid-drop muvaffakiyet-liquid-drop-b" />
-        <span className="muvaffakiyet-liquid-drop muvaffakiyet-liquid-drop-c" />
-      </div>
+      />
     </SectionWrapper>
   );
 }

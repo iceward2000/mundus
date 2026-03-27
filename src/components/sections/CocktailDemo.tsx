@@ -20,7 +20,7 @@ export default function CocktailDemo() {
         playsInline
         className="pointer-events-none absolute inset-0 w-full h-full object-cover object-center"
       >
-        <source src="/videos/mundus%20cocktail%20video.mp4" type="video/mp4" />
+        <source src="/videos/cocktail-compressed.mp4" type="video/mp4" />
       </video>
 
       <div className="absolute inset-0 z-10 bg-black/30" />

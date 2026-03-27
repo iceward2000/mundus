@@ -121,13 +121,13 @@ export default function SparklingFrames() {
     <section
       ref={sectionRef}
       id="sparkling-frames"
-      className="relative z-10 w-full"
+      className="sparkling-frames-section relative z-10 w-full"
       style={{ height: "500vh" }}
     >
-      <div className="sticky top-0 w-full h-screen">
+      <div className="sparkling-frames-sticky sticky top-0 w-full h-screen">
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full"
+          className="sparkling-frames-canvas absolute left-0 w-full h-full"
         />
       </div>
     </section>

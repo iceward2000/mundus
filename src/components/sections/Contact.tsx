@@ -332,7 +332,7 @@ export default function Contact() {
         className="absolute inset-0 w-full h-full object-cover z-0"
         aria-hidden="true"
       >
-        <source src="/videos/mundus%20exit%20video.mp4" type="video/mp4" />
+        <source src="/videos/exit-compressed.mp4" type="video/mp4" />
       </video>
       <VideoAudioToggle
         videoRef={videoRef}

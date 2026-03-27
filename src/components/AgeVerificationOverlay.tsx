@@ -23,7 +23,7 @@ import clsx from "clsx";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const VIDEO_SRC = "/videos/mundus-entrance-video.mp4";
+const VIDEO_SRC = "/videos/entrance-compressed.mp4";
 
 export default function AgeVerificationOverlay() {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);

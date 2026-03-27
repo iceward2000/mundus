@@ -36,7 +36,7 @@ export default function Hayal() {
           <div className="absolute inset-0 z-0 pointer-events-none">
             <video
               className="h-full w-full object-cover"
-              src="/videos/bira-liquid-glass.mp4"
+              src="/videos/bira-compressed.mp4"
               autoPlay={!prefersReducedMotion}
               loop={!prefersReducedMotion}
               muted
