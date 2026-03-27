@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: "Mundus";
-  src: url("/font/mundus-semibold.woff") format("woff");
-  font-weight: 600;
+  font-family: "Syne";
+  src: url("/font/Syne/Syne-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 800;
   font-style: normal;
   font-display: swap;
 }
@@ -25,9 +25,9 @@
   --contact-footer: rgba(255, 255, 255, 0.3);
   --contact-input-bg: transparent;
   
-  --font-sans: 'Mundus', sans-serif;
-  --font-serif: 'Mundus', sans-serif;
-  --font-mundus: 'Mundus', sans-serif;
+  --font-sans: 'Syne', sans-serif;
+  --font-serif: 'Syne', sans-serif;
+  --font-mundus: 'Syne', sans-serif;
   font-weight: 500;
   
   /* Navigation transition timing */
@@ -752,6 +752,224 @@ textarea:-webkit-autofill:focus {
 .muvaffakiyet-card:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Muvaffakiyet -> SparklingFrames liquid transition bridge */
+.muvaffakiyet-liquid-bridge {
+  position: relative;
+  height: clamp(9rem, 20vw, 18rem);
+  margin-top: clamp(2.5rem, 7vw, 5rem);
+  margin-bottom: clamp(-3.5rem, -6vw, -1.5rem);
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 12%,
+    black 90%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 12%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+.muvaffakiyet-liquid-bridge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 60% at 50% 4%, rgba(255, 255, 255, 0.05) 0%, transparent 58%),
+    linear-gradient(
+      to bottom,
+      rgba(10, 10, 10, 0) 0%,
+      rgba(10, 10, 10, 0.55) 26%,
+      rgba(224, 224, 224, 0.44) 76%,
+      rgba(245, 245, 245, 0.82) 100%
+    );
+  z-index: 0;
+}
+
+.muvaffakiyet-liquid-bridge::after {
+  content: "";
+  position: absolute;
+  inset: -10% -8% -30%;
+  background: radial-gradient(
+    70% 50% at 50% 92%,
+    rgba(255, 255, 255, 0.58) 0%,
+    rgba(255, 255, 255, 0.18) 42%,
+    transparent 72%
+  );
+  filter: blur(18px);
+  opacity: 0.84;
+  z-index: 1;
+}
+
+.muvaffakiyet-fluid-flow {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  border-radius: 999px;
+  filter: blur(14px);
+  z-index: 2;
+}
+
+.muvaffakiyet-fluid-flow-top {
+  top: -22%;
+  height: 72%;
+  background: radial-gradient(
+    120% 90% at 50% 100%,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.07) 38%,
+    transparent 72%
+  );
+  animation: muvaffakiyetFluidDriftDown 8.8s ease-in-out infinite alternate;
+}
+
+.muvaffakiyet-fluid-flow-bottom {
+  bottom: -30%;
+  height: 70%;
+  background: radial-gradient(
+    120% 80% at 50% 0%,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 38%,
+    transparent 76%
+  );
+  animation: muvaffakiyetFluidDriftUp 10.2s ease-in-out infinite alternate;
+}
+
+.muvaffakiyet-liquid-drop {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(20px);
+  opacity: 0.65;
+  z-index: 3;
+}
+
+.muvaffakiyet-liquid-drop-a {
+  width: clamp(8.5rem, 18vw, 14rem);
+  height: clamp(3.5rem, 8vw, 6.2rem);
+  left: 11%;
+  top: 30%;
+  background: radial-gradient(
+    ellipse at 40% 50%,
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.08) 56%,
+    transparent 100%
+  );
+  animation: muvaffakiyetDropGlideA 9.4s ease-in-out infinite;
+}
+
+.muvaffakiyet-liquid-drop-b {
+  width: clamp(7rem, 16vw, 12rem);
+  height: clamp(3rem, 7vw, 5.2rem);
+  right: 12%;
+  bottom: 22%;
+  background: radial-gradient(
+    ellipse at 65% 40%,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.14) 52%,
+    transparent 100%
+  );
+  animation: muvaffakiyetDropGlideB 11.2s ease-in-out infinite;
+}
+
+.muvaffakiyet-liquid-drop-c {
+  width: clamp(10rem, 22vw, 16rem);
+  height: clamp(4rem, 10vw, 7rem);
+  left: 38%;
+  bottom: 14%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.08) 58%,
+    transparent 100%
+  );
+  animation: muvaffakiyetDropGlideC 12.8s ease-in-out infinite;
+}
+
+@keyframes muvaffakiyetFluidDriftDown {
+  0% {
+    transform: translate3d(-2.5%, -6%, 0) scaleX(0.98);
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate3d(2.5%, 8%, 0) scaleX(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes muvaffakiyetFluidDriftUp {
+  0% {
+    transform: translate3d(3%, 12%, 0) scaleX(1.02);
+    opacity: 0.72;
+  }
+  100% {
+    transform: translate3d(-3%, -7%, 0) scaleX(0.97);
+    opacity: 0.95;
+  }
+}
+
+@keyframes muvaffakiyetDropGlideA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3.5vw, 1.2vh, 0) scale(1.05);
+  }
+}
+
+@keyframes muvaffakiyetDropGlideB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-3vw, -1.4vh, 0) scale(1.08);
+  }
+}
+
+@keyframes muvaffakiyetDropGlideC {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.8vw, -1.8vh, 0) scale(1.03);
+  }
+}
+
+@media (max-width: 768px) {
+  .muvaffakiyet-liquid-bridge {
+    margin-top: 2.25rem;
+    margin-bottom: -1.5rem;
+    height: clamp(8.5rem, 30vw, 12rem);
+  }
+
+  .muvaffakiyet-fluid-flow {
+    filter: blur(10px);
+  }
+
+  .muvaffakiyet-liquid-drop {
+    filter: blur(14px);
+    opacity: 0.58;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .muvaffakiyet-fluid-flow-top,
+  .muvaffakiyet-fluid-flow-bottom,
+  .muvaffakiyet-liquid-drop-a,
+  .muvaffakiyet-liquid-drop-b,
+  .muvaffakiyet-liquid-drop-c {
+    animation: none;
+  }
 }
 
 /* ——— Matematik — Timeline Elements ——— */

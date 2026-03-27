@@ -18,6 +18,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useLanguage } from "@/context/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
+import VideoAudioToggle from "@/components/VideoAudioToggle";
 import clsx from "clsx";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -32,7 +33,6 @@ export default function AgeVerificationOverlay() {
   const [showGlassContainer, setShowGlassContainer] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
   const [preloadActive, setPreloadActive] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
@@ -82,9 +82,7 @@ export default function AgeVerificationOverlay() {
 
     const video = videoRef.current;
     const tryPlay = () => {
-      video.play().catch(() => {
-        setIsPlaying(false);
-      });
+      video.play().catch(() => {});
     };
 
     if (video.readyState >= 2) {
@@ -111,19 +109,6 @@ export default function AgeVerificationOverlay() {
     };
     window.addEventListener("mundus-load-progress", handler);
     return () => window.removeEventListener("mundus-load-progress", handler);
-  }, []);
-
-  const togglePlayPause = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      video.play().catch(() => { });
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
   }, []);
 
   const handleEnter = () => {
@@ -367,26 +352,13 @@ export default function AgeVerificationOverlay() {
             </div>
           </div>
 
-          <button
-            onClick={togglePlayPause}
-            aria-label={isPlaying ? t("overlay.videoPause") : t("overlay.videoPlay")}
-            className="absolute bottom-5 right-5 sm:bottom-8 sm:right-8 w-12 h-12 flex items-center justify-center rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/60 hover:text-white hover:bg-white/15 transition-opacity duration-700 pointer-events-auto z-50 hover:scale-110 active:scale-95"
-            style={{
-              opacity: showGlassContainer ? 1 : 0,
-              visibility: showGlassContainer ? "visible" : "hidden",
-              pointerEvents: showGlassContainer ? "auto" : "none",
-            }}
-          >
-            {isPlaying ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M6 4h4v16H6zm8 0h4v16h-4z" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            )}
-          </button>
+          <VideoAudioToggle
+            videoRef={videoRef}
+            audioSrc="/audio/mundus-entrance-audio.mp3"
+            sourceId="entrance"
+            hidden={!showGlassContainer}
+            className="z-50"
+          />
         </div>
       )}
     </>

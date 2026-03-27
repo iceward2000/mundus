@@ -6,6 +6,7 @@ import { Send, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
 import clsx from "clsx";
 import gsap from "gsap";
 import PolicyModal from "@/components/PolicyModal";
+import VideoAudioToggle from "@/components/VideoAudioToggle";
 
 const formSteps = [
   { id: "fullName", label: "Ad Soyad", type: "text", placeholder: "Adınız Soyadınız" },
@@ -333,6 +334,12 @@ export default function Contact() {
       >
         <source src="/videos/mundus%20exit%20video.mp4" type="video/mp4" />
       </video>
+      <VideoAudioToggle
+        videoRef={videoRef}
+        audioSrc="/audio/mundus-exit-audio.mp3"
+        sourceId="exit"
+        className="z-[3]"
+      />
 
       {/* Dark Overlay for better light reflection effect */}
       <div className="absolute inset-0 bg-black/40 z-[1]" />

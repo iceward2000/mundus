@@ -1,14 +1,19 @@
 "use client";
 
+import { useRef } from "react";
 import CocktailReveal from "@/components/CocktailReveal";
+import VideoAudioToggle from "@/components/VideoAudioToggle";
 
 export default function CocktailDemo() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   return (
     <section
       id="cocktail-demo"
       className="relative z-10 w-full overflow-hidden bg-black min-h-[78svh] md:min-h-screen"
     >
       <video
+        ref={videoRef}
         autoPlay
         loop
         muted
@@ -23,6 +28,12 @@ export default function CocktailDemo() {
       <div className="absolute inset-0 z-20">
         <CocktailReveal />
       </div>
+
+      <VideoAudioToggle
+        videoRef={videoRef}
+        audioSrc="/audio/mundus-cocktail-audio.wav"
+        sourceId="cocktail"
+      />
     </section>
   );
 }

@@ -51,6 +51,7 @@ export default function Navigation() {
     if (playing) {
       a.pause();
     } else {
+      window.dispatchEvent(new Event("mundus-global-audio-activate"));
       a.volume = 0.5;
       a.play().catch(console.error);
     }
@@ -80,6 +81,20 @@ export default function Navigation() {
       window.addEventListener("mundus-entered", handle);
       return () => window.removeEventListener("mundus-entered", handle);
     }
+  }, []);
+
+  useEffect(() => {
+    const onVideoAudioActivate = () => {
+      const a = audioRef.current;
+      if (!a) return;
+      a.pause();
+      setPlaying(false);
+    };
+
+    window.addEventListener("mundus-video-audio-activate", onVideoAudioActivate);
+    return () => {
+      window.removeEventListener("mundus-video-audio-activate", onVideoAudioActivate);
+    };
   }, []);
 
   useLayoutEffect(() => {

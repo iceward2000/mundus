@@ -87,7 +87,7 @@ export default function GlobeSection() {
           ref={textRef}
           className="absolute bottom-[6%] inset-x-0 z-10 pointer-events-none
                      text-center text-lg sm:text-xl md:text-2xl
-                     font-['Mundus'] select-none"
+                     font-['Syne'] select-none"
           style={{
             color: "rgba(255,255,255,0.75)",
             letterSpacing: "0.25em",

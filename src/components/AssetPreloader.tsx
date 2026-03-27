@@ -21,7 +21,12 @@ const MOBILE_IMAGE_ASSETS = [
   "/hikaye-images/14.png",
   ...Array.from({ length: 16 }, (_, i) => `/cocktail-images/${i + 7}.png`),
 ];
-const AUDIO_ASSETS = ["/audio/loop.mp3"];
+const AUDIO_ASSETS = [
+  "/audio/loop.mp3",
+  "/audio/mundus-entrance-audio.mp3",
+  "/audio/mundus-cocktail-audio.wav",
+  "/audio/mundus-exit-audio.mp3",
+];
 
 export default function AssetPreloader() {
   useEffect(() => {
