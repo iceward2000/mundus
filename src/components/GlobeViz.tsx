@@ -32,7 +32,8 @@ const getPathPoints = (d: any) => d.coords;
 const getPathPointLat = (p: any) => p[1];
 const getPathPointLng = (p: any) => p[0];
 const getPolygonLabel = ({ properties: d }: any) => {
-  const { trName, cheers } = getCheersForCountry(d.ADMIN);
+  const countryName = d.DISPLAY_ADMIN || d.ADMIN;
+  const { trName, cheers } = getCheersForCountry(countryName);
   return `
     <div style="background: rgba(15, 23, 42, 0.9); color: white; padding: 12px 16px; border-radius: 8px; font-family: sans-serif; backdrop-filter: blur(8px); border: 1px solid rgba(212, 175, 55, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
       <h3 style="font-weight: bold; font-size: 1.2em; margin: 0 0 4px 0; color: #d4af37;">${trName}</h3>
@@ -48,6 +49,30 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredPolygon, setHoveredPolygon] = useState<any>(null);
   const [ready, setReady] = useState(false);
+
+  // Some overseas territories are grouped under a sovereign country in this dataset.
+  // For the South America part of France, we relabel to Guyana to match site data.
+  const getDisplayAdmin = useCallback((admin: string, ring: [number, number][]) => {
+    if (admin !== "France") return admin;
+    if (!ring.length) return admin;
+
+    let sumLng = 0;
+    let sumLat = 0;
+    ring.forEach(([lng, lat]) => {
+      sumLng += lng;
+      sumLat += lat;
+    });
+    const centerLng = sumLng / ring.length;
+    const centerLat = sumLat / ring.length;
+
+    const isSouthAmericaFrancePiece =
+      centerLng > -56 &&
+      centerLng < -50 &&
+      centerLat > 1 &&
+      centerLat < 7;
+
+    return isSouthAmericaFrancePiece ? "Guyana" : admin;
+  }, []);
 
   // Stable color accessor to prevent re-renders breaking the lines
   const getPathColor = useCallback(() => PATH_COLORS, []);
@@ -132,10 +157,49 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     }
   }, [ready]);
 
-  // Process GeoJSON features into paths for animated borders
+  const polygonFeatures = useMemo(() => {
+    const features: any[] = [];
+    countries.features.forEach((feature: any) => {
+      const { geometry, properties } = feature;
+      if (!geometry || !properties) return;
+
+      if (geometry.type === "Polygon") {
+        const ring = geometry.coordinates[0];
+        features.push({
+          type: "Feature",
+          properties: {
+            ...properties,
+            DISPLAY_ADMIN: getDisplayAdmin(properties.ADMIN, ring),
+          },
+          geometry,
+        });
+        return;
+      }
+
+      if (geometry.type === "MultiPolygon") {
+        geometry.coordinates.forEach((polygon: any) => {
+          const ring = polygon[0];
+          features.push({
+            type: "Feature",
+            properties: {
+              ...properties,
+              DISPLAY_ADMIN: getDisplayAdmin(properties.ADMIN, ring),
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: polygon,
+            },
+          });
+        });
+      }
+    });
+    return features;
+  }, [countries, getDisplayAdmin]);
+
+  // Process polygon features into paths for animated borders
   const borderPaths = useMemo(() => {
     const paths: any[] = [];
-    countries.features.forEach((feature: any) => {
+    polygonFeatures.forEach((feature: any) => {
       const { geometry, properties } = feature;
       if (!geometry) return;
 
@@ -149,14 +213,10 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
 
       if (geometry.type === 'Polygon') {
         paths.push(extractCoords(geometry.coordinates[0]));
-      } else if (geometry.type === 'MultiPolygon') {
-        geometry.coordinates.forEach((polygon: any) => {
-          paths.push(extractCoords(polygon[0]));
-        });
       }
     });
     return paths;
-  }, [countries]);
+  }, [polygonFeatures]);
 
   return (
     <div
@@ -181,7 +241,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
           backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
 
           // Tiled Countries
-          polygonsData={countries.features}
+          polygonsData={polygonFeatures}
           polygonCapColor={getPolygonCapColor}
           polygonSideColor={getPolygonSideColor}
           polygonStrokeColor={getPolygonStrokeColor}

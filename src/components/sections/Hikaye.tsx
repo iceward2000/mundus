@@ -28,8 +28,8 @@ export default function Hikaye() {
     >
       <div className="max-w-6xl mx-auto w-full">
         {/* ── Full-bleed image stage (breaks out of content width) ── */}
-        <div className="relative left-1/2 w-screen -translate-x-1/2">
-          <div className="relative w-full aspect-[64/15] overflow-hidden rounded-sm border border-white/10 bg-black/30">
+        <div className="relative left-1/2 w-screen -translate-x-1/2 z-[3]">
+          <div className="relative isolate w-full aspect-[64/15] overflow-hidden rounded-sm border border-white/10 bg-black/30">
             <Image
               src="/hikaye-images/4.png"
               alt="Hikaye - Doğru"

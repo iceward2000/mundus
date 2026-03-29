@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
+import { useLanguage, type TranslationKey } from "@/context/LanguageContext";
 
 interface StrokePoint {
   x: number;
@@ -28,47 +29,43 @@ const DEFAULT_CONFIG: SketchConfig = {
 
 const SLIDER_DEFS: {
   key: keyof SketchConfig;
-  label: string;
+  labelKey: TranslationKey;
   min: number;
   max: number;
   step: number;
-  tooltip: string;
+  tooltipKey: TranslationKey;
 }[] = [
     {
       key: "minWidth",
-      label: "Min Width",
+      labelKey: "sketch.slider.minWidth.label",
       min: 0,
       max: 200,
       step: 1,
-      tooltip:
-        "Sets the thinnest stroke possible. Lower values create finer lines at high speed.",
+      tooltipKey: "sketch.slider.minWidth.tooltip",
     },
     {
       key: "maxWidth",
-      label: "Max Width",
+      labelKey: "sketch.slider.maxWidth.label",
       min: 0,
       max: 400,
       step: 1,
-      tooltip:
-        "Sets the thickest stroke at rest. Higher values produce bolder, more expressive marks.",
+      tooltipKey: "sketch.slider.maxWidth.tooltip",
     },
     {
       key: "tension",
-      label: "Tension",
+      labelKey: "sketch.slider.tension.label",
       min: 0,
       max: 1,
       step: 0.01,
-      tooltip:
-        "Controls spring stiffness. Higher tension makes width transitions snappier and more aggressive.",
+      tooltipKey: "sketch.slider.tension.tooltip",
     },
     {
       key: "damping",
-      label: "Damping",
+      labelKey: "sketch.slider.damping.label",
       min: 0,
       max: 1,
       step: 0.01,
-      tooltip:
-        "Controls oscillation decay. Higher damping reduces bounce and makes the stroke settle faster.",
+      tooltipKey: "sketch.slider.damping.tooltip",
     },
   ];
 
@@ -79,9 +76,11 @@ const SLIDER_DEFS: {
 const SliderTooltip = ({
   text,
   describedById,
+  triggerAriaLabel,
 }: {
   text: string;
   describedById: string;
+  triggerAriaLabel: string;
 }) => {
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -141,7 +140,7 @@ const SliderTooltip = ({
         onBlur={hide}
         onClick={toggle}
         aria-describedby={describedById}
-        aria-label="Parameter info"
+        aria-label={triggerAriaLabel}
       >
         ?
       </button>
@@ -187,20 +186,29 @@ const SHAPE_SVGS: Record<ShapeMode, React.ReactNode> = {
   ),
 };
 
+const SHAPE_LABEL_KEYS: Record<ShapeMode, TranslationKey> = {
+  diamond: "sketch.shape.diamond",
+  heart: "sketch.shape.heart",
+  spade: "sketch.shape.spade",
+  club: "sketch.shape.club",
+};
+
 const ShapeIcon = ({
   shape,
   active,
   onClick,
+  ariaLabel,
 }: {
   shape: ShapeMode;
   active: boolean;
   onClick: () => void;
+  ariaLabel: string;
 }) => (
   <button
     type="button"
     onClick={onClick}
     className={`sketch-shape-btn ${active ? "sketch-shape-active" : ""}`}
-    aria-label={`${shape} brush shape`}
+    aria-label={ariaLabel}
     aria-pressed={active}
   >
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -214,6 +222,7 @@ const ShapeIcon = ({
 // ═════════════════════════════════════════════════════════════
 
 const SketchReveal = () => {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawingEnabled = useRef(false);
@@ -675,7 +684,7 @@ const SketchReveal = () => {
         <button
           onClick={() => setPanelOpen((o) => !o)}
           aria-label={
-            panelOpen ? "Collapse sketch controls" : "Expand sketch controls"
+            panelOpen ? t("sketch.toggleCollapse") : t("sketch.toggleExpand")
           }
           className="sketch-panel-toggle"
         >
@@ -703,25 +712,26 @@ const SketchReveal = () => {
         <div
           className="sketch-panel"
           style={{
-            width: panelOpen ? 280 : 0,
+            width: panelOpen ? "min(360px, calc(100vw - 56px))" : 0,
             opacity: panelOpen ? 1 : 0,
             padding: panelOpen ? "16px 20px" : "16px 0",
             overflow: panelOpen ? "visible" : "hidden",
             pointerEvents: panelOpen ? "auto" : "none",
           }}
         >
-          <h3 className="sketch-panel-title">Sketch Tuning</h3>
+          <h3 className="sketch-panel-title">{t("sketch.panelTitle")}</h3>
 
-          {SLIDER_DEFS.map(({ key, label, min, max, step, tooltip }) => (
+          {SLIDER_DEFS.map(({ key, labelKey, min, max, step, tooltipKey }) => (
             <div key={key} className="sketch-slider-row">
               <label
                 htmlFor={`sketch-${key}`}
                 className="sketch-slider-label"
               >
-                <span className="sketch-slider-label-text">{label}</span>
+                <span className="sketch-slider-label-text">{t(labelKey)}</span>
                 <SliderTooltip
-                  text={tooltip}
+                  text={t(tooltipKey)}
                   describedById={`sketch-tip-${key}`}
+                  triggerAriaLabel={t("sketch.tooltip.paramInfo")}
                 />
               </label>
               <input
@@ -743,7 +753,7 @@ const SketchReveal = () => {
 
           {/* ── Shape Selector (card suits) ──────────────── */}
           <div className="sketch-shape-section">
-            <span className="sketch-shape-label">Shape</span>
+            <span className="sketch-shape-label">{t("sketch.shape")}</span>
             <div className="sketch-shape-group">
               {(["diamond", "heart", "spade", "club"] as ShapeMode[]).map(
                 (s) => (
@@ -752,6 +762,7 @@ const SketchReveal = () => {
                     shape={s}
                     active={shapeMode === s}
                     onClick={() => setShapeMode(s)}
+                    ariaLabel={`${t(SHAPE_LABEL_KEYS[s])} ${t("sketch.shape.brushShape")}`}
                   />
                 )
               )}
@@ -765,7 +776,7 @@ const SketchReveal = () => {
             }}
             className="sketch-panel-reset"
           >
-            Reset
+            {t("sketch.reset")}
           </button>
         </div>
       </div>

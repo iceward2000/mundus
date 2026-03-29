@@ -223,12 +223,9 @@ textarea:-webkit-autofill:focus {
   --logo-final-shift-y: -0.35rem;
   color: white;
   z-index: 50;
-  mix-blend-mode: normal;
-  pointer-events: none;
-}
-
-.ConsentLogo.blend-active {
   mix-blend-mode: difference;
+  isolation: isolate;
+  pointer-events: none;
 }
 
 .ConsentLogo .logo-square {
@@ -242,8 +239,12 @@ textarea:-webkit-autofill:focus {
   mix-blend-mode: normal;
 }
 
-.ConsentLogo.blend-active .logo-square {
-  mix-blend-mode: normal;
+.ConsentLogo.intersect-active .logo-square {
+  /*
+    During fly/reposition only: square overlaps invert each other.
+    Outside this window, logo keeps only background-based inversion.
+  */
+  mix-blend-mode: difference;
 }
 
 /* Static Logo State (After Verification) */
@@ -754,100 +755,54 @@ textarea:-webkit-autofill:focus {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Muvaffakiyet -> SparklingFrames liquid transition bridge */
+/* Muvaffakiyet -> SparklingFrames premium gradient transition */
 .muvaffakiyet-liquid-bridge {
   position: relative;
-  background-color: rgb(245, 245, 245);
-  background-image: linear-gradient(
-    to bottom,
-    rgb(10, 10, 10) 0%,
-    rgb(20, 20, 20) 16%,
-    rgb(64, 64, 64) 38%,
-    rgb(148, 148, 148) 66%,
-    rgb(220, 220, 220) 86%,
-    rgb(245, 245, 245) 100%
-  );
-  height: clamp(10rem, 22vw, 19rem);
-  margin-top: clamp(1rem, 3.4vw, 2.1rem);
-  margin-bottom: clamp(-4.25rem, -8vw, -2rem);
+  height: clamp(12rem, 26vw, 21rem);
+  margin-top: clamp(1.25rem, 3.6vw, 2.4rem);
+  margin-bottom: clamp(-6rem, -11vw, -3rem);
   overflow: hidden;
   pointer-events: none;
   isolation: isolate;
   z-index: 14;
-  mask-image: linear-gradient(
+  background: linear-gradient(
     to bottom,
-    transparent 0%,
-    black 10%,
-    black 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    black 10%,
-    black 100%
+    rgba(245, 245, 245, 0) 0%,
+    rgba(245, 245, 245, 0.05) 22%,
+    rgba(245, 245, 245, 0.22) 44%,
+    rgba(245, 245, 245, 0.52) 66%,
+    rgba(245, 245, 245, 0.84) 86%,
+    rgb(245, 245, 245) 100%
   );
 }
 
 .muvaffakiyet-liquid-bridge::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(85% 60% at 50% -10%, rgba(255, 255, 255, 0.1) 0%, transparent 72%),
-    linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.04) 0%,
-      rgba(255, 255, 255, 0.08) 36%,
-      rgba(255, 255, 255, 0.22) 70%,
-      rgba(255, 255, 255, 0.3) 100%
-    );
-  z-index: 1;
+  content: none;
 }
 
 .muvaffakiyet-liquid-bridge::after {
-  content: "";
-  position: absolute;
-  inset: -20% -10% -35%;
-  background: radial-gradient(
-    72% 54% at 50% 88%,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.1) 48%,
-    transparent 78%
-  );
-  filter: blur(14px);
-  opacity: 0.68;
-  z-index: 2;
+  content: none;
 }
 
 @media (max-width: 768px) {
   .muvaffakiyet-liquid-bridge {
-    margin-top: 0.85rem;
-    margin-bottom: -2.25rem;
-    height: clamp(8.6rem, 30vw, 12.6rem);
+    height: clamp(9rem, 29vw, 13rem);
+    margin-top: 1rem;
+    margin-bottom: -2.5rem;
   }
 }
 
-/* SparklingFrames seam control at section entrance */
+/* SparklingFrames top veil to prevent harsh section seam */
 .sparkling-frames-section {
   background-color: rgb(245, 245, 245);
 }
 
 .sparkling-frames-section::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: clamp(4rem, 10vw, 7rem);
-  background: linear-gradient(
-    to bottom,
-    rgb(245, 245, 245) 0%,
-    rgba(245, 245, 245, 0.96) 34%,
-    rgba(245, 245, 245, 0.78) 56%,
-    rgba(245, 245, 245, 0) 100%
-  );
-  pointer-events: none;
-  z-index: 16;
+  content: none;
+}
+
+.sparkling-frames-section::after {
+  content: none;
 }
 
 .sparkling-frames-sticky {
@@ -855,16 +810,8 @@ textarea:-webkit-autofill:focus {
 }
 
 .sparkling-frames-canvas {
-  top: -1px;
-  height: calc(100% + 2px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .muvaffakiyet-liquid-bridge,
-  .muvaffakiyet-liquid-bridge::before,
-  .muvaffakiyet-liquid-bridge::after {
-    animation: none;
-  }
+  top: 0;
+  height: 100%;
 }
 
 /* ——— Matematik — Timeline Elements ——— */
@@ -1088,17 +1035,20 @@ textarea:-webkit-autofill:focus {
 .sketch-slider-label {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.55);
-  min-width: 78px;
-  width: 78px;
+  min-width: 120px;
+  width: 120px;
   flex-shrink: 0;
   letter-spacing: 0.02em;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
 }
 
 .sketch-slider-label-text {
-  flex-shrink: 0;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 /* Ensures numeric values never clip, with tabular figures for alignment */
@@ -1258,8 +1208,8 @@ textarea:-webkit-autofill:focus {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.55);
   letter-spacing: 0.02em;
-  min-width: 78px;
-  width: 78px;
+  min-width: 120px;
+  width: 120px;
   flex-shrink: 0;
 }
 
@@ -1315,8 +1265,8 @@ textarea:-webkit-autofill:focus {
     border-radius: 10px;
   }
   .sketch-slider-label {
-    min-width: 60px;
-    width: 60px;
+    min-width: 96px;
+    width: 96px;
     font-size: 10px;
   }
   .sketch-slider-value {
@@ -1324,8 +1274,8 @@ textarea:-webkit-autofill:focus {
     font-size: 10px;
   }
   .sketch-shape-label {
-    min-width: 60px;
-    width: 60px;
+    min-width: 96px;
+    width: 96px;
     font-size: 10px;
   }
   .sketch-tooltip-card {

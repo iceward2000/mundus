@@ -79,7 +79,7 @@ export default function Hero() {
   return (
     <SectionWrapper id="hero" className="items-center text-center relative overflow-hidden">
       {/* Main content - positioned to work with centered nav */}
-      <div ref={containerRef} className="relative z-10 flex flex-col items-center pt-[45vh]">
+      <div ref={containerRef} className="relative z-10 flex flex-col items-center pt-20 md:pt-24 lg:pt-28">
         <h1 ref={titleRef} className="w-[260px] md:w-[400px] lg:w-[580px] xl:w-[720px]">
           <img
             src="/mundus-text-logo.svg"
@@ -92,7 +92,7 @@ export default function Hero() {
           ref={subtitleRef}
           className="mt-8 text-base md:text-lg lg:text-xl font-light tracking-[0.25em] text-primary/90 uppercase"
         >
-          İçecek İşletme Danışmanlığı
+          Türk Alkollü İçecek Danışmanlığı
         </p>
       </div>
 

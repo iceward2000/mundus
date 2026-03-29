@@ -1,6 +1,7 @@
 export const CHEERS_DATA: Record<string, string> = {
   "Afganistan": "Pa de kher",
   "Almanya": "Prost",
+  "Amerika Birleşik Devletleri": "Cheers",
   "Andorra": "Salut",
   "Angola": "Saúde",
   "Antigua ve Barbuda": "Cheers",
@@ -61,6 +62,7 @@ export const CHEERS_DATA: Record<string, string> = {
   "Guatemala": "Salud",
   "Guyana": "Proost",
   "Güney Afrika": "Gesondheid",
+  "Güney Kıbrıs": "Yamas",
   "Güney Kore": "Geonbae",
   "Güney Sudan": "Fi sihtik",
   "Gürcistan": "Gaumarjos!",
@@ -95,6 +97,7 @@ export const CHEERS_DATA: Record<string, string> = {
   "Kongo Demokratik Cumhuriyeti": "Santé",
   "Kosta Rika": "Pura vida",
   "Kuveyt": "Fi sihtik",
+  "Kuzey Kıbrıs Türk Cumhuriyeti": "Şerefe",
   "Kuzey Kore": "Chukbae",
   "Kuzey Makedonya": "Na zdravje",
   "Küba": "Salud",
@@ -261,7 +264,7 @@ export const COUNTRY_TR_NAMES: Record<string, string> = {
   "Costa Rica": "Kosta Rika",
   "Croatia": "Hırvatistan",
   "Cuba": "Küba",
-  "Cyprus": "Kıbrıs",
+  "Cyprus": "Güney Kıbrıs",
   "Czechia": "Çek Cumhuriyeti",
   "Democratic Republic of the Congo": "Kongo Demokratik Cumhuriyeti",
   "Denmark": "Danimarka",
@@ -369,10 +372,12 @@ export const COUNTRY_TR_NAMES: Record<string, string> = {
   "Zambia": "Zambiya",
   "Zimbabwe": "Zimbabve",
   "Swaziland": "Esvatini",
+  "United States": "Amerika Birleşik Devletleri",
+  "Northern Cyprus": "Kuzey Kıbrıs Türk Cumhuriyeti",
 };
 
-export function getCheersForCountry(adminName: string): { trName: string, cheers: string | null } {
+export function getCheersForCountry(adminName: string): { trName: string, cheers: string } {
   const trName = COUNTRY_TR_NAMES[adminName] || adminName;
-  const cheers = CHEERS_DATA[trName] || CHEERS_DATA[adminName] || null;
+  const cheers = CHEERS_DATA[trName] || CHEERS_DATA[adminName] || "Cheers";
   return { trName, cheers };
 }

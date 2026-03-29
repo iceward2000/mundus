@@ -7,7 +7,7 @@ export type Lang = "tr" | "en";
 export const translations = {
   tr: {
     // Age Verification Overlay
-    "overlay.question": "18 yaşından büyük müsünüz?",
+    "overlay.question": "Yaşadığınız ülkede alkollü içecek tüketme yaşında mısınız?",
     "overlay.yes": "Evet",
     "overlay.no": "Hayır",
     "overlay.videoPause": "Arka plan videosunu duraklat",
@@ -30,7 +30,32 @@ export const translations = {
     "nav.audioPause": "Müziği Durdur",
 
     // Hero
-    "hero.subtitle": "İçecek İşletme Danışmanlığı",
+    "hero.subtitle": "Türk Alkollü İçecek Danışmanlığı",
+
+    // Sketch panel
+    "sketch.panelTitle": "Eskiz Ayarları",
+    "sketch.toggleCollapse": "Eskiz kontrollerini daralt",
+    "sketch.toggleExpand": "Eskiz kontrollerini genişlet",
+    "sketch.shape": "Şekil",
+    "sketch.shape.brushShape": "fırça şekli",
+    "sketch.shape.diamond": "Karo",
+    "sketch.shape.heart": "Kupa",
+    "sketch.shape.spade": "Maça",
+    "sketch.shape.club": "Sinek",
+    "sketch.reset": "Sıfırla",
+    "sketch.tooltip.paramInfo": "Parametre bilgisi",
+    "sketch.slider.minWidth.label": "Minimum Genişlik",
+    "sketch.slider.minWidth.tooltip":
+      "Mümkün olan en ince çizgiyi belirler. Düşük değerler, yüksek hızda daha ince izler üretir.",
+    "sketch.slider.maxWidth.label": "Maksimum Genişlik",
+    "sketch.slider.maxWidth.tooltip":
+      "Durduğunuzdaki en kalın çizgiyi belirler. Yüksek değerler daha belirgin ve güçlü izler üretir.",
+    "sketch.slider.tension.label": "Gerginlik",
+    "sketch.slider.tension.tooltip":
+      "Yay sertliğini kontrol eder. Daha yüksek gerginlik, genişlik geçişlerini daha hızlı ve sert yapar.",
+    "sketch.slider.damping.label": "Sönüm",
+    "sketch.slider.damping.tooltip":
+      "Salınımın sönme hızını kontrol eder. Daha yüksek sönüm, zıplamayı azaltır ve çizgiyi daha hızlı dengeler.",
 
     // Hikaye
     "hikaye.titleDogru": "Doğru",
@@ -183,6 +208,30 @@ export const translations = {
     "nav.audioPause": "Pause music",
 
     "hero.subtitle": "Beverage Business Consulting",
+
+    "sketch.panelTitle": "Sketch Tuning",
+    "sketch.toggleCollapse": "Collapse sketch controls",
+    "sketch.toggleExpand": "Expand sketch controls",
+    "sketch.shape": "Shape",
+    "sketch.shape.brushShape": "brush shape",
+    "sketch.shape.diamond": "Diamond",
+    "sketch.shape.heart": "Heart",
+    "sketch.shape.spade": "Spade",
+    "sketch.shape.club": "Club",
+    "sketch.reset": "Reset",
+    "sketch.tooltip.paramInfo": "Parameter info",
+    "sketch.slider.minWidth.label": "Min Width",
+    "sketch.slider.minWidth.tooltip":
+      "Sets the thinnest stroke possible. Lower values create finer lines at high speed.",
+    "sketch.slider.maxWidth.label": "Max Width",
+    "sketch.slider.maxWidth.tooltip":
+      "Sets the thickest stroke at rest. Higher values produce bolder, more expressive marks.",
+    "sketch.slider.tension.label": "Tension",
+    "sketch.slider.tension.tooltip":
+      "Controls spring stiffness. Higher tension makes width transitions snappier and more aggressive.",
+    "sketch.slider.damping.label": "Damping",
+    "sketch.slider.damping.tooltip":
+      "Controls oscillation decay. Higher damping reduces bounce and makes the stroke settle faster.",
 
     "hikaye.titleDogru": "Truth",
     "hikaye.titleYalan": "Lies",

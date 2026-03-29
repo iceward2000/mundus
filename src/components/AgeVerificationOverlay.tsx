@@ -28,7 +28,7 @@ const VIDEO_SRC = "/videos/entrance-compressed.mp4";
 export default function AgeVerificationOverlay() {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
-  const [blendActive, setBlendActive] = useState(false);
+  const [intersectBlendActive, setIntersectBlendActive] = useState(false);
   const [isStatic, setIsStatic] = useState(false);
   const [showGlassContainer, setShowGlassContainer] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
@@ -64,15 +64,29 @@ export default function AgeVerificationOverlay() {
     if (verified !== "true") {
       setIsOverlayVisible(true);
       setShowLogo(true);
-      setTimeout(() => setBlendActive(true), 3000);
+      // Enable square-to-square inversion only during the fly/reposition phase.
+      const startIntersectAt = 3000;
+      const endIntersectAt = 6000;
+      const startIntersectTimer = setTimeout(
+        () => setIntersectBlendActive(true),
+        startIntersectAt
+      );
+      const endIntersectTimer = setTimeout(
+        () => setIntersectBlendActive(false),
+        endIntersectAt
+      );
       /** Logo: 3s expansion + 3.2s delay + up to 2.8s fly ≈ 6s total. Show glass ~1s before completion for smoother transition. */
       const showGlassAt = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches ? 4500 : 5000;
       const t = setTimeout(() => setShowGlassContainer(true), showGlassAt);
-      return () => clearTimeout(t);
+      return () => {
+        clearTimeout(startIntersectTimer);
+        clearTimeout(endIntersectTimer);
+        clearTimeout(t);
+      };
     } else {
       setShowLogo(true);
       setIsStatic(true);
-      setBlendActive(true);
+      setIntersectBlendActive(false);
     }
   }, []);
 
@@ -222,7 +236,7 @@ export default function AgeVerificationOverlay() {
   return (
     <>
       <div
-        className={`ConsentLogo w-6 h-6 ${blendActive ? "blend-active" : ""} ${isStatic ? "logo-static" : ""
+        className={`ConsentLogo w-6 h-6 ${intersectBlendActive ? "intersect-active" : ""} ${isStatic ? "logo-static" : ""
           }`}
         style={isOverlayVisible ? { zIndex: 10001 } : undefined}
       >
