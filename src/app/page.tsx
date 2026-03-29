@@ -4,7 +4,6 @@ import Hero from "@/components/sections/Hero";
 import Hikaye from "@/components/sections/Hikaye";
 import Matematik from "@/components/sections/Matematik";
 import RakiFrames from "@/components/sections/RakiFrames";
-import Team from "@/components/sections/Team";
 import GlobeSection from "@/components/sections/GlobeSection";
 import Hayal from "@/components/sections/Hayal";
 import CocktailDemo from "@/components/sections/CocktailDemo";
@@ -23,7 +22,6 @@ export default function Home() {
       <Matematik />
       <RakiFrames />
       <GlobeSection />
-      <Team />
       <Hayal />
       <CocktailDemo />
       <Muvaffakiyet />

@@ -3,7 +3,6 @@ export const SECTIONS = [
   { id: "hikaye", title: "Gerçeklik", subtitle: "İki Hikaye" },
   { id: "matematik", title: "Uzmanlık", subtitle: "Matematik" },
   { id: "global-presence", title: "Küresel Varlık", subtitle: "Dünyayı Birleştiriyoruz" },
-  { id: "team", title: "Takım", subtitle: "Ekibimiz" },
   { id: "hayal", title: "Hayal", subtitle: "Vizyon" },
   { id: "cocktail-demo", title: "Kokteyller", subtitle: "Deneyimleyin" },
   { id: "muvaffakiyet", title: "Muvaffakiyet", subtitle: "Başarı" },

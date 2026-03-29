@@ -33,3 +33,28 @@ ts-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# media/video files
+*.mp4
+*.mov
+*.m4v
+*.webm
+*.mkv
+*.avi
+*.wmv
+*.flv
+*.mpeg
+*.mpg
+
+# large binary assets (common project artifacts)
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+*.bz2
+*.xz
+*.iso
+*.bin
+*.dmg
+*.glb
+
