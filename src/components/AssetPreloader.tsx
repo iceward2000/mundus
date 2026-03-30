@@ -9,32 +9,24 @@
 import { useEffect } from "react";
 
 // ── Asset Manifest ──────────────────────────────────────────────────────────
-const IMAGE_ASSETS = [
+const DESKTOP_IMAGE_ASSETS = [
   "/mundus-text-logo.svg",
   "/hikaye-images/13.png",
   "/hikaye-images/14.png",
-  ...Array.from({ length: 144 }, (_, i) => `/cocktail-images/${i + 7}.png`),
+  ...Array.from({ length: 12 }, (_, i) => `/cocktail-images/${i + 7}.png`),
 ];
 const MOBILE_IMAGE_ASSETS = [
   "/mundus-text-logo.svg",
   "/hikaye-images/13.png",
-  "/hikaye-images/14.png",
-  ...Array.from({ length: 16 }, (_, i) => `/cocktail-images/${i + 7}.png`),
-];
-const AUDIO_ASSETS = [
-  "/audio/loop.mp3",
-  "/audio/mundus-entrance-audio.mp3",
-  "/audio/mundus-cocktail-audio.wav",
-  "/audio/mundus-exit-audio.mp3",
+  "/hikaye-images/14.png"
 ];
 
 export default function AssetPreloader() {
   useEffect(() => {
     const desktop =
       window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768;
-    const imageAssets = desktop ? IMAGE_ASSETS : MOBILE_IMAGE_ASSETS;
-    const audioAssets = desktop ? AUDIO_ASSETS : [];
-    const total = imageAssets.length + audioAssets.length;
+    const imageAssets = desktop ? DESKTOP_IMAGE_ASSETS : MOBILE_IMAGE_ASSETS;
+    const total = imageAssets.length;
 
     if (total === 0) return;
 
@@ -53,13 +45,6 @@ export default function AssetPreloader() {
       img.onload = bump;
       img.onerror = bump;
       img.src = url;
-    });
-
-    audioAssets.forEach((url) => {
-      fetch(url)
-        .then((r) => r.blob())
-        .then(bump)
-        .catch(bump);
     });
   }, []);
 

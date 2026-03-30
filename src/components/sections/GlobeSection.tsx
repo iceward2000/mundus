@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import GlobeViz from "../GlobeViz";
 import SectionWrapper from "../SectionWrapper";
 import { useLanguage } from "@/context/LanguageContext";
@@ -46,6 +46,24 @@ export default function GlobeSection() {
   const { t } = useLanguage();
   const sectionRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLHeadingElement>(null);
+  const [mountGlobe, setMountGlobe] = useState(false);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setMountGlobe(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" }
+    );
+
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!sectionRef.current || !textRef.current) return;
@@ -80,7 +98,11 @@ export default function GlobeSection() {
         onMouseLeave={handleMouseLeave}
       >
         <div className="w-full h-full">
-          <GlobeViz markers={MARKERS} />
+          {mountGlobe ? (
+            <GlobeViz markers={MARKERS} />
+          ) : (
+            <div className="w-full h-full bg-slate-950" />
+          )}
         </div>
 
         <h2

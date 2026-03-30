@@ -14,6 +14,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import GrainOverlay from "@/components/GrainOverlay";
 import AgeVerificationOverlay from "@/components/AgeVerificationOverlay";
 import AssetPreloader from "@/components/AssetPreloader";
+import AgeGatedContent from "@/components/AgeGatedContent";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 export const metadata: Metadata = {
@@ -47,7 +48,7 @@ export default function RootLayout({
           <AgeVerificationOverlay />
           <SmoothScroll>
             <GrainOverlay />
-            {children}
+            <AgeGatedContent>{children}</AgeGatedContent>
           </SmoothScroll>
         </LanguageProvider>
       </body>

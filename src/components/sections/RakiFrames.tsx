@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -8,13 +8,34 @@ export default function RakiFrames() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasLayerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const [isActivated, setIsActivated] = useState(false);
 
   useEffect(() => {
+    if (!sectionRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setIsActivated(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "800px 0px" }
+    );
+
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isActivated) return;
+
     gsap.registerPlugin(ScrollTrigger);
+    const triggerEl = sectionRef.current;
 
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
-    if (!canvas || !context || !sectionRef.current) return;
+    if (!canvas || !context || !triggerEl) return;
 
     const frameCount = 59;
     const currentFrame = (index: number) => {
@@ -68,7 +89,7 @@ export default function RakiFrames() {
     // Extra scroll space provides hold + circular handoff into the globe section.
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: sectionRef.current,
+        trigger: triggerEl,
         start: "top top",
         end: "bottom bottom",
         scrub: 0.15,
@@ -110,10 +131,10 @@ export default function RakiFrames() {
     return () => {
       window.removeEventListener("resize", setCanvasSize);
       ScrollTrigger.getAll().forEach((t) => {
-        if (t.vars.trigger === sectionRef.current) t.kill();
+        if (t.vars.trigger === triggerEl) t.kill();
       });
     };
-  }, []);
+  }, [isActivated]);
 
   return (
     <section
