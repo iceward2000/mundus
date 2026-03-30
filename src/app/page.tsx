@@ -1,5 +1,5 @@
 import Navigation from "@/components/Navigation";
-import SketchReveal from "@/components/SketchReveal";
+import LazySketchReveal from "@/components/LazySketchReveal";
 import Hero from "@/components/sections/Hero";
 import Hikaye from "@/components/sections/Hikaye";
 import Matematik from "@/components/sections/Matematik";
@@ -14,7 +14,7 @@ import Contact from "@/components/sections/Contact";
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
-      <SketchReveal />
+      <LazySketchReveal />
       <Navigation />
       
       <Hero />

@@ -55,6 +55,9 @@ export default function CocktailReveal() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const { t } = useLanguage();
   const hasInteractedRef = useRef(false);
+  const loadedFilesRef = useRef<Set<string>>(new Set());
+  const preloadedImagesRef = useRef<HTMLImageElement[]>([]);
+  const preloadTimersRef = useRef<number[]>([]);
   const [hasInteracted, setHasInteracted] = useState(false);
 
 
@@ -68,11 +71,51 @@ export default function CocktailReveal() {
     isDragging: false,
   });
 
-  // Images are preloaded by AssetPreloader — no duplicate preload needed
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+
+    const loadedFiles = loadedFilesRef.current;
+    const filesInUse = state.current.shuffledImages.map((img) => img.file);
+    const eagerCount = isMobile ? 36 : 72;
+    const eagerFiles = filesInUse.slice(0, eagerCount);
+    const deferredFiles = filesInUse.slice(eagerCount);
+
+    const preloadFile = (file: string) => {
+      if (loadedFiles.has(file)) return;
+      const img = new Image();
+      img.decoding = "async";
+      img.loading = "eager";
+      img.src = `${CONFIG.pathPrefix}${file}`;
+      img.onload = () => loadedFiles.add(file);
+      img.onerror = () => loadedFiles.add(file);
+      preloadedImagesRef.current.push(img);
+    };
+
+    eagerFiles.forEach((file, i) => {
+      const timer = window.setTimeout(() => preloadFile(file), i * 18);
+      preloadTimersRef.current.push(timer);
+    });
+
+    deferredFiles.forEach((file, i) => {
+      const timer = window.setTimeout(
+        () => preloadFile(file),
+        eagerFiles.length * 18 + i * 45
+      );
+      preloadTimersRef.current.push(timer);
+    });
+
+    return () => {
+      preloadTimersRef.current.forEach((id) => window.clearTimeout(id));
+      preloadTimersRef.current = [];
+      preloadedImagesRef.current = [];
+      loadedFiles.clear();
+    };
+  }, [isMobile, prefersReducedMotion]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container || prefersReducedMotion) return;
+    const effectState = state.current;
 
     const getSpawnSize = () => {
       if (!isMobile) {
@@ -89,13 +132,22 @@ export default function CocktailReveal() {
       const targetScale =
         runtimeConfig.minScale + ((1 - normVel) * (runtimeConfig.maxScale - runtimeConfig.minScale));
 
-      // Get next image from shuffled array
-      const imgData = state.current.shuffledImages[state.current.currentIndex];
+      // Prefer already loaded files to keep spawn smooth during interaction.
+      let imgData = effectState.shuffledImages[effectState.currentIndex];
+      let nextIndex = (effectState.currentIndex + 1) % effectState.shuffledImages.length;
+      for (let i = 0; i < effectState.shuffledImages.length; i++) {
+        const idx = (effectState.currentIndex + i) % effectState.shuffledImages.length;
+        const candidate = effectState.shuffledImages[idx];
+        if (loadedFilesRef.current.has(candidate.file)) {
+          imgData = candidate;
+          nextIndex = (idx + 1) % effectState.shuffledImages.length;
+          break;
+        }
+      }
 
-      // Advance index (loop and reshuffle when needed)
-      state.current.currentIndex = (state.current.currentIndex + 1) % state.current.shuffledImages.length;
-      if (state.current.currentIndex === 0) {
-        state.current.shuffledImages = shuffleArray(COCKTAIL_IMAGES);
+      effectState.currentIndex = nextIndex;
+      if (effectState.currentIndex === 0) {
+        effectState.shuffledImages = shuffleArray(COCKTAIL_IMAGES);
       }
 
       let targetX = x - (imgWidth / 2) + 20;
@@ -122,7 +174,7 @@ export default function CocktailReveal() {
       img.style.zIndex = "10";
 
       container.appendChild(img);
-      state.current.activeLayers.push(img);
+      effectState.activeLayers.push(img);
       animTarget = img;
 
       animTarget.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(${targetScale * 0.9})`;
@@ -141,11 +193,11 @@ export default function CocktailReveal() {
         if (animTarget.parentNode === container) {
           container.removeChild(animTarget);
         }
-        state.current.activeLayers = state.current.activeLayers.filter(l => l !== animTarget);
+        effectState.activeLayers = effectState.activeLayers.filter(l => l !== animTarget);
       }, runtimeConfig.fadeDuration + 200);
 
-      if (state.current.activeLayers.length > runtimeConfig.maxLayers) {
-        const toRemove = state.current.activeLayers.shift();
+      if (effectState.activeLayers.length > runtimeConfig.maxLayers) {
+        const toRemove = effectState.activeLayers.shift();
         if (toRemove && toRemove.parentNode === container) {
           container.removeChild(toRemove);
         }
@@ -159,23 +211,23 @@ export default function CocktailReveal() {
 
     const maybeSpawn = (x: number, y: number, now: number) => {
       const runtimeConfig = isMobile ? CONFIG.mobile : CONFIG.desktop;
-      if (now - state.current.lastSpawnTime < runtimeConfig.throttleInterval) {
+      if (now - effectState.lastSpawnTime < runtimeConfig.throttleInterval) {
         return;
       }
 
-      const dx = x - state.current.lastPointerPos.x;
-      const dy = y - state.current.lastPointerPos.y;
+      const dx = x - effectState.lastPointerPos.x;
+      const dy = y - effectState.lastPointerPos.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < runtimeConfig.spawnThreshold) {
         return;
       }
 
-      const timeDelta = Math.max(1, now - state.current.lastSpawnTime);
+      const timeDelta = Math.max(1, now - effectState.lastSpawnTime);
       const velocity = dist / timeDelta;
 
-      state.current.lastSpawnTime = now;
-      state.current.lastPointerPos = { x, y };
+      effectState.lastSpawnTime = now;
+      effectState.lastPointerPos = { x, y };
 
       spawnImage(x, y, velocity);
     };
@@ -209,20 +261,20 @@ export default function CocktailReveal() {
       if (!isMobile) return;
       const point = getRelativePointer(e.clientX, e.clientY);
       if (!point) return;
-      state.current.isDragging = true;
-      state.current.lastPointerPos = point;
-      state.current.lastSpawnTime = Date.now();
+      effectState.isDragging = true;
+      effectState.lastPointerPos = point;
+      effectState.lastSpawnTime = Date.now();
     };
 
     const handleMobilePointerMove = (e: PointerEvent) => {
-      if (!isMobile || !state.current.isDragging) return;
+      if (!isMobile || !effectState.isDragging) return;
       const point = getRelativePointer(e.clientX, e.clientY);
       if (!point) return;
       maybeSpawn(point.x, point.y, Date.now());
     };
 
     const stopMobileDrag = () => {
-      state.current.isDragging = false;
+      effectState.isDragging = false;
     };
 
     window.addEventListener("pointermove", handleDesktopPointerMove);
@@ -239,9 +291,9 @@ export default function CocktailReveal() {
       container.removeEventListener("pointerup", stopMobileDrag);
       container.removeEventListener("pointercancel", stopMobileDrag);
       container.removeEventListener("pointerleave", stopMobileDrag);
-      state.current.activeLayers.forEach(el => el.remove());
-      state.current.activeLayers = [];
-      state.current.isDragging = false;
+      effectState.activeLayers.forEach((el) => el.remove());
+      effectState.activeLayers = [];
+      effectState.isDragging = false;
     };
   }, [isMobile, prefersReducedMotion]);
 

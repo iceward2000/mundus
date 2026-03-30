@@ -19,6 +19,8 @@ export default function Muvaffakiyet() {
   ], [t, lang]);
 
   const TOTAL = DATA.length;
+  const DESKTOP_TRACK_REPEAT = 7;
+  const DESKTOP_TRACK_CENTER_BLOCK = Math.floor(DESKTOP_TRACK_REPEAT / 2);
 
   function wrap(i: number) {
     return ((i % TOTAL) + TOTAL) % TOTAL;
@@ -32,8 +34,14 @@ export default function Muvaffakiyet() {
     });
   }
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const dragStartX = useRef(0);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [dragDeltaX, setDragDeltaX] = useState(0);
+  const [isDesktopDragging, setIsDesktopDragging] = useState(false);
+  const [desktopSlideWidth, setDesktopSlideWidth] = useState(0);
+  const dragStartX = useRef<number | null>(null);
+  const desktopViewportRef = useRef<HTMLDivElement | null>(null);
+  const wheelDragAccum = useRef(0);
+  const wheelDragResetTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const justSwiped = useRef(false);
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
   const [mobileCanScroll, setMobileCanScroll] = useState({
@@ -69,9 +77,47 @@ export default function Muvaffakiyet() {
     };
   }, [updateMobileScrollState]);
 
+  const activeIndex = wrap(carouselIndex);
+  const activeAbsoluteIndex = DESKTOP_TRACK_CENTER_BLOCK * TOTAL + carouselIndex;
+  const effectiveDesktopSlideWidth = desktopSlideWidth || 1;
+
   const navigate = (dir: number) => {
-    setActiveIndex((prev) => wrap(prev + dir));
+    setCarouselIndex((prev) => prev + dir);
   };
+
+  const markSwipe = () => {
+    justSwiped.current = true;
+    setTimeout(() => {
+      justSwiped.current = false;
+    }, 120);
+  };
+
+  // Keep index bounded without changing visible order.
+  useEffect(() => {
+    if (Math.abs(carouselIndex) > TOTAL * 4) {
+      setCarouselIndex((prev) => prev % TOTAL);
+    }
+  }, [carouselIndex, TOTAL]);
+
+  useEffect(() => {
+    const updateDesktopSlideWidth = () => {
+      const el = desktopViewportRef.current;
+      if (!el) return;
+      setDesktopSlideWidth(el.clientWidth / 5);
+    };
+
+    updateDesktopSlideWidth();
+    window.addEventListener("resize", updateDesktopSlideWidth);
+    return () => window.removeEventListener("resize", updateDesktopSlideWidth);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (wheelDragResetTimeout.current) {
+        clearTimeout(wheelDragResetTimeout.current);
+      }
+    };
+  }, []);
 
   const handleMobileNavigate = (dir: 1 | -1) => {
     const el = mobileScrollRef.current;
@@ -80,18 +126,72 @@ export default function Muvaffakiyet() {
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     dragStartX.current = e.clientX;
+    setIsDesktopDragging(true);
+    setDragDeltaX(0);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDesktopDragging || dragStartX.current === null) return;
+    setDragDeltaX(e.clientX - dragStartX.current);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    const diff = dragStartX.current - e.clientX;
-    if (Math.abs(diff) > 40) {
-      justSwiped.current = true;
-      navigate(diff > 0 ? 1 : -1);
-      setTimeout(() => {
-        justSwiped.current = false;
-      }, 100);
+    if (!isDesktopDragging || dragStartX.current === null) return;
+    const diff = e.clientX - dragStartX.current;
+    const dragThreshold = Math.max(36, effectiveDesktopSlideWidth * 0.18);
+    if (Math.abs(diff) > dragThreshold) {
+      markSwipe();
+      navigate(diff < 0 ? 1 : -1);
     }
+    setDragDeltaX(0);
+    setIsDesktopDragging(false);
+    dragStartX.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent) => {
+    setDragDeltaX(0);
+    setIsDesktopDragging(false);
+    dragStartX.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  };
+
+  const handleDesktopWheel = (e: React.WheelEvent) => {
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+    if (delta === 0) return;
+
+    e.preventDefault();
+
+    const nextAccum = wheelDragAccum.current + delta;
+    wheelDragAccum.current = nextAccum;
+    setIsDesktopDragging(true);
+    setDragDeltaX(-nextAccum);
+
+    const dragThreshold = Math.max(36, effectiveDesktopSlideWidth * 0.18);
+    if (Math.abs(nextAccum) > dragThreshold) {
+      markSwipe();
+      navigate(nextAccum > 0 ? 1 : -1);
+      wheelDragAccum.current = 0;
+      setDragDeltaX(0);
+      setIsDesktopDragging(false);
+    }
+
+    if (wheelDragResetTimeout.current) {
+      clearTimeout(wheelDragResetTimeout.current);
+    }
+
+    wheelDragResetTimeout.current = setTimeout(() => {
+      wheelDragAccum.current = 0;
+      setDragDeltaX(0);
+      setIsDesktopDragging(false);
+    }, 140);
   };
 
   const handleItemClick = (offset: number) => {
@@ -169,28 +269,47 @@ export default function Muvaffakiyet() {
             </div>
           </div>
 
-          {/* Desktop — 5 columns */}
+          {/* Desktop — horizontal sliding carousel */}
           <div
             onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="hidden md:block touch-pan-y"
+            onPointerCancel={handlePointerCancel}
+            onWheel={handleDesktopWheel}
+            className="hidden md:block touch-pan-y cursor-grab active:cursor-grabbing"
           >
-            <div key={activeIndex} className="muvaffakiyet-content-reveal">
-              <div className="grid grid-cols-[0.7fr_1fr_1.5fr_1fr_0.7fr] gap-5 lg:gap-8 items-start">
-                {getVisibleItems(activeIndex, 5).map(({ offset, dataIndex }) => {
-                  const isActive = offset === 0;
-                  const isAdjacent = Math.abs(offset) === 1;
+            <div ref={desktopViewportRef} className="muvaffakiyet-content-reveal overflow-hidden">
+              <div
+                className={clsx(
+                  "flex items-start",
+                  isDesktopDragging ? "transition-none" : "transition-transform duration-300 ease-out"
+                )}
+                style={{
+                  transform: `translate3d(${-(activeAbsoluteIndex - 2) * effectiveDesktopSlideWidth + dragDeltaX}px, 0, 0)`,
+                }}
+              >
+                {Array.from({ length: TOTAL * DESKTOP_TRACK_REPEAT }, (_, i) => {
+                  const item = DATA[wrap(i)];
+                  const offset = i - activeAbsoluteIndex;
+                  const absOffset = Math.abs(offset);
+                  const isActive = absOffset === 0;
+                  const isAdjacent = absOffset === 1;
+                  const isVisible = absOffset <= 2;
+
                   return (
                     <div
-                      key={offset}
-                      onClick={() => handleItemClick(offset)}
+                      key={`${item.id}-${i}`}
+                      onClick={() => isVisible && handleItemClick(offset)}
                       className={clsx(
-                        "flex flex-col text-center cursor-pointer",
+                        "w-1/5 shrink-0 px-2 lg:px-3 flex flex-col text-center select-none",
+                        isVisible ? "cursor-pointer" : "pointer-events-none",
                         isActive
                           ? "opacity-100"
                           : isAdjacent
                             ? "opacity-30"
-                            : "opacity-10"
+                            : isVisible
+                              ? "opacity-10"
+                              : "opacity-0"
                       )}
                     >
                       <h3
@@ -203,7 +322,7 @@ export default function Muvaffakiyet() {
                               : "text-base text-white/40"
                         )}
                       >
-                        {DATA[dataIndex].title}
+                        {item.title}
                       </h3>
                       <div
                         className={clsx(
@@ -229,7 +348,7 @@ export default function Muvaffakiyet() {
                               : "text-xs lg:text-sm text-white/50"
                           )}
                         >
-                          {DATA[dataIndex].text}
+                          {item.text}
                         </p>
                       </div>
                     </div>
@@ -244,7 +363,7 @@ export default function Muvaffakiyet() {
               {DATA.map((item, i) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveIndex(i)}
+                  onClick={() => setCarouselIndex((prev) => prev + (i - activeIndex))}
                   aria-label={item.title}
                   className={clsx(
                     "rounded-full transition-all duration-300 cursor-pointer",

@@ -31,7 +31,7 @@ export default function CocktailDemo() {
 
       <VideoAudioToggle
         videoRef={videoRef}
-        audioSrc="/audio/mundus-cocktail-audio.wav"
+        audioSrc="/audio/mundus-cocktail-audio.mp3"
         sourceId="cocktail"
       />
     </section>

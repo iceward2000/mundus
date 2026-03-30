@@ -38,6 +38,204 @@ export default function Contact() {
   const formContentRef = useRef<HTMLDivElement>(null);
   const spanMeasureRef = useRef<HTMLSpanElement>(null);
   const fieldContainerRef = useRef<HTMLDivElement>(null);
+  const submitIconRef = useRef<SVGSVGElement>(null);
+  const mobileSubmitIconRef = useRef<SVGSVGElement>(null);
+  const planeTimelineRef = useRef<gsap.core.Timeline | null>(null);
+  const planeNodesRef = useRef<HTMLElement[]>([]);
+  const planeAnimatingRef = useRef(false);
+
+  const animatePaperPlaneFlight = useCallback(() => {
+    return new Promise<void>((resolve) => {
+      const cleanupPlaneArtifacts = () => {
+        planeTimelineRef.current?.kill();
+        planeTimelineRef.current = null;
+        planeNodesRef.current.forEach((node) => node.remove());
+        planeNodesRef.current = [];
+      };
+
+      cleanupPlaneArtifacts();
+
+      const planeSourceIcon = [submitIconRef.current, mobileSubmitIconRef.current].find((icon) => {
+        if (!icon) return false;
+        const rect = icon.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      });
+
+      if (!planeSourceIcon) {
+        resolve();
+        return;
+      }
+
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
+        resolve();
+        return;
+      }
+
+      const iconRect = planeSourceIcon.getBoundingClientRect();
+      const startX = iconRect.left + iconRect.width / 2;
+      const startY = iconRect.top + iconRect.height / 2;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const random = (min: number, max: number) => min + Math.random() * (max - min);
+      const waypointPause = 0.16;
+
+      const getInnerSpot = () => ({
+        x: random(viewportWidth * 0.16, viewportWidth * 0.84),
+        y: random(viewportHeight * 0.16, viewportHeight * 0.84),
+      });
+
+      const getBorderSpot = () => {
+        const edge = Math.floor(Math.random() * 4);
+        if (edge === 0) return { x: random(36, viewportWidth - 36), y: 24 }; // top
+        if (edge === 1) return { x: viewportWidth - 24, y: random(36, viewportHeight - 36) }; // right
+        if (edge === 2) return { x: random(36, viewportWidth - 36), y: viewportHeight - 24 }; // bottom
+        return { x: 24, y: random(36, viewportHeight - 36) }; // left
+      };
+
+      const getOutsideExitPoint = () => {
+        const edge = Math.floor(Math.random() * 4);
+        const outside = 240;
+        if (edge === 0) return { x: random(24, viewportWidth - 24), y: -outside }; // top
+        if (edge === 1) return { x: viewportWidth + outside, y: random(24, viewportHeight - 24) }; // right
+        if (edge === 2) return { x: random(24, viewportWidth - 24), y: viewportHeight + outside }; // bottom
+        return { x: -outside, y: random(24, viewportHeight - 24) }; // left
+      };
+
+      const targetSpots = [getInnerSpot(), getInnerSpot(), getInnerSpot()];
+      const borderSpot = getBorderSpot();
+      const exitSpot = getOutsideExitPoint();
+
+      const plane = document.createElement("div");
+      plane.style.position = "fixed";
+      plane.style.left = "0";
+      plane.style.top = "0";
+      plane.style.zIndex = "9999";
+      plane.style.pointerEvents = "none";
+      plane.style.willChange = "transform, opacity";
+      plane.style.color = "#d4af37";
+      plane.style.filter = "drop-shadow(0 0 14px rgba(212,175,55,0.5))";
+
+      const clonedPlane = planeSourceIcon.cloneNode(true) as SVGSVGElement;
+      clonedPlane.removeAttribute("class");
+      clonedPlane.classList.add("paper-plane-flight-clone");
+      clonedPlane.setAttribute("width", "36");
+      clonedPlane.setAttribute("height", "36");
+      plane.appendChild(clonedPlane);
+      document.body.appendChild(plane);
+      planeNodesRef.current.push(plane);
+
+      gsap.set(plane, {
+        x: startX,
+        y: startY,
+        xPercent: -50,
+        yPercent: -50,
+        rotation: 0,
+        transformOrigin: "50% 50%",
+        opacity: 1,
+      });
+
+      let currentRotation = 0;
+      const setRotation = gsap.quickSetter(plane, "rotation", "deg");
+      const normalizeAngle = (angle: number) => {
+        let normalized = angle % 360;
+        if (normalized > 180) normalized -= 360;
+        if (normalized < -180) normalized += 360;
+        return normalized;
+      };
+      const shortestDelta = (from: number, to: number) => normalizeAngle(to - from);
+      const steerTowardsTarget = (target: { x: number; y: number }, turnLerp = 0.22) => () => {
+        const currentX = gsap.getProperty(plane, "x") as number;
+        const currentY = gsap.getProperty(plane, "y") as number;
+        const desiredAngle = (Math.atan2(target.y - currentY, target.x - currentX) * 180) / Math.PI;
+        currentRotation = normalizeAngle(currentRotation + shortestDelta(currentRotation, desiredAngle) * turnLerp);
+        setRotation(currentRotation);
+      };
+
+      const getOvershootPoint = (from: { x: number; y: number }, to: { x: number; y: number }) => {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const distance = Math.hypot(dx, dy) || 1;
+        const ux = dx / distance;
+        const uy = dy / distance;
+        const overshootDistance = Math.min(70, distance * 0.18 + 28);
+        return {
+          x: to.x + ux * overshootDistance,
+          y: to.y + uy * overshootDistance,
+        };
+      };
+
+      let current = { x: startX, y: startY };
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        onComplete: () => {
+          cleanupPlaneArtifacts();
+          resolve();
+        },
+      });
+      planeTimelineRef.current = tl;
+
+      targetSpots.forEach((spot, index) => {
+        const overshoot = getOvershootPoint(current, spot);
+        const fastDuration = random(1.05, 1.45);
+        const settleDuration = random(1.0, 1.55);
+
+        tl.to(plane, {
+          x: overshoot.x,
+          y: overshoot.y,
+          duration: fastDuration,
+          ease: "power4.out",
+          onUpdate: steerTowardsTarget(spot, 0.18),
+        });
+
+        tl.to(plane, {
+          x: spot.x,
+          y: spot.y,
+          duration: settleDuration,
+          ease: "back.out(2.1)",
+          onUpdate: steerTowardsTarget(spot, 0.28),
+        });
+        tl.to({}, { duration: waypointPause });
+
+        current = spot;
+      });
+
+      const borderOvershoot = getOvershootPoint(current, borderSpot);
+      tl.to(plane, {
+        x: borderOvershoot.x,
+        y: borderOvershoot.y,
+        duration: random(1.05, 1.4),
+        ease: "power4.out",
+        onUpdate: steerTowardsTarget(borderSpot, 0.18),
+      });
+      tl.to(plane, {
+        x: borderSpot.x,
+        y: borderSpot.y,
+        duration: random(1.1, 1.5),
+        ease: "back.out(2.2)",
+        onUpdate: steerTowardsTarget(borderSpot, 0.26),
+      });
+      tl.to({}, { duration: waypointPause });
+
+      tl.to(plane, {
+        x: exitSpot.x,
+        y: exitSpot.y,
+        duration: random(2.0, 2.6),
+        ease: "power2.in",
+        onUpdate: steerTowardsTarget(exitSpot, 0.2),
+      });
+      tl.to(plane, { opacity: 0, duration: 0.14, ease: "power1.out" }, "-=0.14");
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      planeTimelineRef.current?.kill();
+      planeTimelineRef.current = null;
+      planeNodesRef.current.forEach((node) => node.remove());
+      planeNodesRef.current = [];
+    };
+  }, []);
 
   // Smoothly animate text alignment using padding
   useEffect(() => {
@@ -124,7 +322,7 @@ export default function Contact() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < formSteps.length - 1) {
       const stepData = formSteps[currentStep];
       if (stepData.id === "email" && formData.email.length > 0 && !formData.email.includes("@")) return;
@@ -137,6 +335,13 @@ export default function Contact() {
       setCurrentStep((prev) => prev + 1);
     } else {
       if (formData.message.trim().length === 0) return;
+      if (planeAnimatingRef.current) return;
+      planeAnimatingRef.current = true;
+      try {
+        await animatePaperPlaneFlight();
+      } finally {
+        planeAnimatingRef.current = false;
+      }
       handleSubmit();
     }
   };
@@ -476,6 +681,7 @@ export default function Contact() {
             <div className="relative z-10 flex items-center justify-center">
               {currentStep === formSteps.length - 1 ? (
                 <Send
+                  ref={submitIconRef}
                   size={32}
                   className="translate-x-[-2px] group-hover:translate-x-0 group-hover:-translate-y-1 transition-transform"
                 />
@@ -507,7 +713,7 @@ export default function Contact() {
               {currentStep === formSteps.length - 1 ? "Gönder" : "İleri"}
             </span>
             {currentStep === formSteps.length - 1 ? (
-              <Send size={20} />
+              <Send ref={mobileSubmitIconRef} size={20} />
             ) : (
               <ChevronRight size={20} />
             )}
