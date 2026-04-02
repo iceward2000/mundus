@@ -3,7 +3,6 @@ import LazySketchReveal from "@/components/LazySketchReveal";
 import Hero from "@/components/sections/Hero";
 import Hikaye from "@/components/sections/Hikaye";
 import Matematik from "@/components/sections/Matematik";
-import RakiFrames from "@/components/sections/RakiFrames";
 import GlobeSection from "@/components/sections/GlobeSection";
 import Hayal from "@/components/sections/Hayal";
 import CocktailDemo from "@/components/sections/CocktailDemo";
@@ -20,7 +19,6 @@ export default function Home() {
       <Hero />
       <Hikaye />
       <Matematik />
-      <RakiFrames />
       <GlobeSection />
       <Hayal />
       <CocktailDemo />

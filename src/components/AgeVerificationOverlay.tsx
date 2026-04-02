@@ -41,6 +41,16 @@ export default function AgeVerificationOverlay() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { t } = useLanguage();
 
+  /** Cursor tilt/blur only with a real mouse; touch devices fire bogus mouseleave. */
+  const [cursorEffectsEnabled, setCursorEffectsEnabled] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: fine)");
+    const sync = () => setCursorEffectsEnabled(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
   /** Desktop: wait for AssetPreloader to reach 100%. Mobile: immediate. */
   const loadComplete = !preloadActive || loadProgress >= 100;
 
@@ -252,8 +262,8 @@ export default function AgeVerificationOverlay() {
         <div
           ref={overlayRef}
           className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+          onMouseMove={cursorEffectsEnabled ? handleMouseMove : undefined}
+          onMouseLeave={cursorEffectsEnabled ? handleMouseLeave : undefined}
         >
           {/* Parallax Video layer */}
           <div

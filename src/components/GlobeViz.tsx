@@ -27,7 +27,10 @@ const PATH_COLORS = [
 ];
 
 const getPolygonSideColor = () => "rgba(0, 0, 0, 0.2)";
-const getPolygonStrokeColor = () => "transparent";
+
+const GEOJSON_PRIMARY = "/data/ne_110m_admin_0_countries.geojson";
+const GEOJSON_FALLBACK =
+  "https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson";
 const getPathPoints = (d: any) => d.coords;
 const getPathPointLat = (p: any) => p[1];
 const getPathPointLng = (p: any) => p[0];
@@ -44,11 +47,12 @@ const getPolygonLabel = ({ properties: d }: any) => {
 
 export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const globeEl = useRef<any>(undefined);
-  const [countries, setCountries] = useState({ features: [] });
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [countries, setCountries] = useState<{ features: any[] }>({ features: [] });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredPolygon, setHoveredPolygon] = useState<any>(null);
   const [ready, setReady] = useState(false);
+  const [compactLayout, setCompactLayout] = useState(false);
 
   // Some overseas territories are grouped under a sovereign country in this dataset.
   // For the South America part of France, we relabel to Guyana to match site data.
@@ -77,11 +81,26 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   // Stable color accessor to prevent re-renders breaking the lines
   const getPathColor = useCallback(() => PATH_COLORS, []);
 
-  const getPolygonCapColor = useCallback((d: any) =>
-    d === hoveredPolygon
-      ? "rgba(212, 175, 55, 0.3)" // Gold tint on hover
-      : "rgba(20, 30, 50, 0.6)",  // Dark transparent blue for countries
-    [hoveredPolygon]);
+  const getPolygonCapColor = useCallback(
+    (d: any) => {
+      if (d === hoveredPolygon) {
+        return "rgba(212, 175, 55, 0.42)";
+      }
+      return compactLayout
+        ? "rgba(55, 75, 110, 0.82)"
+        : "rgba(20, 30, 50, 0.6)";
+    },
+    [hoveredPolygon, compactLayout]
+  );
+
+  const getPolygonStrokeColor = useCallback(
+    () =>
+      compactLayout ? "rgba(212, 175, 55, 0.22)" : "transparent",
+    [compactLayout]
+  );
+
+  const polygonAltitude = compactLayout ? 0.045 : 0.018;
+  const pathPointAltitude = compactLayout ? 0.04 : 0.02;
 
   // 1. Safe Initialization & Cleanup Strategy
   useEffect(() => {
@@ -118,44 +137,74 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   }, []);
 
   useEffect(() => {
-    // Load country data
-    fetch(
-      "https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson"
-    )
-      .then((res) => res.json())
-      .then(setCountries);
+    let cancelled = false;
+
+    const loadGeo = async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<{ features: any[] }>;
+    };
+
+    (async () => {
+      try {
+        const data = await loadGeo(GEOJSON_PRIMARY);
+        if (!cancelled) setCountries(data);
+      } catch {
+        try {
+          const data = await loadGeo(GEOJSON_FALLBACK);
+          if (!cancelled) setCountries(data);
+        } catch {
+          if (!cancelled) setCountries({ features: [] });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight,
-        });
+    const el = containerRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w > 0 && h > 0) {
+        setDimensions({ width: w, height: h });
       }
     };
 
-    window.addEventListener("resize", handleResize);
-    const timer = setTimeout(handleResize, 100);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("orientationchange", measure);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      clearTimeout(timer);
+      ro.disconnect();
+      window.removeEventListener("orientationchange", measure);
     };
   }, []);
 
   useEffect(() => {
-    if (ready && globeEl.current) {
-      // Auto-rotate configuration
-      globeEl.current.controls().autoRotate = true;
-      globeEl.current.controls().autoRotateSpeed = 0.5;
-      globeEl.current.controls().enableZoom = true;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setCompactLayout(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
-      // Adjust camera distance
-      globeEl.current.pointOfView({ altitude: 2.5 });
-    }
-  }, [ready]);
+  useEffect(() => {
+    if (!ready || !globeEl.current) return;
+    if (dimensions.width < 1 || dimensions.height < 1) return;
+
+    globeEl.current.controls().autoRotate = true;
+    globeEl.current.controls().autoRotateSpeed = compactLayout ? 0.35 : 0.5;
+    globeEl.current.controls().enableZoom = true;
+
+    globeEl.current.pointOfView({ altitude: compactLayout ? 2.35 : 2.5 });
+  }, [ready, dimensions.width, dimensions.height, compactLayout]);
 
   const polygonFeatures = useMemo(() => {
     const features: any[] = [];
@@ -218,45 +267,45 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     return paths;
   }, [polygonFeatures]);
 
+  const canRenderGlobe =
+    ready && dimensions.width > 0 && dimensions.height > 0;
+
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-[500px] relative overflow-hidden touch-none"
+      className="w-full h-full min-h-[min(100dvh,520px)] lg:min-h-[500px] relative overflow-hidden max-lg:touch-pan-y lg:touch-none"
       data-lenis-prevent // Prevents Lenis from hijacking scroll/drag events on the globe
     >
-      {ready && (
+      {canRenderGlobe && (
         <Globe
           ref={globeEl}
           width={dimensions.width}
           height={dimensions.height}
-          // Strict minimal configuration to ensure context creation succeeds
           rendererConfig={{
             antialias: false,
             alpha: true,
             failIfMajorPerformanceCaveat: false,
-            powerPreference: "default"
+            powerPreference: "high-performance",
           }}
-          globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
-          bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+          globeImageUrl="https://unpkg.com/three-globe/example/img/earth-dark.jpg"
+          bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
+          backgroundImageUrl="https://unpkg.com/three-globe/example/img/night-sky.png"
 
-          // Tiled Countries
           polygonsData={polygonFeatures}
           polygonCapColor={getPolygonCapColor}
           polygonSideColor={getPolygonSideColor}
           polygonStrokeColor={getPolygonStrokeColor}
 
-          // Hover Label with "Cheers" info
           polygonLabel={getPolygonLabel}
           onPolygonHover={setHoveredPolygon}
-          polygonAltitude={0.01}
+          polygonAltitude={polygonAltitude}
+          polygonCapCurvatureResolution={compactLayout ? 8 : 12}
 
-          // Animated Borders
           pathsData={borderPaths}
           pathPoints={getPathPoints}
           pathPointLat={getPathPointLat}
           pathPointLng={getPathPointLng}
-          pathPointAlt={0.02}
+          pathPointAlt={pathPointAltitude}
 
           // Bold, Beautiful Colors for Borders
           pathColor={getPathColor}
@@ -265,10 +314,15 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
           pathDashLength={2} // Longer dashes to show more border simultaneously
           pathDashGap={0.1}  // Smaller gaps
           pathDashAnimateTime={12000} // Slower animation speed
-          pathResolution={3} // Optimize performance
+          pathResolution={compactLayout ? 2 : 3}
         />
       )}
 
+      {ready && !canRenderGlobe && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950 text-slate-500 text-sm">
+          <span className="animate-pulse">Loading…</span>
+        </div>
+      )}
     </div>
   );
 }

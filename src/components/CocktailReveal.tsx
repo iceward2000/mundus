@@ -300,7 +300,7 @@ export default function CocktailReveal() {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full min-h-full overflow-hidden ${
+      className={`relative w-full h-full min-h-full overflow-hidden select-none ${
         isMobile ? "touch-pan-y" : "touch-none"
       }`}
     >

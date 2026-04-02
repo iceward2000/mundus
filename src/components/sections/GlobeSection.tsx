@@ -89,11 +89,12 @@ export default function GlobeSection() {
   return (
     <SectionWrapper
       id="global-presence"
+      fullHeight={false}
       className="relative z-[3] isolate overflow-hidden bg-black !px-0 !py-0"
     >
       <div
         ref={sectionRef}
-        className="relative w-full h-screen"
+        className="relative w-full h-screen lg:h-[82vh]"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
