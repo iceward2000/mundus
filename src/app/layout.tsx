@@ -7,7 +7,7 @@
  * Note: {children} is always rendered—the overlay visually covers it. Content is not
  * conditionally loaded after verification.
  */
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -20,6 +20,13 @@ import { LanguageProvider } from "@/context/LanguageContext";
 export const metadata: Metadata = {
   title: "Mundus | Premium İçecek Danışmanlığı",
   description: "Stratejik mükemmellikle içki markalarını yükseltiyoruz.",
+};
+
+/** Enables env(safe-area-inset-*) under the notch / Dynamic Island (iOS, etc.). */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

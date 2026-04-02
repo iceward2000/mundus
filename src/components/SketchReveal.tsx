@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
+import { StableLocaleText } from "@/components/StableLocaleText";
 import { useLanguage, type TranslationKey } from "@/context/LanguageContext";
 
 interface StrokePoint {
@@ -78,7 +79,7 @@ const SliderTooltip = ({
   describedById,
   triggerAriaLabel,
 }: {
-  text: string;
+  text: React.ReactNode;
   describedById: string;
   triggerAriaLabel: string;
 }) => {
@@ -230,7 +231,7 @@ const SketchReveal = () => {
   const hueRef = useRef(0);
 
   const [config, setConfig] = useState<SketchConfig>(DEFAULT_CONFIG);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [shapeMode, setShapeMode] = useState<ShapeMode>("diamond");
   const [panelVisible, setPanelVisible] = useState(false);
 
@@ -719,7 +720,9 @@ const SketchReveal = () => {
             pointerEvents: panelOpen ? "auto" : "none",
           }}
         >
-          <h3 className="sketch-panel-title">{t("sketch.panelTitle")}</h3>
+          <h3 className="sketch-panel-title">
+            <StableLocaleText tKey="sketch.panelTitle" fill className="text-inherit" />
+          </h3>
 
           {SLIDER_DEFS.map(({ key, labelKey, min, max, step, tooltipKey }) => (
             <div key={key} className="sketch-slider-row">
@@ -727,9 +730,11 @@ const SketchReveal = () => {
                 htmlFor={`sketch-${key}`}
                 className="sketch-slider-label"
               >
-                <span className="sketch-slider-label-text">{t(labelKey)}</span>
+                <span className="sketch-slider-label-text">
+                  <StableLocaleText tKey={labelKey} fill className="text-inherit" />
+                </span>
                 <SliderTooltip
-                  text={t(tooltipKey)}
+                  text={<StableLocaleText tKey={tooltipKey} fill className="text-inherit" />}
                   describedById={`sketch-tip-${key}`}
                   triggerAriaLabel={t("sketch.tooltip.paramInfo")}
                 />
@@ -753,7 +758,9 @@ const SketchReveal = () => {
 
           {/* ── Shape Selector (card suits) ──────────────── */}
           <div className="sketch-shape-section">
-            <span className="sketch-shape-label">{t("sketch.shape")}</span>
+            <span className="sketch-shape-label">
+              <StableLocaleText tKey="sketch.shape" fill className="text-inherit" />
+            </span>
             <div className="sketch-shape-group">
               {(["diamond", "heart", "spade", "club"] as ShapeMode[]).map(
                 (s) => (
@@ -776,7 +783,7 @@ const SketchReveal = () => {
             }}
             className="sketch-panel-reset"
           >
-            {t("sketch.reset")}
+            <StableLocaleText tKey="sketch.reset" nowrap className="text-inherit" />
           </button>
         </div>
       </div>

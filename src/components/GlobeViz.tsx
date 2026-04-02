@@ -86,11 +86,9 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       if (d === hoveredPolygon) {
         return "rgba(212, 175, 55, 0.42)";
       }
-      return compactLayout
-        ? "rgba(55, 75, 110, 0.82)"
-        : "rgba(20, 30, 50, 0.6)";
+      return "#E8E9EB";
     },
-    [hoveredPolygon, compactLayout]
+    [hoveredPolygon]
   );
 
   const getPolygonStrokeColor = useCallback(
@@ -199,11 +197,41 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     if (!ready || !globeEl.current) return;
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
-    globeEl.current.controls().autoRotate = true;
-    globeEl.current.controls().autoRotateSpeed = compactLayout ? 0.35 : 0.5;
-    globeEl.current.controls().enableZoom = true;
+    const controls = globeEl.current.controls();
+    let resumeRotateTimer: ReturnType<typeof setTimeout>;
+
+    const pauseAutoRotate = () => {
+      clearTimeout(resumeRotateTimer);
+      controls.autoRotate = false;
+    };
+
+    const scheduleResumeAutoRotate = () => {
+      clearTimeout(resumeRotateTimer);
+      resumeRotateTimer = setTimeout(() => {
+        controls.autoRotate = true;
+      }, compactLayout ? 4500 : 3500);
+    };
+
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
+    controls.enableZoom = true;
+    controls.zoomSpeed = compactLayout ? 1.25 : 1;
+
+    if ("enableDamping" in controls) {
+      (controls as { enableDamping: boolean }).enableDamping = true;
+      (controls as { dampingFactor: number }).dampingFactor = 0.06;
+    }
 
     globeEl.current.pointOfView({ altitude: compactLayout ? 2.35 : 2.5 });
+
+    controls.addEventListener("start", pauseAutoRotate);
+    controls.addEventListener("end", scheduleResumeAutoRotate);
+
+    return () => {
+      clearTimeout(resumeRotateTimer);
+      controls.removeEventListener("start", pauseAutoRotate);
+      controls.removeEventListener("end", scheduleResumeAutoRotate);
+    };
   }, [ready, dimensions.width, dimensions.height, compactLayout]);
 
   const polygonFeatures = useMemo(() => {
@@ -273,7 +301,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-[min(100dvh,520px)] lg:min-h-[500px] relative overflow-hidden max-lg:touch-pan-y lg:touch-none"
+      className="w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden max-lg:touch-manipulation lg:touch-none"
       data-lenis-prevent // Prevents Lenis from hijacking scroll/drag events on the globe
     >
       {canRenderGlobe && (

@@ -131,7 +131,7 @@ export const translations = {
     // CocktailDemo
     "cocktail.title": "Kokteyllerimiz",
     "cocktail.subtitle": "Renkli seçkimizi deneyimleyin.",
-    "cocktail.mobileHintDrag": "Parmağını sürükle, kokteylleri ortaya çıkar.",
+    "cocktail.mobileHintDrag": "Kokteylleri keşfetmek için basılı tutarak sürükle",
 
     // Muvaffakiyet
     "muvaffakiyet.manifesto": "Manifesto",
@@ -286,7 +286,7 @@ export const translations = {
 
     "cocktail.title": "Our Cocktails",
     "cocktail.subtitle": "Experience our colourful selection.",
-    "cocktail.mobileHintDrag": "Drag your finger to reveal cocktails.",
+    "cocktail.mobileHintDrag": "Press and drag to discover the cocktails.",
 
     "muvaffakiyet.manifesto": "Manifesto",
     "muvaffakiyet.title": "Success",

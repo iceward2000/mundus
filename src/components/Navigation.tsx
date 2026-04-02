@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useLanguage, type Lang, type TranslationKey } from "@/context/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
+import { StableLocaleText } from "@/components/StableLocaleText";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -27,7 +28,6 @@ export default function Navigation() {
 
   const LANG_LABELS: Record<Lang, string> = { tr: "TÜRKÇE", en: "ENGLISH" };
   const nextLang: Lang = lang === "tr" ? "en" : "tr";
-  const langLabel = LANG_LABELS[nextLang];
 
   // Derived states for different modes
   const [transitionProgress, setTransitionProgress] = useState(0);
@@ -395,7 +395,11 @@ export default function Navigation() {
                       transform: `translateX(${titleTranslateX}px)`,
                     }}
                   >
-                    {t(`nav.${section.id}` as TranslationKey)}
+                    <StableLocaleText
+                      tKey={`nav.${section.id}` as TranslationKey}
+                      nowrap
+                      className="text-inherit"
+                    />
                   </span>
                 </button>
               </li>
@@ -440,7 +444,13 @@ export default function Navigation() {
                     style={{ width: 0, opacity: langLineOpacity }}
                   />
                   <span className="tracking-wide text-sm whitespace-nowrap">
-                    {langLabel}
+                    <StableLocaleText
+                      tr={LANG_LABELS.tr}
+                      en={LANG_LABELS.en}
+                      activeLang={nextLang}
+                      nowrap
+                      className="text-inherit"
+                    />
                   </span>
                 </button>
               </li>
@@ -460,7 +470,7 @@ export default function Navigation() {
             <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-2 bg-white/50 rounded-full animate-bounce" />
           </div>
           <span className="text-[9px] tracking-[0.4em] uppercase text-white/30 font-light">
-            {t("nav.scroll")}
+            <StableLocaleText tKey="nav.scroll" nowrap className="text-inherit" />
           </span>
         </div>
       </nav>

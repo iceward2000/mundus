@@ -16,8 +16,8 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useLanguage } from "@/context/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
+import { StableLocaleText } from "@/components/StableLocaleText";
 import VideoAudioToggle from "@/components/VideoAudioToggle";
 import clsx from "clsx";
 
@@ -39,18 +39,6 @@ export default function AgeVerificationOverlay() {
   const glassCardRef = useRef<HTMLDivElement>(null);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { t } = useLanguage();
-
-  /** Cursor tilt/blur only with a real mouse; touch devices fire bogus mouseleave. */
-  const [cursorEffectsEnabled, setCursorEffectsEnabled] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(pointer: fine)");
-    const sync = () => setCursorEffectsEnabled(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
-
   /** Desktop: wait for AssetPreloader to reach 100%. Mobile: immediate. */
   const loadComplete = !preloadActive || loadProgress >= 100;
 
@@ -173,17 +161,13 @@ export default function AgeVerificationOverlay() {
     window.location.href = "https://www.google.com";
   };
 
-  // 3D Perspective & Styling Tricks
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  // 3D Perspective — pointer events: mouse + touch share move; reset only on real mouse leave
+  const applyTiltFromPoint = useCallback((clientX: number, clientY: number) => {
     if (!glassCardRef.current || !videoWrapperRef.current) return;
-    const { clientX, clientY } = e;
     const { innerWidth, innerHeight } = window;
-
-    // Normalize coordinates (-1 to 1)
     const x = (clientX / innerWidth) * 2 - 1;
     const y = (clientY / innerHeight) * 2 - 1;
 
-    // Trick X: Action when cursor moves inside the container
     gsap.to(glassCardRef.current, {
       rotateX: -y * 10,
       rotateY: x * 10,
@@ -192,18 +176,67 @@ export default function AgeVerificationOverlay() {
       borderColor: "rgba(255, 255, 255, 0.3)",
       boxShadow: `0 40px 80px rgba(0,0,0,0.6), ${-x * 30}px ${-y * 30}px 60px rgba(255,255,255,0.15) inset, ${x * 20}px ${y * 20}px 40px rgba(255,255,255,0.08)`,
       ease: "power2.out",
-      duration: 0.6
+      duration: 0.6,
     });
 
     gsap.to(videoWrapperRef.current, {
       x: -x * 30,
       y: -y * 30,
       scale: 1.08,
-      filter: "blur(0px) brightness(0.9)", // Bring the video sharply into focus
+      filter: "blur(0px) brightness(0.9)",
       ease: "power2.out",
-      duration: 0.6
+      duration: 0.6,
     });
   }, []);
+
+  const resetTilt = useCallback(() => {
+    if (!glassCardRef.current || !videoWrapperRef.current) return;
+
+    gsap.to(glassCardRef.current, {
+      rotateX: 0,
+      rotateY: 0,
+      translateZ: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.1)",
+      borderColor: "rgba(255, 255, 255, 0.05)",
+      boxShadow: "0 30px 60px rgba(0,0,0,0.4), 0 0 0 rgba(255,255,255,0) inset",
+      ease: "power3.out",
+      duration: 1.2,
+    });
+
+    gsap.to(videoWrapperRef.current, {
+      x: 0,
+      y: 0,
+      scale: 1,
+      filter: "blur(16px) brightness(0.4)",
+      ease: "power3.out",
+      duration: 1.2,
+    });
+  }, []);
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      applyTiltFromPoint(e.clientX, e.clientY);
+    },
+    [applyTiltFromPoint]
+  );
+
+  /** Touch end fires pointerleave with pointerType touch — do not reset (that was the mobile bug). */
+  const handlePointerLeave = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      resetTilt();
+    },
+    [resetTilt]
+  );
+
+  /** Coarse pointer: no hover — snap to “engaged” center once the glass is visible. */
+  useEffect(() => {
+    if (!isOverlayVisible || !showGlassContainer) return;
+    if (!window.matchMedia("(pointer: coarse)").matches) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    applyTiltFromPoint(w / 2, h / 2);
+  }, [isOverlayVisible, showGlassContainer, applyTiltFromPoint]);
 
   /** Fade in liquid glass container when logo animation nears completion. */
   useLayoutEffect(() => {
@@ -215,31 +248,6 @@ export default function AgeVerificationOverlay() {
       );
     }
   }, [showGlassContainer]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!glassCardRef.current || !videoWrapperRef.current) return;
-
-    // Trick Y: Action when cursor leaves the container
-    gsap.to(glassCardRef.current, {
-      rotateX: 0,
-      rotateY: 0,
-      translateZ: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.1)",
-      borderColor: "rgba(255, 255, 255, 0.05)",
-      boxShadow: "0 30px 60px rgba(0,0,0,0.4), 0 0 0 rgba(255,255,255,0) inset",
-      ease: "power3.out",
-      duration: 1.2
-    });
-
-    gsap.to(videoWrapperRef.current, {
-      x: 0,
-      y: 0,
-      scale: 1,
-      filter: "blur(16px) brightness(0.4)", // Fade into a cinematic blurry depth of field
-      ease: "power3.out",
-      duration: 1.2
-    });
-  }, []);
 
   if (!showLogo) return null;
 
@@ -261,9 +269,9 @@ export default function AgeVerificationOverlay() {
       {isOverlayVisible && (
         <div
           ref={overlayRef}
-          className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black"
-          onMouseMove={cursorEffectsEnabled ? handleMouseMove : undefined}
-          onMouseLeave={cursorEffectsEnabled ? handleMouseLeave : undefined}
+          className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black touch-none"
+          onPointerMove={handlePointerMove}
+          onPointerLeave={handlePointerLeave}
         >
           {/* Parallax Video layer */}
           <div
@@ -286,9 +294,11 @@ export default function AgeVerificationOverlay() {
           </div>
 
           <div
-            className="absolute top-6 right-6 sm:top-8 sm:right-8 pointer-events-auto transition-opacity duration-700"
+            className="absolute pointer-events-auto transition-opacity duration-700"
             style={{
               zIndex: 3,
+              top: "max(1.5rem, env(safe-area-inset-top, 0px))",
+              right: "max(1.5rem, env(safe-area-inset-right, 0px))",
               opacity: showGlassContainer ? 1 : 0,
               visibility: showGlassContainer ? "visible" : "hidden",
               pointerEvents: showGlassContainer ? "auto" : "none",
@@ -326,7 +336,7 @@ export default function AgeVerificationOverlay() {
                 className="text-lg sm:text-2xl text-white font-light tracking-wide text-center leading-relaxed mb-10 text-shadow-sm"
                 style={{ transform: "translateZ(50px)" }}
               >
-                {t("overlay.question")}
+                <StableLocaleText tKey="overlay.question" fill className="text-inherit" />
               </h2>
 
               <div className="flex flex-col sm:flex-row gap-4 w-full" style={{ transform: "translateZ(60px)" }}>
@@ -354,7 +364,7 @@ export default function AgeVerificationOverlay() {
                         loadComplete ? "text-white group-hover:text-black" : "text-white/30"
                       )}
                     >
-                      {t("overlay.yes")}
+                      <StableLocaleText tKey="overlay.yes" nowrap className="text-inherit" />
                     </span>
                     {!loadComplete && loadProgress > 0 && (
                       <span className="text-[10px] tabular-nums font-light text-white/40">
@@ -369,7 +379,7 @@ export default function AgeVerificationOverlay() {
                   className="flex-1 py-4 px-6 rounded-xl border border-white/10 bg-transparent hover:bg-black/40 hover:border-white/40 transition-all duration-500 flex items-center justify-center cursor-pointer group"
                 >
                   <span className="text-white/60 group-hover:text-white transition-colors duration-300 tracking-[0.2em] text-sm font-medium uppercase drop-shadow-sm">
-                    {t("overlay.no")}
+                    <StableLocaleText tKey="overlay.no" nowrap className="text-inherit" />
                   </span>
                 </button>
               </div>

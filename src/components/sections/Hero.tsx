@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SectionWrapper from "../SectionWrapper";
+import { StableLocaleText } from "@/components/StableLocaleText";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -92,7 +93,7 @@ export default function Hero() {
           ref={subtitleRef}
           className="mt-8 text-base md:text-lg lg:text-xl font-light tracking-[0.25em] text-primary/90 uppercase"
         >
-          Türk Alkollü İçecek Danışmanlığı
+          <StableLocaleText tKey="hero.subtitle" fill className="text-inherit" />
         </p>
       </div>
 

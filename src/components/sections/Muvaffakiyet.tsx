@@ -1,22 +1,30 @@
 "use client";
 
-import { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import SectionWrapper from "../SectionWrapper";
 import clsx from "clsx";
+import { StableLocaleText } from "@/components/StableLocaleText";
 import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/lib/translations";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const MUVAFFAKIYET_SLIDES: {
+  id: string;
+  titleKey: TranslationKey;
+  textKey: TranslationKey;
+}[] = [
+  { id: "kim", titleKey: "muvaffakiyet.kim.title", textKey: "muvaffakiyet.kim.text" },
+  { id: "neden", titleKey: "muvaffakiyet.neden.title", textKey: "muvaffakiyet.neden.text" },
+  { id: "nasil", titleKey: "muvaffakiyet.nasil.title", textKey: "muvaffakiyet.nasil.text" },
+  { id: "ne", titleKey: "muvaffakiyet.ne.title", textKey: "muvaffakiyet.ne.text" },
+  { id: "nerede", titleKey: "muvaffakiyet.nerede.title", textKey: "muvaffakiyet.nerede.text" },
+  { id: "ne-zaman", titleKey: "muvaffakiyet.neZaman.title", textKey: "muvaffakiyet.neZaman.text" },
+];
 
 export default function Muvaffakiyet() {
   const { t, lang } = useLanguage();
 
-  const DATA = useMemo(() => [
-    { id: "kim", title: t("muvaffakiyet.kim.title"), text: t("muvaffakiyet.kim.text") },
-    { id: "neden", title: t("muvaffakiyet.neden.title"), text: t("muvaffakiyet.neden.text") },
-    { id: "nasil", title: t("muvaffakiyet.nasil.title"), text: t("muvaffakiyet.nasil.text") },
-    { id: "ne", title: t("muvaffakiyet.ne.title"), text: t("muvaffakiyet.ne.text") },
-    { id: "nerede", title: t("muvaffakiyet.nerede.title"), text: t("muvaffakiyet.nerede.text") },
-    { id: "ne-zaman", title: t("muvaffakiyet.neZaman.title"), text: t("muvaffakiyet.neZaman.text") },
-  ], [t, lang]);
+  const DATA = MUVAFFAKIYET_SLIDES;
 
   const TOTAL = DATA.length;
   const DESKTOP_TRACK_REPEAT = 7;
@@ -204,10 +212,10 @@ export default function Muvaffakiyet() {
         {/* Section header */}
         <div className="mb-12 md:mb-16 text-center">
           <h2 className="text-4xl md:text-5xl font-serif mt-4">
-            {t("muvaffakiyet.title")}
+            <StableLocaleText tKey="muvaffakiyet.title" fill className="text-inherit" />
           </h2>
           <p className="mt-4 text-white/60 max-w-xl mx-auto">
-            {t("muvaffakiyet.subtitle")}
+            <StableLocaleText tKey="muvaffakiyet.subtitle" fill className="text-inherit" />
           </p>
         </div>
 
@@ -225,7 +233,9 @@ export default function Muvaffakiyet() {
                   className="w-full min-w-full shrink-0 snap-start text-center px-1"
                 >
                   <div className="mx-auto max-w-2xl">
-                    <h3 className="font-serif mb-3 text-2xl text-primary">{item.title}</h3>
+                    <h3 className="font-serif mb-3 text-2xl text-primary">
+                      <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
+                    </h3>
                     <div className="relative">
                       <button
                         type="button"
@@ -244,7 +254,7 @@ export default function Muvaffakiyet() {
                       </button>
 
                       <p className="font-light leading-relaxed text-sm text-white/70 px-10">
-                        {item.text}
+                        <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
                       </p>
 
                       <button
@@ -322,7 +332,7 @@ export default function Muvaffakiyet() {
                               : "text-base text-white/40"
                         )}
                       >
-                        {item.title}
+                        <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
                       </h3>
                       <div
                         className={clsx(
@@ -348,7 +358,7 @@ export default function Muvaffakiyet() {
                               : "text-xs lg:text-sm text-white/50"
                           )}
                         >
-                          {item.text}
+                          <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
                         </p>
                       </div>
                     </div>
@@ -364,7 +374,7 @@ export default function Muvaffakiyet() {
                 <button
                   key={item.id}
                   onClick={() => setCarouselIndex((prev) => prev + (i - activeIndex))}
-                  aria-label={item.title}
+                  aria-label={t(item.titleKey)}
                   className={clsx(
                     "rounded-full transition-all duration-300 cursor-pointer",
                     i === activeIndex

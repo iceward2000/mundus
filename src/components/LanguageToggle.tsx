@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/context/LanguageContext";
+import { StableLocaleText } from "@/components/StableLocaleText";
 import clsx from "clsx";
 
 interface Props {
@@ -26,7 +27,13 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
           "text-neutral-500 hover:text-neutral-200"
         )}
       >
-        {label}
+        <StableLocaleText
+          tr={LABELS.tr}
+          en={LABELS.en}
+          activeLang={nextLang}
+          nowrap
+          className="text-inherit"
+        />
       </button>
     );
   }
@@ -42,7 +49,13 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
         "text-sm px-2 py-1 -mx-2 -my-1"
       )}
     >
-      {label}
+      <StableLocaleText
+        tr={LABELS.tr}
+        en={LABELS.en}
+        activeLang={nextLang}
+        nowrap
+        className="text-inherit"
+      />
     </button>
   );
 }

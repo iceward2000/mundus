@@ -3,7 +3,7 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import GlobeViz from "../GlobeViz";
 import SectionWrapper from "../SectionWrapper";
-import { useLanguage } from "@/context/LanguageContext";
+import { StableLocaleText } from "@/components/StableLocaleText";
 
 const MARKERS = [
   { lat: 37.0902, lng: -95.7129, label: "Amerika Birleşik Devletleri", description: "Küresel Merkez & Teknoloji Üssü" },
@@ -43,7 +43,6 @@ const MARKERS = [
 ];
 
 export default function GlobeSection() {
-  const { t } = useLanguage();
   const sectionRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLHeadingElement>(null);
   const [mountGlobe, setMountGlobe] = useState(false);
@@ -94,7 +93,7 @@ export default function GlobeSection() {
     >
       <div
         ref={sectionRef}
-        className="relative w-full h-screen lg:h-[82vh]"
+        className="relative w-full h-[70dvh] min-h-[280px] lg:min-h-0 lg:h-[76vh]"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
@@ -119,7 +118,7 @@ export default function GlobeSection() {
             transition: "transform 0.15s ease-out",
           }}
         >
-          {t("globe.cheersTitle")}
+          <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />
         </h2>
       </div>
     </SectionWrapper>

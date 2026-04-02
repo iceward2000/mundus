@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { useLanguage } from "@/context/LanguageContext";
+import { StableLocaleText } from "@/components/StableLocaleText";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 type Tab = "gercek" | "hayal";
 
 export default function Hayal() {
-  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<Tab>("gercek");
   const [isAnimating, setIsAnimating] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -75,7 +74,7 @@ export default function Hayal() {
                   !prefersReducedMotion && activeTab !== "gercek" && "hayal-tab-pulse"
                 )}
               >
-                {t("hayal.gercek")}
+                <StableLocaleText tKey="hayal.gercek" nowrap className="text-inherit" />
               </span>
               <span
                 className={clsx(
@@ -105,7 +104,7 @@ export default function Hayal() {
                   !prefersReducedMotion && activeTab !== "hayal" && "hayal-tab-pulse"
                 )}
               >
-                Sahte
+                <StableLocaleText tKey="hayal.hayal" nowrap className="text-inherit" />
               </span>
               <span
                 className={clsx(
@@ -122,7 +121,11 @@ export default function Hayal() {
         <div className="mt-10 md:mt-16 lg:mt-20 max-w-5xl mx-auto w-full">
           <div key={activeTab} className="hayal-content-reveal">
             <p className="text-base md:text-lg lg:text-xl leading-relaxed text-white/85 font-light indent-8 text-balance">
-              {activeTab === "gercek" ? t("hayal.gercekText") : t("hayal.hayalText")}
+              <StableLocaleText
+                tKey={activeTab === "gercek" ? "hayal.gercekText" : "hayal.hayalText"}
+                fill
+                className="text-inherit"
+              />
             </p>
           </div>
         </div>

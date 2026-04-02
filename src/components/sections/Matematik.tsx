@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SectionWrapper from "../SectionWrapper";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { StableLocaleText } from "@/components/StableLocaleText";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/lib/translations";
 
@@ -19,17 +20,17 @@ const OP_STRUCTURE = [
 ];
 
 export default function Matematik() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   const OPERATIONS = useMemo(() => {
     return OP_STRUCTURE.map((op, opIndex) => ({
-      label: t(op.labelKey),
+      labelKey: op.labelKey,
       items: Array.from({ length: op.itemCount }, (_, i) => ({
-        title: t(`mat.op${opIndex}.i${i}.title` as TranslationKey),
-        desc: t(`mat.op${opIndex}.i${i}.desc` as TranslationKey),
+        titleKey: `mat.op${opIndex}.i${i}.title` as TranslationKey,
+        descKey: `mat.op${opIndex}.i${i}.desc` as TranslationKey,
       })),
     }));
-  }, [t, lang]);
+  }, []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -271,8 +272,12 @@ export default function Matematik() {
       <div ref={sectionRef} className="max-w-7xl mx-auto w-full py-10 md:py-20">
         {/* Header */}
         <div className="mat-header text-center mb-10 md:mb-14">
-          <span className="text-primary text-sm tracking-widest uppercase">{t("matematik.label")}</span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif mt-4">{t("matematik.title")}</h2>
+          <span className="text-primary text-sm tracking-widest uppercase">
+            <StableLocaleText tKey="matematik.label" nowrap className="text-inherit" />
+          </span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif mt-4">
+            <StableLocaleText tKey="matematik.title" fill className="text-inherit" />
+          </h2>
         </div>
 
         {/* Desktop: 2-column | Mobile: single column */}
@@ -335,7 +340,7 @@ export default function Matematik() {
 
               {!hasInteracted && (
                 <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-white/25 text-xs sm:text-sm whitespace-nowrap animate-pulse select-none pointer-events-none">
-                  {t("matematik.clickHint")}
+                  <StableLocaleText tKey="matematik.clickHint" nowrap className="text-inherit" />
                 </span>
               )}
             </div>
@@ -354,7 +359,7 @@ export default function Matematik() {
           <div className="md:w-[62%] lg:w-[65%]">
             <div ref={contentRef} className="mat-content-wrap">
               <h3 className="text-2xl md:text-3xl font-serif text-primary mb-8 md:mb-10 pl-12">
-                {current.label}
+                <StableLocaleText tKey={current.labelKey} fill className="text-inherit" />
               </h3>
 
               <div ref={timelineRef} className="relative">
@@ -375,10 +380,10 @@ export default function Matematik() {
 
                     <div className="pt-1">
                       <h4 className="text-base md:text-lg font-medium text-white/90 mb-1.5 transition-colors duration-300">
-                        {item.title}
+                        <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
                       </h4>
                       <p className="text-white/45 text-sm md:text-[15px] leading-relaxed transition-colors duration-300">
-                        {item.desc}
+                        <StableLocaleText tKey={item.descKey} fill className="text-inherit" />
                       </p>
                     </div>
                   </div>

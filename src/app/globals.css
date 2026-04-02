@@ -485,9 +485,14 @@ textarea:-webkit-autofill:focus {
   100% { opacity: 1; transform: translate(180%, -120%) scale(1, 1); }
 }
 
-/* Responsive logo adjustments for smaller viewports */
+/*
+  Mobile / narrow: safe-area anchor + svh (stable vs iOS toolbar) for ConsentLogo.
+  - Shifts the fixed center down by inset-top so the fly-to corner clears status bar / island.
+  - svh keyframes match .logo-static when animation ends (first visit uses forwards only).
+*/
 @media (max-width: 1024px) {
   .ConsentLogo {
+    top: calc(50% + env(safe-area-inset-top, 0px));
     --logo-final-shift-x: -1.25rem;
     --logo-final-shift-y: -0.5rem;
   }
@@ -509,6 +514,110 @@ textarea:-webkit-autofill:focus {
   }
   .ConsentLogo.logo-static .sq-6 {
     transform: translate(calc(-14.2vw - 14.2vh + 5.18rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+  }
+}
+
+@supports (height: 100svh) {
+  @media (max-width: 1024px) {
+    .ConsentLogo.logo-static .sq-1 {
+      transform: translate(calc(-14.2vw - 14.2svh + 3.02rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    }
+    .ConsentLogo.logo-static .sq-2 {
+      transform: translate(calc(-14.2vw - 14.2svh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    }
+    .ConsentLogo.logo-static .sq-3 {
+      transform: translate(calc(-14.2vw - 14.2svh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + var(--logo-final-shift-y))) scale(0.4);
+    }
+    .ConsentLogo.logo-static .sq-4 {
+      transform: translate(calc(-14.2vw - 14.2svh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + var(--logo-final-shift-y))) scale(0.4);
+    }
+    .ConsentLogo.logo-static .sq-5 {
+      transform: translate(calc(-14.2vw - 14.2svh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    }
+    .ConsentLogo.logo-static .sq-6 {
+      transform: translate(calc(-14.2vw - 14.2svh + 5.18rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    }
+
+    @keyframes snake-fly-sq1 {
+      0% { transform: translate(-180%, 120%); }
+      100% {
+        transform: translate(
+            calc(-14.2vw - 14.2svh + 2.52rem + var(--logo-final-shift-x)),
+            calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))
+          )
+          scale(0.4);
+      }
+    }
+
+    @keyframes snake-fly-sq2 {
+      0% { transform: translate(-60%, 120%); }
+      33% { transform: translate(-180%, 120%); }
+      100% {
+        transform: translate(
+            calc(-14.2vw - 14.2svh + 3.24rem + var(--logo-final-shift-x)),
+            calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))
+          )
+          scale(0.4);
+      }
+    }
+
+    @keyframes snake-fly-sq3 {
+      0% { transform: translate(-60%, 0%); }
+      25% { transform: translate(-60%, 120%); }
+      50% { transform: translate(-180%, 120%); }
+      100% {
+        transform: translate(
+            calc(-14.2vw - 14.2svh + 3.24rem + var(--logo-final-shift-x)),
+            calc(14.2vw - 14.2svh + var(--logo-final-shift-y))
+          )
+          scale(0.4);
+      }
+    }
+
+    @keyframes snake-fly-sq4 {
+      0% { transform: translate(60%, 0%); }
+      20% { transform: translate(-60%, 0%); }
+      40% { transform: translate(-60%, 120%); }
+      60% { transform: translate(-180%, 120%); }
+      100% {
+        transform: translate(
+            calc(-14.2vw - 14.2svh + 3.96rem + var(--logo-final-shift-x)),
+            calc(14.2vw - 14.2svh + var(--logo-final-shift-y))
+          )
+          scale(0.4);
+      }
+    }
+
+    @keyframes snake-fly-sq5 {
+      0% { transform: translate(60%, -120%); }
+      16.66% { transform: translate(60%, 0%); }
+      33.33% { transform: translate(-60%, 0%); }
+      50% { transform: translate(-60%, 120%); }
+      66.66% { transform: translate(-180%, 120%); }
+      100% {
+        transform: translate(
+            calc(-14.2vw - 14.2svh + 3.96rem + var(--logo-final-shift-x)),
+            calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))
+          )
+          scale(0.4);
+      }
+    }
+
+    @keyframes snake-fly-sq6 {
+      0% { transform: translate(180%, -120%); }
+      14.28% { transform: translate(60%, -120%); }
+      28.57% { transform: translate(60%, 0%); }
+      42.85% { transform: translate(-60%, 0%); }
+      57.14% { transform: translate(-60%, 120%); }
+      71.42% { transform: translate(-180%, 120%); }
+      100% {
+        transform: translate(
+            calc(-14.2vw - 14.2svh + 4.68rem + var(--logo-final-shift-x)),
+            calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))
+          )
+          scale(0.4);
+      }
+    }
   }
 }
 

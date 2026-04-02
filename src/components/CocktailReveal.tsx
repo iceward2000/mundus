@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { useLanguage } from "@/context/LanguageContext";
+import { StableLocaleText } from "@/components/StableLocaleText";
 
 // Configuration
 // Generate cocktail images array from 7.png to 150.png
@@ -53,7 +53,6 @@ export default function CocktailReveal() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
-  const { t } = useLanguage();
   const hasInteractedRef = useRef(false);
   const loadedFilesRef = useRef<Set<string>>(new Set());
   const preloadedImagesRef = useRef<HTMLImageElement[]>([]);
@@ -307,13 +306,13 @@ export default function CocktailReveal() {
       {prefersReducedMotion && <ReducedMotionFallback />}
 
       {isMobile && !prefersReducedMotion && (
-        <div
-          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-24 text-neutral-200 text-xs sm:text-sm px-4 py-2 rounded-full bg-black/45 border border-white/20 backdrop-blur-sm transition-all duration-500 ${
+        <p
+          className={`pointer-events-none m-0 absolute left-1/2 -translate-x-1/2 bottom-24 max-w-[min(90vw,20rem)] text-center text-neutral-200 text-xs sm:text-sm font-medium [text-shadow:0_1px_12px_rgba(0,0,0,0.85)] transition-all duration-500 ${
             hasInteracted ? "opacity-0 translate-y-2" : "opacity-100 animate-pulse"
           }`}
         >
-          {t("cocktail.mobileHintDrag")}
-        </div>
+          <StableLocaleText tKey="cocktail.mobileHintDrag" fill className="text-inherit" />
+        </p>
       )}
     </div>
   );

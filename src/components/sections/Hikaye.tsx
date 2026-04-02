@@ -3,10 +3,9 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import SectionWrapper from "../SectionWrapper";
-import { useLanguage } from "@/context/LanguageContext";
+import { StableLocaleText } from "@/components/StableLocaleText";
 
 export default function Hikaye() {
-  const { t } = useLanguage();
   const [active, setActive] = useState<"dogru" | "yalan">("dogru");
   const selected = active;
 
@@ -82,7 +81,7 @@ export default function Hikaye() {
                   : "text-white/70 opacity-100"
               }`}
             >
-              {t("hikaye.titleDogru")}
+              <StableLocaleText tKey="hikaye.titleDogru" nowrap className="text-inherit" />
             </h3>
           </button>
 
@@ -101,7 +100,7 @@ export default function Hikaye() {
                   : "text-white/70 opacity-100"
               }`}
             >
-              {t("hikaye.titleYalan")}
+              <StableLocaleText tKey="hikaye.titleYalan" nowrap className="text-inherit" />
             </h3>
           </button>
         </div>
@@ -124,7 +123,7 @@ export default function Hikaye() {
             }`}
           >
             <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/80 font-light w-full">
-              {t("hikaye.dogru")}
+              <StableLocaleText tKey="hikaye.dogru" fill className="text-inherit" />
             </p>
           </div>
 
@@ -137,7 +136,7 @@ export default function Hikaye() {
             }`}
           >
             <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/80 font-light w-full text-right">
-              {t("hikaye.yalan")}
+              <StableLocaleText tKey="hikaye.yalan" fill className="text-inherit" />
             </p>
           </div>
         </div>
