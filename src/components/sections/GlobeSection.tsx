@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import GlobeViz from "../GlobeViz";
 import SectionWrapper from "../SectionWrapper";
 import { StableLocaleText } from "@/components/StableLocaleText";
@@ -44,7 +44,6 @@ const MARKERS = [
 
 export default function GlobeSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLHeadingElement>(null);
   const [mountGlobe, setMountGlobe] = useState(false);
 
   useEffect(() => {
@@ -64,27 +63,6 @@ export default function GlobeSection() {
     return () => observer.disconnect();
   }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!sectionRef.current || !textRef.current) return;
-    const rect = sectionRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const offsetX = ((e.clientX - rect.left) - centerX) / centerX;
-    const offsetY = ((e.clientY - rect.top) - centerY) / centerY;
-
-    textRef.current.style.transform =
-      `perspective(1200px) rotateX(${8 - offsetY * 4}deg) rotateY(${offsetX * 3}deg) translateX(${offsetX * 12}px) translateY(${offsetY * 8}px)`;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!textRef.current) return;
-    textRef.current.style.transition = "transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)";
-    textRef.current.style.transform = "perspective(1200px) rotateX(8deg) rotateY(0deg) translateX(0px) translateY(0px)";
-    setTimeout(() => {
-      if (textRef.current) textRef.current.style.transition = "transform 0.15s ease-out";
-    }, 600);
-  }, []);
-
   return (
     <SectionWrapper
       id="global-presence"
@@ -94,8 +72,6 @@ export default function GlobeSection() {
       <div
         ref={sectionRef}
         className="relative w-full h-[70dvh] min-h-[280px] lg:min-h-0 lg:h-[76vh]"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="w-full h-full">
           {mountGlobe ? (
@@ -106,16 +82,12 @@ export default function GlobeSection() {
         </div>
 
         <h2
-          ref={textRef}
           className="absolute bottom-[6%] inset-x-0 z-10 pointer-events-none
                      text-center text-lg sm:text-xl md:text-2xl
-                     font-['Syne'] select-none"
+                     font-['Syne'] select-none text-white/90 mix-blend-difference"
           style={{
-            color: "rgba(255,255,255,0.75)",
             letterSpacing: "0.25em",
             fontWeight: 300,
-            transform: "perspective(1200px) rotateX(8deg)",
-            transition: "transform 0.15s ease-out",
           }}
         >
           <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />

@@ -9,11 +9,32 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    const supportsHistory = typeof window.history.scrollRestoration === "string";
+    const previousScrollRestoration = supportsHistory
+      ? window.history.scrollRestoration
+      : null;
+
+    if (supportsHistory) {
+      // Prevent browsers from restoring the previous scroll position on reload.
+      window.history.scrollRestoration = "manual";
+    }
+
+    // Keep hash-based deep links working; otherwise always start from top.
+    if (!window.location.hash) {
+      window.scrollTo(0, 0);
+    }
+
     // Only enable Lenis on devices with fine pointers (mouse) to avoid
     // interfering with native touch scrolling on mobile.
     const isDesktop = window.matchMedia("(pointer: fine)").matches;
 
-    if (!isDesktop) return;
+    if (!isDesktop) {
+      return () => {
+        if (supportsHistory && previousScrollRestoration) {
+          window.history.scrollRestoration = previousScrollRestoration;
+        }
+      };
+    }
 
     const lenis = new Lenis({
       duration: 1.2,
@@ -39,6 +60,9 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     return () => {
       lenis.destroy();
       gsap.ticker.remove(raf);
+      if (supportsHistory && previousScrollRestoration) {
+        window.history.scrollRestoration = previousScrollRestoration;
+      }
     };
   }, []);
 

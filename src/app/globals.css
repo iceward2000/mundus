@@ -864,43 +864,6 @@ textarea:-webkit-autofill:focus {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Muvaffakiyet -> SparklingFrames premium gradient transition */
-.muvaffakiyet-liquid-bridge {
-  position: relative;
-  height: clamp(12rem, 26vw, 21rem);
-  margin-top: clamp(1.25rem, 3.6vw, 2.4rem);
-  margin-bottom: clamp(-6rem, -11vw, -3rem);
-  overflow: hidden;
-  pointer-events: none;
-  isolation: isolate;
-  z-index: 14;
-  background: linear-gradient(
-    to bottom,
-    rgba(245, 245, 245, 0) 0%,
-    rgba(245, 245, 245, 0.05) 22%,
-    rgba(245, 245, 245, 0.22) 44%,
-    rgba(245, 245, 245, 0.52) 66%,
-    rgba(245, 245, 245, 0.84) 86%,
-    rgb(245, 245, 245) 100%
-  );
-}
-
-.muvaffakiyet-liquid-bridge::before {
-  content: none;
-}
-
-.muvaffakiyet-liquid-bridge::after {
-  content: none;
-}
-
-@media (max-width: 768px) {
-  .muvaffakiyet-liquid-bridge {
-    height: clamp(9rem, 29vw, 13rem);
-    margin-top: 1rem;
-    margin-bottom: -2.5rem;
-  }
-}
-
 /* SparklingFrames top veil to prevent harsh section seam */
 .sparkling-frames-section {
   background-color: rgb(245, 245, 245);

@@ -388,10 +388,6 @@ export default function Muvaffakiyet() {
         </div>
       </div>
 
-      <div
-        aria-hidden="true"
-        className="muvaffakiyet-liquid-bridge w-screen relative left-1/2 -translate-x-1/2"
-      />
     </SectionWrapper>
   );
 }
