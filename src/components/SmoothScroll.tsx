@@ -9,32 +9,40 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const supportsHistory = typeof window.history.scrollRestoration === "string";
-    const previousScrollRestoration = supportsHistory
+    // Prevent browsers from restoring previous scroll position on refresh.
+    const supportsManualRestoration =
+      typeof window !== "undefined" && "scrollRestoration" in window.history;
+    const previousRestoration = supportsManualRestoration
       ? window.history.scrollRestoration
       : null;
 
-    if (supportsHistory) {
-      // Prevent browsers from restoring the previous scroll position on reload.
+    if (supportsManualRestoration) {
       window.history.scrollRestoration = "manual";
     }
 
-    // Keep hash-based deep links working; otherwise always start from top.
-    if (!window.location.hash) {
+    const resetScrollTop = () => {
       window.scrollTo(0, 0);
-    }
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
 
+    resetScrollTop();
+    const rafId = window.requestAnimationFrame(resetScrollTop);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      if (supportsManualRestoration && previousRestoration) {
+        window.history.scrollRestoration = previousRestoration;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     // Only enable Lenis on devices with fine pointers (mouse) to avoid
     // interfering with native touch scrolling on mobile.
     const isDesktop = window.matchMedia("(pointer: fine)").matches;
 
-    if (!isDesktop) {
-      return () => {
-        if (supportsHistory && previousScrollRestoration) {
-          window.history.scrollRestoration = previousScrollRestoration;
-        }
-      };
-    }
+    if (!isDesktop) return;
 
     const lenis = new Lenis({
       duration: 1.2,
@@ -60,9 +68,6 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     return () => {
       lenis.destroy();
       gsap.ticker.remove(raf);
-      if (supportsHistory && previousScrollRestoration) {
-        window.history.scrollRestoration = previousScrollRestoration;
-      }
     };
   }, []);
 

@@ -24,6 +24,8 @@ import clsx from "clsx";
 gsap.registerPlugin(ScrollTrigger);
 
 const VIDEO_SRC = "/videos/entrance-compressed.mp4";
+const LOGO_ANIMATION_TOTAL_MS = 6000;
+const LOGO_ANIMATION_FALLBACK_MS = 6500;
 
 export default function AgeVerificationOverlay() {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
@@ -39,8 +41,37 @@ export default function AgeVerificationOverlay() {
   const glassCardRef = useRef<HTMLDivElement>(null);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const logoAnimationStartedAtRef = useRef<number | null>(null);
+  const revealDelayTimerRef = useRef<number | null>(null);
+  const hasRevealedGlassRef = useRef(false);
+  const lastMousePositionRef = useRef<{ x: number; y: number } | null>(null);
   /** Desktop: wait for AssetPreloader to reach 100%. Mobile: immediate. */
   const loadComplete = !preloadActive || loadProgress >= 100;
+  const revealInteractiveOverlay = useCallback(() => {
+    if (hasRevealedGlassRef.current) return;
+
+    const startedAt = logoAnimationStartedAtRef.current;
+    if (startedAt !== null) {
+      const elapsedMs = performance.now() - startedAt;
+      const remainingMs = LOGO_ANIMATION_TOTAL_MS - elapsedMs;
+
+      if (remainingMs > 16) {
+        if (revealDelayTimerRef.current !== null) {
+          window.clearTimeout(revealDelayTimerRef.current);
+        }
+        revealDelayTimerRef.current = window.setTimeout(() => {
+          if (hasRevealedGlassRef.current) return;
+          hasRevealedGlassRef.current = true;
+          setShowGlassContainer(true);
+          revealDelayTimerRef.current = null;
+        }, remainingMs);
+        return;
+      }
+    }
+
+    hasRevealedGlassRef.current = true;
+    setShowGlassContainer(true);
+  }, []);
 
   // Prevent body scroll while overlay is active
   useEffect(() => {
@@ -60,11 +91,13 @@ export default function AgeVerificationOverlay() {
     /** Hydration-safe check: if already verified this session, skip overlay. */
     const verified = sessionStorage.getItem("mundus-age-verified");
     if (verified !== "true") {
+      logoAnimationStartedAtRef.current = performance.now();
+      hasRevealedGlassRef.current = false;
       setIsOverlayVisible(true);
       setShowLogo(true);
       // Enable square-to-square inversion only during the fly/reposition phase.
       const startIntersectAt = 3000;
-      const endIntersectAt = 6000;
+      const endIntersectAt = LOGO_ANIMATION_TOTAL_MS;
       const startIntersectTimer = setTimeout(
         () => setIntersectBlendActive(true),
         startIntersectAt
@@ -73,20 +106,29 @@ export default function AgeVerificationOverlay() {
         () => setIntersectBlendActive(false),
         endIntersectAt
       );
-      /** Logo: 3s expansion + 3.2s delay + up to 2.8s fly ≈ 6s total. Show glass ~1s before completion for smoother transition. */
-      const showGlassAt = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches ? 4500 : 5000;
-      const t = setTimeout(() => setShowGlassContainer(true), showGlassAt);
+      // Fallback in case animationend does not fire (tab backgrounding, browser quirks).
+      const fallbackRevealTimer = setTimeout(
+        revealInteractiveOverlay,
+        LOGO_ANIMATION_FALLBACK_MS
+      );
       return () => {
         clearTimeout(startIntersectTimer);
         clearTimeout(endIntersectTimer);
-        clearTimeout(t);
+        clearTimeout(fallbackRevealTimer);
+        if (revealDelayTimerRef.current !== null) {
+          window.clearTimeout(revealDelayTimerRef.current);
+          revealDelayTimerRef.current = null;
+        }
       };
     } else {
+      logoAnimationStartedAtRef.current = null;
+      hasRevealedGlassRef.current = true;
       setShowLogo(true);
       setIsStatic(true);
       setIntersectBlendActive(false);
+      setShowGlassContainer(true);
     }
-  }, []);
+  }, [revealInteractiveOverlay]);
 
   // Autoplay fallback
   useEffect(() => {
@@ -215,6 +257,29 @@ export default function AgeVerificationOverlay() {
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") {
+        lastMousePositionRef.current = { x: e.clientX, y: e.clientY };
+      }
+      applyTiltFromPoint(e.clientX, e.clientY);
+    },
+    [applyTiltFromPoint]
+  );
+
+  const handlePointerEnter = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") {
+        lastMousePositionRef.current = { x: e.clientX, y: e.clientY };
+      }
+      applyTiltFromPoint(e.clientX, e.clientY);
+    },
+    [applyTiltFromPoint]
+  );
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") {
+        lastMousePositionRef.current = { x: e.clientX, y: e.clientY };
+      }
       applyTiltFromPoint(e.clientX, e.clientY);
     },
     [applyTiltFromPoint]
@@ -238,6 +303,51 @@ export default function AgeVerificationOverlay() {
     applyTiltFromPoint(w / 2, h / 2);
   }, [isOverlayVisible, showGlassContainer, applyTiltFromPoint]);
 
+  const handleLogoAnimationEnd = useCallback(
+    (event: React.AnimationEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement;
+      if (!target.classList.contains("sq-6")) return;
+      if (event.animationName !== "snake-fly-sq6") return;
+      revealInteractiveOverlay();
+    },
+    [revealInteractiveOverlay]
+  );
+
+  /** Fine pointer: initialize tilt from latest mouse position when glass becomes visible. */
+  useEffect(() => {
+    if (!isOverlayVisible || !showGlassContainer) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
+    const hasStoredMousePosition = () => {
+      const p = lastMousePositionRef.current;
+      return (
+        !!p &&
+        p.x >= 0 &&
+        p.y >= 0 &&
+        p.x <= window.innerWidth &&
+        p.y <= window.innerHeight
+      );
+    };
+
+    if (hasStoredMousePosition()) {
+      const p = lastMousePositionRef.current!;
+      applyTiltFromPoint(p.x, p.y);
+      return;
+    }
+
+    const captureInitialMousePosition = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      lastMousePositionRef.current = { x: event.clientX, y: event.clientY };
+      applyTiltFromPoint(event.clientX, event.clientY);
+      window.removeEventListener("pointermove", captureInitialMousePosition);
+    };
+
+    window.addEventListener("pointermove", captureInitialMousePosition);
+    return () => {
+      window.removeEventListener("pointermove", captureInitialMousePosition);
+    };
+  }, [isOverlayVisible, showGlassContainer, applyTiltFromPoint]);
+
   /** Fade in liquid glass container when logo animation nears completion. */
   useLayoutEffect(() => {
     if (showGlassContainer && contentWrapperRef.current) {
@@ -257,6 +367,7 @@ export default function AgeVerificationOverlay() {
         className={`ConsentLogo w-6 h-6 ${intersectBlendActive ? "intersect-active" : ""} ${isStatic ? "logo-static" : ""
           }`}
         style={isOverlayVisible ? { zIndex: 10001 } : undefined}
+        onAnimationEnd={handleLogoAnimationEnd}
       >
         <div className="logo-square sq-1"></div>
         <div className="logo-square sq-2"></div>
@@ -270,7 +381,9 @@ export default function AgeVerificationOverlay() {
         <div
           ref={overlayRef}
           className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black touch-none"
+          onPointerEnter={handlePointerEnter}
           onPointerMove={handlePointerMove}
+          onPointerDown={handlePointerDown}
           onPointerLeave={handlePointerLeave}
         >
           {/* Parallax Video layer */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import SectionWrapper from "../SectionWrapper";
 import clsx from "clsx";
 import { StableLocaleText } from "@/components/StableLocaleText";
@@ -23,188 +23,102 @@ const MUVAFFAKIYET_SLIDES: {
 
 export default function Muvaffakiyet() {
   const { t, lang } = useLanguage();
-
   const DATA = MUVAFFAKIYET_SLIDES;
-
   const TOTAL = DATA.length;
-  const DESKTOP_TRACK_REPEAT = 7;
-  const DESKTOP_TRACK_CENTER_BLOCK = Math.floor(DESKTOP_TRACK_REPEAT / 2);
+  const START_INDEX = TOTAL;
+  const LOOP_REPEAT = 3;
+  const LOOP_SLIDES = useMemo(
+    () =>
+      Array.from({ length: TOTAL * LOOP_REPEAT }, (_, index) => ({
+        virtualIndex: index,
+        realIndex: index % TOTAL,
+        item: DATA[index % TOTAL],
+      })),
+    [DATA, TOTAL]
+  );
 
-  function wrap(i: number) {
-    return ((i % TOTAL) + TOTAL) % TOTAL;
-  }
+  const [activeVirtualIndex, setActiveVirtualIndex] = useState(START_INDEX);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const itemRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+  const scrollRaf = useRef<number | null>(null);
 
-  function getVisibleItems(activeIndex: number, count: number) {
-    const half = Math.floor(count / 2);
-    return Array.from({ length: count }, (_, i) => {
-      const offset = i - half;
-      return { offset, dataIndex: wrap(activeIndex + offset) };
-    });
-  }
+  const activeIndex = activeVirtualIndex % TOTAL;
 
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [dragDeltaX, setDragDeltaX] = useState(0);
-  const [isDesktopDragging, setIsDesktopDragging] = useState(false);
-  const [desktopSlideWidth, setDesktopSlideWidth] = useState(0);
-  const dragStartX = useRef<number | null>(null);
-  const desktopViewportRef = useRef<HTMLDivElement | null>(null);
-  const wheelDragAccum = useRef(0);
-  const wheelDragResetTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const justSwiped = useRef(false);
-  const mobileScrollRef = useRef<HTMLDivElement | null>(null);
-  const [mobileCanScroll, setMobileCanScroll] = useState({
-    left: false,
-    right: true,
-  });
+  const centerByVirtualIndex = useCallback(
+    (index: number, behavior: ScrollBehavior = "smooth", forceMidLoop = false) => {
+      const container = carouselRef.current;
+      if (!container) return;
 
-  const updateMobileScrollState = useCallback(() => {
-    const el = mobileScrollRef.current;
-    if (!el) return;
+      const canonical = ((index % TOTAL) + TOTAL) % TOTAL;
+      const nextIndex = forceMidLoop ? TOTAL + canonical : index;
+      const element = itemRefs.current[nextIndex];
+      if (!element) return;
 
-    const threshold = 6;
-    setMobileCanScroll({
-      left: el.scrollLeft > threshold,
-      right: el.scrollLeft < el.scrollWidth - el.clientWidth - threshold,
-    });
-  }, []);
+      const left = element.offsetLeft - (container.clientWidth - element.clientWidth) / 2;
+      container.scrollTo({ left, behavior });
+      setActiveVirtualIndex(nextIndex);
+    },
+    [TOTAL]
+  );
+
+  const navigate = useCallback(
+    (direction: 1 | -1) => {
+      centerByVirtualIndex(activeVirtualIndex + direction);
+    },
+    [activeVirtualIndex, centerByVirtualIndex]
+  );
 
   useEffect(() => {
-    const el = mobileScrollRef.current;
-    if (!el) return;
+    centerByVirtualIndex(START_INDEX, "auto", true);
+  }, [centerByVirtualIndex, START_INDEX]);
 
-    updateMobileScrollState();
-    const onScroll = () => updateMobileScrollState();
-    const onResize = () => updateMobileScrollState();
-
-    el.addEventListener("scroll", onScroll, { passive: true });
+  useEffect(() => {
+    const onResize = () => centerByVirtualIndex(activeVirtualIndex, "auto", true);
     window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [activeVirtualIndex, centerByVirtualIndex]);
 
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [updateMobileScrollState]);
-
-  const activeIndex = wrap(carouselIndex);
-  const activeAbsoluteIndex = DESKTOP_TRACK_CENTER_BLOCK * TOTAL + carouselIndex;
-  const effectiveDesktopSlideWidth = desktopSlideWidth || 1;
-
-  const navigate = (dir: number) => {
-    setCarouselIndex((prev) => prev + dir);
-  };
-
-  const markSwipe = () => {
-    justSwiped.current = true;
-    setTimeout(() => {
-      justSwiped.current = false;
-    }, 120);
-  };
-
-  // Keep index bounded without changing visible order.
-  useEffect(() => {
-    if (Math.abs(carouselIndex) > TOTAL * 4) {
-      setCarouselIndex((prev) => prev % TOTAL);
+  const handleScroll = () => {
+    if (scrollRaf.current) {
+      cancelAnimationFrame(scrollRaf.current);
     }
-  }, [carouselIndex, TOTAL]);
 
-  useEffect(() => {
-    const updateDesktopSlideWidth = () => {
-      const el = desktopViewportRef.current;
-      if (!el) return;
-      setDesktopSlideWidth(el.clientWidth / 5);
-    };
+    scrollRaf.current = requestAnimationFrame(() => {
+      const container = carouselRef.current;
+      if (!container) return;
 
-    updateDesktopSlideWidth();
-    window.addEventListener("resize", updateDesktopSlideWidth);
-    return () => window.removeEventListener("resize", updateDesktopSlideWidth);
-  }, []);
+      const center = container.scrollLeft + container.clientWidth / 2;
+      let closestIndex = activeVirtualIndex;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      LOOP_SLIDES.forEach(({ virtualIndex }) => {
+        const element = itemRefs.current[virtualIndex];
+        if (!element) return;
+
+        const elementCenter = element.offsetLeft + element.clientWidth / 2;
+        const distance = Math.abs(elementCenter - center);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = virtualIndex;
+        }
+      });
+
+      setActiveVirtualIndex(closestIndex);
+
+      // Re-center into the middle track copy to keep a seamless loop.
+      if (closestIndex < TOTAL || closestIndex >= TOTAL * 2) {
+        centerByVirtualIndex(closestIndex, "auto", true);
+      }
+    });
+  };
 
   useEffect(() => {
     return () => {
-      if (wheelDragResetTimeout.current) {
-        clearTimeout(wheelDragResetTimeout.current);
+      if (scrollRaf.current) {
+        cancelAnimationFrame(scrollRaf.current);
       }
     };
   }, []);
-
-  const handleMobileNavigate = (dir: 1 | -1) => {
-    const el = mobileScrollRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
-  };
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    dragStartX.current = e.clientX;
-    setIsDesktopDragging(true);
-    setDragDeltaX(0);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDesktopDragging || dragStartX.current === null) return;
-    setDragDeltaX(e.clientX - dragStartX.current);
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isDesktopDragging || dragStartX.current === null) return;
-    const diff = e.clientX - dragStartX.current;
-    const dragThreshold = Math.max(36, effectiveDesktopSlideWidth * 0.18);
-    if (Math.abs(diff) > dragThreshold) {
-      markSwipe();
-      navigate(diff < 0 ? 1 : -1);
-    }
-    setDragDeltaX(0);
-    setIsDesktopDragging(false);
-    dragStartX.current = null;
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-  };
-
-  const handlePointerCancel = (e: React.PointerEvent) => {
-    setDragDeltaX(0);
-    setIsDesktopDragging(false);
-    dragStartX.current = null;
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-  };
-
-  const handleDesktopWheel = (e: React.WheelEvent) => {
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
-    if (delta === 0) return;
-
-    e.preventDefault();
-
-    const nextAccum = wheelDragAccum.current + delta;
-    wheelDragAccum.current = nextAccum;
-    setIsDesktopDragging(true);
-    setDragDeltaX(-nextAccum);
-
-    const dragThreshold = Math.max(36, effectiveDesktopSlideWidth * 0.18);
-    if (Math.abs(nextAccum) > dragThreshold) {
-      markSwipe();
-      navigate(nextAccum > 0 ? 1 : -1);
-      wheelDragAccum.current = 0;
-      setDragDeltaX(0);
-      setIsDesktopDragging(false);
-    }
-
-    if (wheelDragResetTimeout.current) {
-      clearTimeout(wheelDragResetTimeout.current);
-    }
-
-    wheelDragResetTimeout.current = setTimeout(() => {
-      wheelDragAccum.current = 0;
-      setDragDeltaX(0);
-      setIsDesktopDragging(false);
-    }, 140);
-  };
-
-  const handleItemClick = (offset: number) => {
-    if (!justSwiped.current && offset !== 0) navigate(offset);
-  };
 
   return (
     <SectionWrapper id="muvaffakiyet" className="py-20">
@@ -219,175 +133,101 @@ export default function Muvaffakiyet() {
           </p>
         </div>
 
-        {/* Carousel */}
+        {/* Unified loop carousel - mobile + desktop */}
         <div className="select-none">
-          {/* Mobile — horizontal carousel, full text per card */}
-          <div
-            ref={mobileScrollRef}
-            className="md:hidden overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            <div className="flex">
-              {DATA.map((item) => (
-                <article
-                  key={item.id}
-                  className="w-full min-w-full shrink-0 snap-start text-center px-1"
-                >
-                  <div className="mx-auto max-w-2xl">
-                    <h3 className="font-serif mb-3 text-2xl text-primary">
-                      <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
-                    </h3>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => handleMobileNavigate(-1)}
-                        disabled={!mobileCanScroll.left}
-                        aria-label={lang === "tr" ? "Onceki" : "Previous"}
-                        className={clsx(
-                          "absolute left-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
-                          "active:scale-95 disabled:cursor-default",
-                          mobileCanScroll.left
-                            ? "opacity-100"
-                            : "opacity-40 border-white/10 text-white/40"
-                        )}
-                      >
-                        <ChevronLeft className="h-4 w-4 mx-auto" />
-                      </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              aria-label={lang === "tr" ? "Onceki" : "Previous"}
+              className={clsx(
+                "absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full border border-white/20 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
+                "active:scale-95 hover:bg-black/60"
+              )}
+            >
+              <ChevronLeft className="h-4 w-4 mx-auto" />
+            </button>
 
-                      <p className="font-light leading-relaxed text-sm text-white/70 px-10">
-                        <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() => handleMobileNavigate(1)}
-                        disabled={!mobileCanScroll.right}
-                        aria-label={lang === "tr" ? "Sonraki" : "Next"}
-                        className={clsx(
-                          "absolute right-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
-                          "active:scale-95 disabled:cursor-default",
-                          mobileCanScroll.right
-                            ? "opacity-100"
-                            : "opacity-40 border-white/10 text-white/40"
-                        )}
-                      >
-                        <ChevronRight className="h-4 w-4 mx-auto" />
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          {/* Desktop — horizontal sliding carousel */}
-          <div
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerCancel}
-            onWheel={handleDesktopWheel}
-            className="hidden md:block touch-pan-y cursor-grab active:cursor-grabbing"
-          >
-            <div ref={desktopViewportRef} className="muvaffakiyet-content-reveal overflow-hidden">
-              <div
-                className={clsx(
-                  "flex items-start",
-                  isDesktopDragging ? "transition-none" : "transition-transform duration-300 ease-out"
-                )}
-                style={{
-                  transform: `translate3d(${-(activeAbsoluteIndex - 2) * effectiveDesktopSlideWidth + dragDeltaX}px, 0, 0)`,
-                }}
-              >
-                {Array.from({ length: TOTAL * DESKTOP_TRACK_REPEAT }, (_, i) => {
-                  const item = DATA[wrap(i)];
-                  const offset = i - activeAbsoluteIndex;
-                  const absOffset = Math.abs(offset);
-                  const isActive = absOffset === 0;
-                  const isAdjacent = absOffset === 1;
-                  const isVisible = absOffset <= 2;
+            <div
+              ref={carouselRef}
+              onScroll={handleScroll}
+              className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <div className="flex items-stretch gap-3 sm:gap-4 px-8 sm:px-12">
+                {LOOP_SLIDES.map(({ virtualIndex, realIndex, item }) => {
+                  const isActive = virtualIndex === activeVirtualIndex;
 
                   return (
-                    <div
-                      key={`${item.id}-${i}`}
-                      onClick={() => isVisible && handleItemClick(offset)}
+                    <button
+                      key={`${item.id}-${virtualIndex}`}
+                      type="button"
+                      ref={(element) => {
+                        itemRefs.current[virtualIndex] = element;
+                      }}
+                      onClick={() => centerByVirtualIndex(virtualIndex)}
+                      aria-label={t(item.titleKey)}
                       className={clsx(
-                        "w-1/5 shrink-0 px-2 lg:px-3 flex flex-col text-center select-none",
-                        isVisible ? "cursor-pointer" : "pointer-events-none",
+                        "shrink-0 snap-center text-left rounded-2xl border px-5 py-6 sm:px-6 sm:py-7 transition-all duration-250",
+                        "basis-[84%] sm:basis-[62%] lg:basis-[46%] xl:basis-[38%]",
                         isActive
-                          ? "opacity-100"
-                          : isAdjacent
-                            ? "opacity-30"
-                            : isVisible
-                              ? "opacity-10"
-                              : "opacity-0"
+                          ? "border-primary/50 bg-white/[0.07] shadow-[0_10px_35px_rgba(212,175,55,0.12)]"
+                          : "border-white/15 bg-white/[0.03] opacity-70 hover:opacity-95"
                       )}
                     >
                       <h3
                         className={clsx(
-                          "font-serif mb-4",
-                          isActive
-                            ? "text-2xl lg:text-3xl text-primary"
-                            : isAdjacent
-                              ? "text-lg lg:text-xl text-white/60"
-                              : "text-base text-white/40"
+                          "font-serif mb-3 sm:mb-4 transition-colors",
+                          isActive ? "text-2xl lg:text-[2rem] text-primary" : "text-xl lg:text-2xl text-white/80"
                         )}
                       >
                         <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
                       </h3>
-                      <div
+                      <p
                         className={clsx(
-                          "relative overflow-hidden",
-                          !isActive && (isAdjacent ? "max-h-44" : "max-h-28")
+                          "font-light leading-relaxed transition-colors",
+                          isActive ? "text-sm lg:text-base text-white/75" : "text-sm text-white/55 line-clamp-6"
                         )}
-                        style={
-                          !isActive
-                            ? {
-                                WebkitMaskImage:
-                                  "linear-gradient(to bottom, black 60%, transparent 100%)",
-                                maskImage:
-                                  "linear-gradient(to bottom, black 60%, transparent 100%)",
-                              }
-                            : undefined
-                        }
                       >
-                        <p
-                          className={clsx(
-                            "font-light leading-relaxed",
-                            isActive
-                              ? "text-sm lg:text-base text-white/70"
-                              : "text-xs lg:text-sm text-white/50"
-                          )}
-                        >
-                          <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
-                        </p>
-                      </div>
-                    </div>
+                        <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
+                      </p>
+                      <span className="sr-only">{realIndex + 1}</span>
+                    </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Separator + dots */}
-            <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent mx-auto mt-10 mb-6" />
-            <div className="flex items-center justify-center gap-2">
-              {DATA.map((item, i) => (
-                <button
-                  key={item.id}
-                  onClick={() => setCarouselIndex((prev) => prev + (i - activeIndex))}
-                  aria-label={t(item.titleKey)}
-                  className={clsx(
-                    "rounded-full transition-all duration-300 cursor-pointer",
-                    i === activeIndex
-                      ? "w-6 h-1.5 bg-primary"
-                      : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
-                  )}
-                />
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate(1)}
+              aria-label={lang === "tr" ? "Sonraki" : "Next"}
+              className={clsx(
+                "absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full border border-white/20 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
+                "active:scale-95 hover:bg-black/60"
+              )}
+            >
+              <ChevronRight className="h-4 w-4 mx-auto" />
+            </button>
+          </div>
+
+          <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent mx-auto mt-10 mb-6" />
+          <div className="flex items-center justify-center gap-2">
+            {DATA.map((item, i) => (
+              <button
+                key={item.id}
+                onClick={() => centerByVirtualIndex(TOTAL + i)}
+                aria-label={t(item.titleKey)}
+                className={clsx(
+                  "rounded-full transition-all duration-300 cursor-pointer",
+                  i === activeIndex
+                    ? "w-6 h-1.5 bg-primary"
+                    : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
+                )}
+              />
+            ))}
           </div>
         </div>
       </div>
-
     </SectionWrapper>
   );
 }
