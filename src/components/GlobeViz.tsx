@@ -216,6 +216,23 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
     controls.enableZoom = true;
     controls.zoomSpeed = compactLayout ? 1.25 : 1;
+    controls.enablePan = false;
+    controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
+
+    if ("touches" in controls) {
+      // Keep pinch gesture focused on dolly by disabling pan.
+      // OrbitControls has no dolly-only touch mode, so this is the closest stable setup.
+      (
+        controls as {
+          touches: { ONE: number; TWO: number };
+        }
+      ).touches.ONE = 0; // THREE.TOUCH.ROTATE
+      (
+        controls as {
+          touches: { ONE: number; TWO: number };
+        }
+      ).touches.TWO = 2; // THREE.TOUCH.DOLLY_PAN (pan disabled above)
+    }
 
     if ("enableDamping" in controls) {
       (controls as { enableDamping: boolean }).enableDamping = true;
@@ -301,7 +318,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden max-lg:touch-manipulation lg:touch-none"
+      className="w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden touch-none"
       data-lenis-prevent // Prevents Lenis from hijacking scroll/drag events on the globe
     >
       {canRenderGlobe && (

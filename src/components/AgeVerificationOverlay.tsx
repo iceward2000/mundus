@@ -335,6 +335,11 @@ export default function AgeVerificationOverlay() {
       return;
     }
 
+    // Overlay can mount under an already-stationary cursor, so no enter/move event fires.
+    // Seed an engaged state immediately, then replace it with the real pointer position
+    // on the first mouse move.
+    applyTiltFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+
     const captureInitialMousePosition = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
       lastMousePositionRef.current = { x: event.clientX, y: event.clientY };
@@ -402,6 +407,7 @@ export default function AgeVerificationOverlay() {
               preload="metadata"
               aria-hidden="true"
             >
+              <source src="/videos/entrance-compressed.webm" type="video/webm" />
               <source src={VIDEO_SRC} type="video/mp4" />
             </video>
           </div>

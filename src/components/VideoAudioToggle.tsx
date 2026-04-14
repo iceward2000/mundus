@@ -115,7 +115,7 @@ export default function VideoAudioToggle({
 
   return (
     <>
-      <audio ref={audioRef} src={audioSrc} loop preload="auto" />
+      <audio ref={audioRef} src={audioSrc} loop preload="none" />
 
       <button
         type="button"

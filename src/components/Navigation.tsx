@@ -478,7 +478,7 @@ export default function Navigation() {
       {/* Top-right HUD: audio toggle + scroll percentage — single aligned row */}
       {!isMobile && (
         <div className="fixed top-8 right-8 z-[70] pointer-events-none flex items-center gap-5">
-          <audio ref={audioRef} src="/audio/loop.mp3" loop preload="auto" />
+          <audio ref={audioRef} src="/audio/loop.mp3" loop preload="none" />
 
           {showAudioToggle && (
             <button

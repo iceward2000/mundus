@@ -11,14 +11,13 @@ import { useEffect } from "react";
 // ── Asset Manifest ──────────────────────────────────────────────────────────
 const DESKTOP_IMAGE_ASSETS = [
   "/mundus-text-logo.svg",
-  "/hikaye-images/13.png",
-  "/hikaye-images/14.png",
-  ...Array.from({ length: 12 }, (_, i) => `/cocktail-images/${i + 7}.png`),
+  "/hikaye-images/4.png",
+  "/hikaye-images/5.png",
 ];
 const MOBILE_IMAGE_ASSETS = [
   "/mundus-text-logo.svg",
-  "/hikaye-images/13.png",
-  "/hikaye-images/14.png"
+  "/hikaye-images/4.png",
+  "/hikaye-images/5.png",
 ];
 
 export default function AssetPreloader() {

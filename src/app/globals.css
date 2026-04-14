@@ -492,50 +492,56 @@ textarea:-webkit-autofill:focus {
 */
 @media (max-width: 1024px) {
   .ConsentLogo {
-    top: calc(50% + env(safe-area-inset-top, 0px));
+    top: calc(50vh + env(safe-area-inset-top, 0px));
+    left: 50vw;
     --logo-final-shift-x: -1.25rem;
     --logo-final-shift-y: -0.5rem;
   }
 
   .ConsentLogo.logo-static .sq-1 {
-    transform: translate(calc(-14.2vw - 14.2vh + 3.02rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 2.52rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-2 {
-    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 3.24rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-3 {
-    transform: translate(calc(-14.2vw - 14.2vh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 3.24rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-4 {
-    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 3.96rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-5 {
-    transform: translate(calc(-14.2vw - 14.2vh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 3.96rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
   .ConsentLogo.logo-static .sq-6 {
-    transform: translate(calc(-14.2vw - 14.2vh + 5.18rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+    transform: translate(calc(-14.2vw - 14.2vh + 4.68rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
   }
 }
 
 @supports (height: 100svh) {
   @media (max-width: 1024px) {
+    .ConsentLogo {
+      top: calc(50svh + env(safe-area-inset-top, 0px));
+      left: 50vw;
+    }
+
     .ConsentLogo.logo-static .sq-1 {
-      transform: translate(calc(-14.2vw - 14.2svh + 3.02rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+      transform: translate(calc(-14.2vw - 14.2svh + 2.52rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
     }
     .ConsentLogo.logo-static .sq-2 {
-      transform: translate(calc(-14.2vw - 14.2svh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+      transform: translate(calc(-14.2vw - 14.2svh + 3.24rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
     }
     .ConsentLogo.logo-static .sq-3 {
-      transform: translate(calc(-14.2vw - 14.2svh + 3.74rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + var(--logo-final-shift-y))) scale(0.4);
+      transform: translate(calc(-14.2vw - 14.2svh + 3.24rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + var(--logo-final-shift-y))) scale(0.4);
     }
     .ConsentLogo.logo-static .sq-4 {
-      transform: translate(calc(-14.2vw - 14.2svh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + var(--logo-final-shift-y))) scale(0.4);
+      transform: translate(calc(-14.2vw - 14.2svh + 3.96rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh + var(--logo-final-shift-y))) scale(0.4);
     }
     .ConsentLogo.logo-static .sq-5 {
-      transform: translate(calc(-14.2vw - 14.2svh + 4.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+      transform: translate(calc(-14.2vw - 14.2svh + 3.96rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
     }
     .ConsentLogo.logo-static .sq-6 {
-      transform: translate(calc(-14.2vw - 14.2svh + 5.18rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+      transform: translate(calc(-14.2vw - 14.2svh + 4.68rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2svh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
     }
 
     @keyframes snake-fly-sq1 {

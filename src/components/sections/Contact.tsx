@@ -30,6 +30,8 @@ export default function Contact() {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [isFocused, setIsFocused] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+  const [useLiteVisuals, setUseLiteVisuals] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -43,6 +45,18 @@ export default function Contact() {
   const planeTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const planeNodesRef = useRef<HTMLElement[]>([]);
   const planeAnimatingRef = useRef(false);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const hasBackdropSupport =
+      CSS.supports("backdrop-filter: blur(2px)") || CSS.supports("-webkit-backdrop-filter: blur(2px)");
+    const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
+    const cores = navigator.hardwareConcurrency ?? 8;
+    const lowPowerDevice = memory <= 4 || cores <= 4;
+
+    // Older/low-power GPUs often artifact when backdrop-filter + 3D transforms + heavy shadows are stacked.
+    setUseLiteVisuals(reducedMotion || !hasBackdropSupport || lowPowerDevice);
+  }, []);
 
   const animatePaperPlaneFlight = useCallback(() => {
     return new Promise<void>((resolve) => {
@@ -260,13 +274,46 @@ export default function Contact() {
   }, [formData, currentStep, isFocused]);
 
   useEffect(() => {
-    videoRef.current?.play().catch(() => { });
+    const section = document.getElementById("contact");
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoadVideo(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "500px 0px" }
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!shouldLoadVideo || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const tryPlay = () => {
+      video.play().catch(() => {});
+    };
+
+    tryPlay();
+    video.addEventListener("loadeddata", tryPlay);
+    video.addEventListener("canplay", tryPlay);
+
+    return () => {
+      video.removeEventListener("loadeddata", tryPlay);
+      video.removeEventListener("canplay", tryPlay);
+    };
+  }, [shouldLoadVideo]);
 
   // 3D Perspective – cursor-based liquid glass tilt (like AgeVerificationOverlay)
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!inputContainerRef.current) return;
     if (isSubmitting || submitStatus === "success") return;
+    if (useLiteVisuals) return;
 
     const { clientX, clientY } = e;
     const { innerWidth, innerHeight } = window;
@@ -283,11 +330,12 @@ export default function Contact() {
       ease: "power2.out",
       duration: 0.6,
     });
-  }, [isSubmitting, submitStatus]);
+  }, [isSubmitting, submitStatus, useLiteVisuals]);
 
   const handleMouseLeave = useCallback(() => {
     if (!inputContainerRef.current) return;
     if (isSubmitting || submitStatus === "success") return;
+    if (useLiteVisuals) return;
 
     gsap.to(inputContainerRef.current, {
       rotateX: 0,
@@ -299,16 +347,17 @@ export default function Contact() {
       ease: "power3.out",
       duration: 1.2,
     });
-  }, [isSubmitting, submitStatus]);
+  }, [isSubmitting, submitStatus, useLiteVisuals]);
 
   useEffect(() => {
+    if (useLiteVisuals) return;
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseleave", handleMouseLeave);
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [handleMouseMove, handleMouseLeave]);
+  }, [handleMouseMove, handleMouseLeave, useLiteVisuals]);
 
   // Autofocus input on step change
   useEffect(() => {
@@ -430,7 +479,7 @@ export default function Contact() {
         // A transparent gradient that we will animate
         background: "linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(216, 180, 254, 0.4), rgba(168, 85, 247, 0.2))",
         backgroundSize: "200% 200%",
-        backdropFilter: "blur(40px)",
+        backdropFilter: useLiteVisuals ? "none" : "blur(40px)",
       },
       "-=0.1"
     );
@@ -523,7 +572,7 @@ export default function Contact() {
       {/* Background Video Layer */}
       <video
         ref={videoRef}
-        autoPlay
+        autoPlay={shouldLoadVideo}
         muted
         loop
         playsInline
@@ -531,13 +580,18 @@ export default function Contact() {
           const video = videoRef.current;
           if (!video) return;
           video.currentTime = 0;
-          video.play().catch(() => { });
+          video.play().catch(() => {});
         }}
-        preload="metadata"
+        preload="none"
         className="absolute inset-0 w-full h-full object-cover z-0"
         aria-hidden="true"
       >
-        <source src="/videos/exit-compressed.mp4" type="video/mp4" />
+        {shouldLoadVideo && (
+          <>
+            <source src="/videos/exit-compressed.webm" type="video/webm" />
+            <source src="/videos/exit-compressed.mp4" type="video/mp4" />
+          </>
+        )}
       </video>
       <VideoAudioToggle
         videoRef={videoRef}
@@ -584,9 +638,9 @@ export default function Contact() {
             }}
             className={clsx(
               "relative w-full max-w-2xl will-change-transform",
-              "bg-white/[0.01] backdrop-blur-[40px] rounded-[3rem] group",
-              "border-t border-l border-white/20 border-b border-r border-white/5",
-              "shadow-[inset_0_0_20px_rgba(255,255,255,0.1),0_20px_50px_rgba(0,0,0,0.5)]",
+              useLiteVisuals
+                ? "bg-black/35 rounded-[3rem] group border border-white/15 shadow-[0_12px_30px_rgba(0,0,0,0.45)]"
+                : "bg-white/[0.01] backdrop-blur-[40px] rounded-[3rem] group border-t border-l border-white/20 border-b border-r border-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.1),0_20px_50px_rgba(0,0,0,0.5)]",
               submitStatus === "idle" && !isSubmitting && "hover:shadow-[inset_0_0_30px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.6)]",
               submitStatus === "success" && "cursor-pointer",
               isSubmitting && submitStatus !== "success" && "pointer-events-none overflow-hidden",
@@ -602,7 +656,9 @@ export default function Contact() {
             </div>
 
             {/* Internal gleam effect */}
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-50 mix-blend-overlay rounded-[inherit]" />
+            {!useLiteVisuals && (
+              <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-50 mix-blend-overlay rounded-[inherit]" />
+            )}
 
             <div
               ref={formContentRef}

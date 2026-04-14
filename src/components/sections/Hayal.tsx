@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { StableLocaleText } from "@/components/StableLocaleText";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -8,9 +8,47 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 type Tab = "gercek" | "hayal";
 
 export default function Hayal() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [activeTab, setActiveTab] = useState<Tab>("gercek");
   const [isAnimating, setIsAnimating] = useState(false);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoadVideo(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "450px 0px" }
+    );
+
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldLoadVideo || prefersReducedMotion || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const tryPlay = () => {
+      video.play().catch(() => {});
+    };
+
+    tryPlay();
+    video.addEventListener("loadeddata", tryPlay);
+    video.addEventListener("canplay", tryPlay);
+
+    return () => {
+      video.removeEventListener("loadeddata", tryPlay);
+      video.removeEventListener("canplay", tryPlay);
+    };
+  }, [prefersReducedMotion, shouldLoadVideo]);
 
   const handleTabChange = (tab: Tab) => {
     if (tab === activeTab || isAnimating) return;
@@ -20,7 +58,7 @@ export default function Hayal() {
   };
 
   return (
-    <section id="hayal" className="relative w-full min-h-screen overflow-hidden">
+    <section ref={sectionRef} id="hayal" className="relative w-full min-h-screen overflow-hidden">
       {/* Content layer */}
       <div className="relative z-10 flex flex-col justify-start min-h-screen px-4 md:px-8 lg:px-16 py-20 md:py-32">
         <div className="mb-8 md:mb-10 lg:mb-12 text-center">
@@ -34,15 +72,22 @@ export default function Hayal() {
           {/* Background video lives inside glass and stays clipped by radius */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <video
+              ref={videoRef}
               className="h-full w-full object-cover"
-              src="/videos/bira-compressed.mp4"
-              autoPlay={!prefersReducedMotion}
+              autoPlay={shouldLoadVideo && !prefersReducedMotion}
               loop={!prefersReducedMotion}
               muted
               playsInline
-              preload="metadata"
+              preload="none"
               aria-hidden="true"
-            />
+            >
+              {shouldLoadVideo && (
+                <>
+                  <source src="/videos/bira-compressed.webm" type="video/webm" />
+                  <source src="/videos/bira-compressed.mp4" type="video/mp4" />
+                </>
+              )}
+            </video>
             {/* Keeps tab labels legible while preserving glass depth */}
             <div className="absolute inset-0 bg-black/30" />
           </div>

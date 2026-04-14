@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import SectionWrapper from "../SectionWrapper";
 import clsx from "clsx";
 import { StableLocaleText } from "@/components/StableLocaleText";
@@ -23,102 +23,64 @@ const MUVAFFAKIYET_SLIDES: {
 
 export default function Muvaffakiyet() {
   const { t, lang } = useLanguage();
+
   const DATA = MUVAFFAKIYET_SLIDES;
   const TOTAL = DATA.length;
-  const START_INDEX = TOTAL;
-  const LOOP_REPEAT = 3;
-  const LOOP_SLIDES = useMemo(
-    () =>
-      Array.from({ length: TOTAL * LOOP_REPEAT }, (_, index) => ({
-        virtualIndex: index,
-        realIndex: index % TOTAL,
-        item: DATA[index % TOTAL],
-      })),
-    [DATA, TOTAL]
-  );
+  const [activeIndex, setActiveIndex] = useState(0);
+  const mobileScrollRef = useRef<HTMLDivElement | null>(null);
+  const [mobileCanScroll, setMobileCanScroll] = useState({
+    left: false,
+    right: true,
+  });
 
-  const [activeVirtualIndex, setActiveVirtualIndex] = useState(START_INDEX);
-  const carouselRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef<Record<number, HTMLButtonElement | null>>({});
-  const scrollRaf = useRef<number | null>(null);
-
-  const activeIndex = activeVirtualIndex % TOTAL;
-
-  const centerByVirtualIndex = useCallback(
-    (index: number, behavior: ScrollBehavior = "smooth", forceMidLoop = false) => {
-      const container = carouselRef.current;
-      if (!container) return;
-
-      const canonical = ((index % TOTAL) + TOTAL) % TOTAL;
-      const nextIndex = forceMidLoop ? TOTAL + canonical : index;
-      const element = itemRefs.current[nextIndex];
-      if (!element) return;
-
-      const left = element.offsetLeft - (container.clientWidth - element.clientWidth) / 2;
-      container.scrollTo({ left, behavior });
-      setActiveVirtualIndex(nextIndex);
-    },
+  const wrap = useCallback(
+    (index: number) => ((index % TOTAL) + TOTAL) % TOTAL,
     [TOTAL]
   );
 
-  const navigate = useCallback(
-    (direction: 1 | -1) => {
-      centerByVirtualIndex(activeVirtualIndex + direction);
-    },
-    [activeVirtualIndex, centerByVirtualIndex]
-  );
+  const updateMobileScrollState = useCallback(() => {
+    const el = mobileScrollRef.current;
+    if (!el) return;
 
-  useEffect(() => {
-    centerByVirtualIndex(START_INDEX, "auto", true);
-  }, [centerByVirtualIndex, START_INDEX]);
-
-  useEffect(() => {
-    const onResize = () => centerByVirtualIndex(activeVirtualIndex, "auto", true);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [activeVirtualIndex, centerByVirtualIndex]);
-
-  const handleScroll = () => {
-    if (scrollRaf.current) {
-      cancelAnimationFrame(scrollRaf.current);
-    }
-
-    scrollRaf.current = requestAnimationFrame(() => {
-      const container = carouselRef.current;
-      if (!container) return;
-
-      const center = container.scrollLeft + container.clientWidth / 2;
-      let closestIndex = activeVirtualIndex;
-      let closestDistance = Number.POSITIVE_INFINITY;
-
-      LOOP_SLIDES.forEach(({ virtualIndex }) => {
-        const element = itemRefs.current[virtualIndex];
-        if (!element) return;
-
-        const elementCenter = element.offsetLeft + element.clientWidth / 2;
-        const distance = Math.abs(elementCenter - center);
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestIndex = virtualIndex;
-        }
-      });
-
-      setActiveVirtualIndex(closestIndex);
-
-      // Re-center into the middle track copy to keep a seamless loop.
-      if (closestIndex < TOTAL || closestIndex >= TOTAL * 2) {
-        centerByVirtualIndex(closestIndex, "auto", true);
-      }
+    const threshold = 6;
+    setMobileCanScroll({
+      left: el.scrollLeft > threshold,
+      right: el.scrollLeft < el.scrollWidth - el.clientWidth - threshold,
     });
+  }, []);
+
+  useEffect(() => {
+    const el = mobileScrollRef.current;
+    if (!el) return;
+
+    updateMobileScrollState();
+    const onScroll = () => updateMobileScrollState();
+    const onResize = () => updateMobileScrollState();
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [updateMobileScrollState]);
+
+  const handleMobileNavigate = (dir: 1 | -1) => {
+    const el = mobileScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
   };
 
-  useEffect(() => {
-    return () => {
-      if (scrollRaf.current) {
-        cancelAnimationFrame(scrollRaf.current);
-      }
-    };
-  }, []);
+  const activeWrappedIndex = wrap(activeIndex);
+  const visibleOffsets = [-2, -1, 0, 1, 2];
+
+  const getShortestLoopOffset = (targetIndex: number) => {
+    const from = activeWrappedIndex;
+    const forward = (targetIndex - from + TOTAL) % TOTAL;
+    const backward = forward - TOTAL;
+    return Math.abs(forward) <= Math.abs(backward) ? forward : backward;
+  };
 
   return (
     <SectionWrapper id="muvaffakiyet" className="py-20">
@@ -133,101 +95,167 @@ export default function Muvaffakiyet() {
           </p>
         </div>
 
-        {/* Unified loop carousel - mobile + desktop */}
+        {/* Carousel */}
         <div className="select-none">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              aria-label={lang === "tr" ? "Onceki" : "Previous"}
-              className={clsx(
-                "absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full border border-white/20 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
-                "active:scale-95 hover:bg-black/60"
-              )}
-            >
-              <ChevronLeft className="h-4 w-4 mx-auto" />
-            </button>
+          {/* Mobile — horizontal carousel, full text per card */}
+          <div
+            ref={mobileScrollRef}
+            className="md:hidden overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="flex">
+              {DATA.map((item) => (
+                <article
+                  key={item.id}
+                  className="w-full min-w-full shrink-0 snap-start text-center px-1"
+                >
+                  <div className="mx-auto max-w-2xl">
+                    <h3 className="font-serif mb-3 text-2xl text-primary">
+                      <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
+                    </h3>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => handleMobileNavigate(-1)}
+                        disabled={!mobileCanScroll.left}
+                        aria-label={lang === "tr" ? "Onceki" : "Previous"}
+                        className={clsx(
+                          "absolute left-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
+                          "active:scale-95 disabled:cursor-default",
+                          mobileCanScroll.left
+                            ? "opacity-100"
+                            : "opacity-40 border-white/10 text-white/40"
+                        )}
+                      >
+                        <ChevronLeft className="h-4 w-4 mx-auto" />
+                      </button>
 
-            <div
-              ref={carouselRef}
-              onScroll={handleScroll}
-              className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              <div className="flex items-stretch gap-3 sm:gap-4 px-8 sm:px-12">
-                {LOOP_SLIDES.map(({ virtualIndex, realIndex, item }) => {
-                  const isActive = virtualIndex === activeVirtualIndex;
+                      <p className="font-light leading-relaxed text-sm text-white/70 px-10">
+                        <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => handleMobileNavigate(1)}
+                        disabled={!mobileCanScroll.right}
+                        aria-label={lang === "tr" ? "Sonraki" : "Next"}
+                        className={clsx(
+                          "absolute right-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
+                          "active:scale-95 disabled:cursor-default",
+                          mobileCanScroll.right
+                            ? "opacity-100"
+                            : "opacity-40 border-white/10 text-white/40"
+                        )}
+                      >
+                        <ChevronRight className="h-4 w-4 mx-auto" />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop — horizontal layout (infinite loop, center-focused) */}
+          <div className="hidden md:block">
+            <div className="muvaffakiyet-content-reveal overflow-hidden">
+              <div className="flex items-start justify-center">
+                {visibleOffsets.map((offset) => {
+                  const itemIndex = wrap(activeIndex + offset);
+                  const item = DATA[itemIndex];
+                  const isActive = offset === 0;
+                  const absOffset = Math.abs(offset);
+                  const isAdjacent = absOffset === 1;
+                  const isVisible = absOffset <= 2;
 
                   return (
                     <button
-                      key={`${item.id}-${virtualIndex}`}
+                      key={`${item.id}-${offset}`}
                       type="button"
-                      ref={(element) => {
-                        itemRefs.current[virtualIndex] = element;
+                      onClick={() => {
+                        if (offset !== 0) setActiveIndex((prev) => prev + offset);
                       }}
-                      onClick={() => centerByVirtualIndex(virtualIndex)}
                       aria-label={t(item.titleKey)}
+                      aria-pressed={isActive}
                       className={clsx(
-                        "shrink-0 snap-center text-left rounded-2xl border px-5 py-6 sm:px-6 sm:py-7 transition-all duration-250",
-                        "basis-[84%] sm:basis-[62%] lg:basis-[46%] xl:basis-[38%]",
+                        "shrink-0 px-3 lg:px-4 text-center transition-all duration-300",
+                        "flex flex-col",
                         isActive
-                          ? "border-primary/50 bg-white/[0.07] shadow-[0_10px_35px_rgba(212,175,55,0.12)]"
-                          : "border-white/15 bg-white/[0.03] opacity-70 hover:opacity-95"
+                          ? "opacity-100"
+                          : isAdjacent
+                            ? "opacity-35"
+                            : isVisible
+                              ? "opacity-15"
+                              : "opacity-0 pointer-events-none"
                       )}
+                      style={{ width: "clamp(260px, 28vw, 420px)" }}
                     >
                       <h3
                         className={clsx(
-                          "font-serif mb-3 sm:mb-4 transition-colors",
-                          isActive ? "text-2xl lg:text-[2rem] text-primary" : "text-xl lg:text-2xl text-white/80"
+                          "font-serif mb-4",
+                          isActive
+                            ? "text-2xl lg:text-3xl text-primary"
+                            : isAdjacent
+                              ? "text-lg lg:text-xl text-white/60"
+                              : "text-base text-white/40"
                         )}
                       >
                         <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
                       </h3>
-                      <p
+                      <div
                         className={clsx(
-                          "font-light leading-relaxed transition-colors",
-                          isActive ? "text-sm lg:text-base text-white/75" : "text-sm text-white/55 line-clamp-6"
+                          "relative overflow-hidden",
+                          !isActive && (isAdjacent ? "max-h-44" : "max-h-28")
                         )}
+                        style={
+                          !isActive
+                            ? {
+                                WebkitMaskImage:
+                                  "linear-gradient(to bottom, black 60%, transparent 100%)",
+                                maskImage:
+                                  "linear-gradient(to bottom, black 60%, transparent 100%)",
+                              }
+                            : undefined
+                        }
                       >
-                        <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
-                      </p>
-                      <span className="sr-only">{realIndex + 1}</span>
+                        <p
+                          className={clsx(
+                            "font-light leading-relaxed",
+                            isActive
+                              ? "text-sm lg:text-base text-white/70"
+                              : "text-xs lg:text-sm text-white/50"
+                          )}
+                        >
+                          <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
+                        </p>
+                      </div>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => navigate(1)}
-              aria-label={lang === "tr" ? "Sonraki" : "Next"}
-              className={clsx(
-                "absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full border border-white/20 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
-                "active:scale-95 hover:bg-black/60"
-              )}
-            >
-              <ChevronRight className="h-4 w-4 mx-auto" />
-            </button>
-          </div>
-
-          <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent mx-auto mt-10 mb-6" />
-          <div className="flex items-center justify-center gap-2">
-            {DATA.map((item, i) => (
-              <button
-                key={item.id}
-                onClick={() => centerByVirtualIndex(TOTAL + i)}
-                aria-label={t(item.titleKey)}
-                className={clsx(
-                  "rounded-full transition-all duration-300 cursor-pointer",
-                  i === activeIndex
-                    ? "w-6 h-1.5 bg-primary"
-                    : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
-                )}
-              />
-            ))}
+            {/* Separator + dots */}
+            <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent mx-auto mt-10 mb-6" />
+            <div className="flex items-center justify-center gap-2">
+              {DATA.map((item, i) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveIndex((prev) => prev + getShortestLoopOffset(i))}
+                  aria-label={t(item.titleKey)}
+                  className={clsx(
+                    "rounded-full transition-all duration-300 cursor-pointer",
+                    i === activeWrappedIndex
+                      ? "w-6 h-1.5 bg-primary"
+                      : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
+                  )}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
+
     </SectionWrapper>
   );
 }
