@@ -45,6 +45,7 @@ export default function Contact() {
   const planeTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const planeNodesRef = useRef<HTMLElement[]>([]);
   const planeAnimatingRef = useRef(false);
+  const hasMountedRef = useRef(false);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -359,8 +360,14 @@ export default function Contact() {
     };
   }, [handleMouseMove, handleMouseLeave, useLiteVisuals]);
 
-  // Autofocus input on step change
+  // Keep step-to-step focus behavior, but do not autofocus on initial mount
+  // because browser will scroll to the focused input (jumping to contact on refresh).
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
     if (inputElementRef.current && !isSubmitting && submitStatus === "idle") {
       inputElementRef.current.focus();
     }

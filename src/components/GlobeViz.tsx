@@ -201,6 +201,18 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
     let isPinching = false;
+    let pinchStartDistance = 0;
+    let pinchStartAltitude = compactLayout ? 2.35 : 2.5;
+
+    const getTouchDistance = (touches: TouchList) => {
+      if (touches.length < 2) return 0;
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx, dy);
+    };
+
+    const clamp = (value: number, min: number, max: number) =>
+      Math.min(max, Math.max(min, value));
 
     const pauseAutoRotate = () => {
       clearTimeout(resumeRotateTimer);
@@ -217,16 +229,15 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
 
     controls.autoRotate = !compactLayout;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
-    controls.enableZoom = true;
+    controls.enableZoom = !compactLayout;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
-    controls.minDistance = compactLayout ? 140 : 120;
-    controls.maxDistance = compactLayout ? 900 : 1000;
+    controls.minDistance = 120;
+    controls.maxDistance = 1000;
 
     if ("touches" in controls) {
-      // Keep pinch gesture focused on dolly by disabling pan.
-      // OrbitControls has no dolly-only touch mode, so this is the closest stable setup.
+      // 1 finger rotates the globe. 2-finger zoom is handled manually on mobile.
       (
         controls as {
           touches: { ONE: number; TWO: number };
@@ -236,7 +247,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.TWO = 2; // THREE.TOUCH.DOLLY_PAN (pan disabled above)
+      ).touches.TWO = 1; // THREE.TOUCH.PAN (pan is disabled above)
     }
 
     if ("enableDamping" in controls) {
@@ -247,23 +258,40 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     globeEl.current.pointOfView({ altitude: compactLayout ? 2.35 : 2.5 });
 
     const handleTouchStart = (event: TouchEvent) => {
+      if (!compactLayout) return;
       if (event.touches.length < 2) return;
       isPinching = true;
-      // Prevent accidental spin when two-finger pinch starts.
+      pinchStartDistance = getTouchDistance(event.touches);
+      pinchStartAltitude = globeEl.current.pointOfView().altitude ?? 2.35;
+      // Two-finger gesture should zoom only.
       controls.enableRotate = false;
       pauseAutoRotate();
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (!compactLayout || !isPinching || event.touches.length < 2) return;
+      const currentDistance = getTouchDistance(event.touches);
+      if (!pinchStartDistance || !currentDistance) return;
+
+      event.preventDefault();
+
+      const rawScale = pinchStartDistance / currentDistance;
+      const nextAltitude = clamp(pinchStartAltitude * rawScale, 0.85, 3.8);
+      globeEl.current.pointOfView({ altitude: nextAltitude }, 0);
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
       if (event.touches.length >= 2) return;
       if (!isPinching) return;
       isPinching = false;
+      pinchStartDistance = 0;
       controls.enableRotate = true;
       scheduleResumeAutoRotate();
     };
 
     if (canvas) {
       canvas.addEventListener("touchstart", handleTouchStart, { passive: true });
+      canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
       canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
       canvas.addEventListener("touchcancel", handleTouchEnd, { passive: true });
     }
@@ -275,6 +303,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       clearTimeout(resumeRotateTimer);
       if (canvas) {
         canvas.removeEventListener("touchstart", handleTouchStart);
+        canvas.removeEventListener("touchmove", handleTouchMove);
         canvas.removeEventListener("touchend", handleTouchEnd);
         canvas.removeEventListener("touchcancel", handleTouchEnd);
       }
