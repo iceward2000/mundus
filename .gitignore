@@ -37,7 +37,6 @@ next-env.d.ts
 *.mp4
 *.mov
 *.m4v
-*.webm
 *.mkv
 *.avi
 *.wmv
