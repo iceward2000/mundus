@@ -198,7 +198,9 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
     const controls = globeEl.current.controls();
+    const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
+    let isPinching = false;
 
     const pauseAutoRotate = () => {
       clearTimeout(resumeRotateTimer);
@@ -206,18 +208,21 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     };
 
     const scheduleResumeAutoRotate = () => {
+      if (compactLayout) return;
       clearTimeout(resumeRotateTimer);
       resumeRotateTimer = setTimeout(() => {
         controls.autoRotate = true;
-      }, compactLayout ? 4500 : 3500);
+      }, 3500);
     };
 
-    controls.autoRotate = true;
+    controls.autoRotate = !compactLayout;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
     controls.enableZoom = true;
-    controls.zoomSpeed = compactLayout ? 1.25 : 1;
+    controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
+    controls.minDistance = compactLayout ? 140 : 120;
+    controls.maxDistance = compactLayout ? 900 : 1000;
 
     if ("touches" in controls) {
       // Keep pinch gesture focused on dolly by disabling pan.
@@ -241,11 +246,38 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
 
     globeEl.current.pointOfView({ altitude: compactLayout ? 2.35 : 2.5 });
 
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length < 2) return;
+      isPinching = true;
+      // Prevent accidental spin when two-finger pinch starts.
+      controls.enableRotate = false;
+      pauseAutoRotate();
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (event.touches.length >= 2) return;
+      if (!isPinching) return;
+      isPinching = false;
+      controls.enableRotate = true;
+      scheduleResumeAutoRotate();
+    };
+
+    if (canvas) {
+      canvas.addEventListener("touchstart", handleTouchStart, { passive: true });
+      canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
+      canvas.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    }
+
     controls.addEventListener("start", pauseAutoRotate);
     controls.addEventListener("end", scheduleResumeAutoRotate);
 
     return () => {
       clearTimeout(resumeRotateTimer);
+      if (canvas) {
+        canvas.removeEventListener("touchstart", handleTouchStart);
+        canvas.removeEventListener("touchend", handleTouchEnd);
+        canvas.removeEventListener("touchcancel", handleTouchEnd);
+      }
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);
     };
