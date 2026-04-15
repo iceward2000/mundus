@@ -527,14 +527,33 @@ const SketchReveal = () => {
     const onMouseMove = (e: MouseEvent) =>
       handleMove(e.clientX, e.clientY);
 
+    const isCoarsePointer =
+      typeof window !== "undefined" &&
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    const TAP_MAX_MOVEMENT = 12;
+    const TAP_MAX_DURATION = 320;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let touchStartScrollY = 0;
+
     const onTouchStart = (e: TouchEvent) => {
       if (window.scrollY > 100) return;
       if (!isDrawingEnabled.current) return;
       if (e.touches.length !== 1) return;
 
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchStartTime = performance.now();
+      touchStartScrollY = window.scrollY;
+
+      // Keep continuous brush behavior on non-mobile touch devices.
+      if (isCoarsePointer) return;
+
       const rect = canvas.getBoundingClientRect();
-      lastX = e.touches[0].clientX - rect.left;
-      lastY = e.touches[0].clientY - rect.top;
+      lastX = touch.clientX - rect.left;
+      lastY = touch.clientY - rect.top;
       lastTime = performance.now();
       smoothVelocity = 0;
       currentWidth = configRef.current.maxWidth;
@@ -543,6 +562,7 @@ const SketchReveal = () => {
     };
 
     const onTouchMove = (e: TouchEvent) => {
+      if (isCoarsePointer) return;
       if (e.touches.length === 1) {
         handleMove(e.touches[0].clientX, e.touches[0].clientY);
       }
@@ -603,9 +623,52 @@ const SketchReveal = () => {
 
     let lastTapTime = 0;
     const onTouchEnd = (e: TouchEvent) => {
+      if (!isDrawingEnabled.current) return;
+      if (e.changedTouches.length === 0) return;
+
       const now = performance.now();
-      if (now - lastTapTime < 350 && e.changedTouches.length > 0) {
-        const touch = e.changedTouches[0];
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      const moved = Math.hypot(dx, dy);
+      const elapsed = now - touchStartTime;
+      const scrollDelta = Math.abs(window.scrollY - touchStartScrollY);
+
+      // Mobile/touch-first UX: stamp only on intentional taps, never on scroll.
+      if (isCoarsePointer) {
+        const isTap =
+          moved <= TAP_MAX_MOVEMENT &&
+          elapsed <= TAP_MAX_DURATION &&
+          scrollDelta <= 8;
+        if (!isTap) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        ctx.shadowColor = GLOW_COLOR;
+        ctx.shadowBlur = GLOW_BLUR;
+        ctx.fillStyle = COLOR;
+        ctx.beginPath();
+        stampShape(x, y, Math.max(0.5, configRef.current.maxWidth / 2));
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+
+        points = [];
+        currentWidth = configRef.current.maxWidth;
+        widthVelocity = 0;
+        smoothVelocity = 0;
+        hasDrawn = true;
+        return;
+      }
+
+      // Keep desktop touch behavior: quick double tap to clear-and-stamp.
+      if (
+        now - lastTapTime < 350 &&
+        moved <= TAP_MAX_MOVEMENT &&
+        scrollDelta <= 8
+      ) {
         const rect = canvas.getBoundingClientRect();
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;

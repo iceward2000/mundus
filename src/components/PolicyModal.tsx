@@ -86,7 +86,7 @@ export default function PolicyModal({ isOpen, onClose }: PolicyModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6 md:p-8">
+    <div className="fixed inset-0 z-[120] flex items-end justify-center p-2 pt-24 sm:items-center sm:p-6 md:p-8">
       <button
         type="button"
         aria-label="Politikalar popup kapat"
@@ -94,16 +94,16 @@ export default function PolicyModal({ isOpen, onClose }: PolicyModalProps) {
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
 
-      <div className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/15 bg-black/30 shadow-[0_40px_90px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:max-h-[calc(100dvh-3rem)]">
-        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-5 sm:px-8">
-          <h3 className="text-white text-lg sm:text-xl tracking-[0.18em] uppercase">
+      <div className="relative flex max-h-[68dvh] w-full max-w-xl flex-col overflow-hidden rounded-[1.4rem] border border-white/15 bg-black/30 shadow-[0_40px_90px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:max-h-[calc(100dvh-3rem)] sm:max-w-2xl sm:rounded-[2rem]">
+        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3.5 sm:px-8 sm:py-5">
+          <h3 className="text-white text-base sm:text-xl tracking-[0.16em] uppercase">
             Politikalar
           </h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Kapat"
-            className="rounded-full border border-white/20 bg-white/5 p-2 text-white/70 hover:text-white hover:bg-white/10 transition-colors duration-300"
+            className="rounded-full border border-white/20 bg-white/5 p-1.5 text-white/70 hover:text-white hover:bg-white/10 transition-colors duration-300 sm:p-2"
           >
             <X size={16} />
           </button>
@@ -111,7 +111,7 @@ export default function PolicyModal({ isOpen, onClose }: PolicyModalProps) {
 
         <div
           data-lenis-prevent
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pr-3 sm:px-6 sm:py-5 sm:pr-4 [scrollbar-width:thin] [scrollbar-color:rgba(212,175,55,0.55)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track:hover]:bg-transparent [&::-webkit-scrollbar-track-piece]:bg-transparent [&::-webkit-scrollbar-corner]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/55 [&::-webkit-scrollbar-thumb:hover]:bg-primary/75"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pr-2.5 sm:px-6 sm:py-5 sm:pr-4 [scrollbar-width:thin] [scrollbar-color:rgba(212,175,55,0.55)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track:hover]:bg-transparent [&::-webkit-scrollbar-track-piece]:bg-transparent [&::-webkit-scrollbar-corner]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/55 [&::-webkit-scrollbar-thumb:hover]:bg-primary/75"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {POLICY_ITEMS.map((item) => {
@@ -122,10 +122,10 @@ export default function PolicyModal({ isOpen, onClose }: PolicyModalProps) {
                 <button
                   type="button"
                   onClick={() => setActiveItem((prev) => (prev === item.id ? "" : item.id))}
-                  className="w-full rounded-2xl border border-white/15 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors duration-300"
+                  className="w-full rounded-2xl border border-white/15 bg-white/[0.03] px-3.5 py-2.5 text-left hover:bg-white/[0.06] transition-colors duration-300 sm:px-4 sm:py-3"
                 >
                   <span className="flex items-center justify-between gap-4">
-                    <span className="text-sm sm:text-base tracking-[0.06em] text-white/90">
+                    <span className="text-[13px] sm:text-base tracking-[0.06em] text-white/90">
                       {item.title}
                     </span>
                     <ChevronDown
@@ -145,7 +145,7 @@ export default function PolicyModal({ isOpen, onClose }: PolicyModalProps) {
                   )}
                 >
                   <div className="overflow-hidden">
-                    <p className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-white/75 text-sm leading-relaxed whitespace-pre-line">
+                    <p className="rounded-2xl border border-white/10 bg-black/20 px-3.5 py-3.5 text-white/75 text-[13px] leading-relaxed whitespace-pre-line sm:px-4 sm:py-4 sm:text-sm">
                       {policyContent[item.id] ?? "Politika metni yukleniyor..."}
                     </p>
                   </div>

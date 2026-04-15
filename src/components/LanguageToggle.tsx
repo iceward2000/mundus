@@ -43,10 +43,10 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
       onClick={() => setLang(nextLang)}
       aria-label={`Switch to ${label}`}
       className={clsx(
-        "tracking-wide whitespace-nowrap transition-colors duration-300",
+        "tracking-[0.12em] whitespace-nowrap transition-colors duration-300",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg",
         "text-neutral-400 hover:text-white font-extrabold",
-        "text-sm px-2 py-1 -mx-2 -my-1"
+        "text-[10px] sm:text-sm px-1.5 py-1 -mx-1.5 -my-1"
       )}
     >
       <StableLocaleText

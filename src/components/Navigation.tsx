@@ -226,16 +226,16 @@ export default function Navigation() {
   // Mobile Navigation - Bottom pill with dots
   if (isMobile) {
     return (
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-black/90 backdrop-blur-lg px-5 py-3 rounded-full border border-white/10 shadow-2xl shadow-black/50">
-        <div className="flex gap-3 items-center">
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-transparent px-3 py-2 rounded-full border border-white/0 shadow-none">
+        <div className="flex gap-2 items-center">
           {SECTIONS.map((section) => (
             <button
               key={section.id}
               onClick={() => handleScrollTo(section.id)}
               className={clsx(
-                "relative w-2.5 h-2.5 rounded-full transition-all duration-300",
+                "relative w-2 h-2 rounded-full transition-all duration-300",
                 activeId === section.id
-                  ? "bg-primary scale-125"
+                  ? "bg-primary scale-110"
                   : "bg-white/20 hover:bg-white/40"
               )}
               aria-label={t(`nav.${section.id}` as TranslationKey)}
@@ -246,7 +246,7 @@ export default function Navigation() {
             </button>
           ))}
 
-          <span className="w-px h-3 bg-white/10 mx-0.5" />
+          <span className="w-px h-3 bg-white/15 mx-0.5" />
 
           <LanguageToggle variant="nav" />
         </div>
