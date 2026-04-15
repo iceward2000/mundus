@@ -65,11 +65,17 @@ export default function SparklingFrames() {
       canvas.height = sticky.clientHeight;
       render();
     };
-    const resizeObserver = new ResizeObserver(() => {
-      setCanvasSize();
-      ScrollTrigger.refresh();
-    });
-    resizeObserver.observe(sticky);
+    let resizeRafId: number | null = null;
+    const scheduleCanvasResize = () => {
+      if (resizeRafId !== null) window.cancelAnimationFrame(resizeRafId);
+      resizeRafId = window.requestAnimationFrame(() => {
+        resizeRafId = null;
+        setCanvasSize();
+      });
+    };
+
+    window.addEventListener("resize", scheduleCanvasResize, { passive: true });
+    window.addEventListener("orientationchange", scheduleCanvasResize, { passive: true });
     setCanvasSize();
 
     function render() {
@@ -140,7 +146,9 @@ export default function SparklingFrames() {
     }, 0);
 
     return () => {
-      resizeObserver.disconnect();
+      if (resizeRafId !== null) window.cancelAnimationFrame(resizeRafId);
+      window.removeEventListener("resize", scheduleCanvasResize);
+      window.removeEventListener("orientationchange", scheduleCanvasResize);
       tl.kill();
       ScrollTrigger.getAll().forEach((t) => {
         if (t.vars.trigger === triggerEl) t.kill();

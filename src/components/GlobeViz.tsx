@@ -34,29 +34,6 @@ const GEOJSON_FALLBACK =
 const getPathPoints = (d: any) => d.coords;
 const getPathPointLat = (p: any) => p[1];
 const getPathPointLng = (p: any) => p[0];
-const getRingSignedArea = (ring: [number, number][]) => {
-  let area = 0;
-  for (let i = 0; i < ring.length - 1; i += 1) {
-    const [x1, y1] = ring[i];
-    const [x2, y2] = ring[i + 1];
-    area += x1 * y2 - x2 * y1;
-  }
-  return area / 2;
-};
-
-const normalizePolygonCoordinates = (polygonCoords: [number, number][][]) =>
-  polygonCoords.map((ring, index) => {
-    if (!ring.length) return ring;
-    const ringCopy = [...ring] as [number, number][];
-    const area = getRingSignedArea(ringCopy);
-    const isClockwise = area < 0;
-    const shouldBeClockwise = index > 0;
-    if (isClockwise !== shouldBeClockwise) {
-      ringCopy.reverse();
-    }
-    return ringCopy;
-  });
-
 const getPolygonLabel = ({ properties: d }: any) => {
   const countryName = d.DISPLAY_ADMIN || d.ADMIN;
   const { trName, cheers } = getCheersForCountry(countryName);
@@ -121,8 +98,8 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     [compactLayout]
   );
 
-  const polygonAltitude = compactLayout ? 0.055 : 0.04;
-  const pathPointAltitude = compactLayout ? 0.065 : 0.05;
+  const polygonAltitude = compactLayout ? 0.045 : 0.018;
+  const pathPointAltitude = compactLayout ? 0.04 : 0.02;
 
   // 1. Safe Initialization & Cleanup Strategy
   useEffect(() => {
@@ -368,26 +345,21 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       if (!geometry || !properties) return;
 
       if (geometry.type === "Polygon") {
-        const normalizedCoordinates = normalizePolygonCoordinates(geometry.coordinates);
-        const ring = normalizedCoordinates[0];
+        const ring = geometry.coordinates[0];
         features.push({
           type: "Feature",
           properties: {
             ...properties,
             DISPLAY_ADMIN: getDisplayAdmin(properties.ADMIN, ring),
           },
-          geometry: {
-            type: "Polygon",
-            coordinates: normalizedCoordinates,
-          },
+          geometry,
         });
         return;
       }
 
       if (geometry.type === "MultiPolygon") {
         geometry.coordinates.forEach((polygon: any) => {
-          const normalizedCoordinates = normalizePolygonCoordinates(polygon);
-          const ring = normalizedCoordinates[0];
+          const ring = polygon[0];
           features.push({
             type: "Feature",
             properties: {
@@ -396,7 +368,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
             },
             geometry: {
               type: "Polygon",
-              coordinates: normalizedCoordinates,
+              coordinates: polygon,
             },
           });
         });
@@ -442,11 +414,10 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
           width={dimensions.width}
           height={dimensions.height}
           rendererConfig={{
-            antialias: true,
+            antialias: false,
             alpha: true,
             failIfMajorPerformanceCaveat: false,
             powerPreference: "high-performance",
-            logarithmicDepthBuffer: true,
           }}
           globeImageUrl="https://unpkg.com/three-globe/example/img/earth-dark.jpg"
           bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
@@ -460,7 +431,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
           polygonLabel={getPolygonLabel}
           onPolygonHover={setHoveredPolygon}
           polygonAltitude={polygonAltitude}
-          polygonCapCurvatureResolution={compactLayout ? 14 : 16}
+          polygonCapCurvatureResolution={compactLayout ? 8 : 12}
 
           pathsData={borderPaths}
           pathPoints={getPathPoints}

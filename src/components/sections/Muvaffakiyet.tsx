@@ -120,7 +120,7 @@ export default function Muvaffakiyet() {
               {mobileLoopData.map(({ item, loopIndex }) => (
                 <article
                   key={`${item.id}-${loopIndex}`}
-                  className="w-full min-w-full shrink-0 snap-start text-center px-1"
+                  className="w-full min-w-full shrink-0 snap-start text-left px-1"
                 >
                   <div className="mx-auto max-w-2xl">
                     <h3 className="font-serif mb-3 text-2xl text-primary">
@@ -183,7 +183,7 @@ export default function Muvaffakiyet() {
                       aria-label={t(item.titleKey)}
                       aria-pressed={isActive}
                       className={clsx(
-                        "shrink-0 px-3 lg:px-4 text-center transition-all duration-300",
+                        "shrink-0 px-3 lg:px-4 text-left transition-all duration-300",
                         "flex flex-col",
                         isActive
                           ? "opacity-100"

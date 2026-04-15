@@ -223,34 +223,12 @@ export default function Navigation() {
     });
   }, [prefersReducedMotion]);
 
-  // Mobile Navigation - Bottom pill with dots
+  // Mobile: remove section navigation and keep only language access
   if (isMobile) {
     return (
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-transparent px-3 py-2 rounded-full border border-white/0 shadow-none mix-blend-difference text-white">
-        <div className="flex gap-2 items-center">
-          {SECTIONS.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => handleScrollTo(section.id)}
-              className={clsx(
-                "relative w-2 h-2 rounded-full transition-all duration-300",
-                activeId === section.id
-                  ? "bg-current scale-110 opacity-100"
-                  : "bg-current/45 hover:bg-current/70"
-              )}
-              aria-label={t(`nav.${section.id}` as TranslationKey)}
-            >
-              {activeId === section.id && (
-                <span className="absolute inset-0 rounded-full bg-current animate-ping opacity-50" />
-              )}
-            </button>
-          ))}
-
-          <span className="w-px h-3 bg-current/55 mx-0.5" />
-
-          <LanguageToggle variant="nav" />
-        </div>
-      </nav>
+      <div className="fixed top-5 right-4 z-[70] pointer-events-auto mix-blend-difference text-white">
+        <LanguageToggle variant="nav" />
+      </div>
     );
   }
 
