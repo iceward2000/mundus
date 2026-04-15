@@ -120,7 +120,7 @@ html.lenis, html.lenis body {
   height: 100%;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.05;
+  opacity: 0.02;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
@@ -256,22 +256,22 @@ textarea:-webkit-autofill:focus {
 
 /* Manually applying final transforms for static state - Adjusted for tighter spacing */
 .ConsentLogo.logo-static .sq-1 {
-  transform: translate(calc(-14.2vw - 14.2vh + 2.02rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 2.52rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-2 {
-  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 3.24rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-3 {
-  transform: translate(calc(-14.2vw - 14.2vh + 2.76rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 3.24rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-4 {
-  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 3.96rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-5 {
-  transform: translate(calc(-14.2vw - 14.2vh + 3.46rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 3.96rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 .ConsentLogo.logo-static .sq-6 {
-  transform: translate(calc(-14.2vw - 14.2vh + 4.18rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
+  transform: translate(calc(-14.2vw - 14.2vh + 4.68rem + var(--logo-final-shift-x)), calc(14.2vw - 14.2vh - 0.72rem + var(--logo-final-shift-y))) scale(0.4);
 }
 
 /* Positions relative to center (0deg grid) */

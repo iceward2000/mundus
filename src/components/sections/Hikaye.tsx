@@ -60,7 +60,7 @@ export default function Hikaye() {
         {/* Horizontal "hikaye" text below image */}
         <div className="mt-4 flex justify-center select-none">
           <p className="font-serif text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white/60 tracking-[0.22em] uppercase">
-            hikaye
+            <StableLocaleText tKey="hikaye.sectionName" nowrap className="text-inherit" />
           </p>
         </div>
 

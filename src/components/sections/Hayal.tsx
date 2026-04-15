@@ -63,7 +63,7 @@ export default function Hayal() {
       <div className="relative z-10 flex flex-col justify-start min-h-screen px-4 md:px-8 lg:px-16 py-20 md:py-32">
         <div className="mb-8 md:mb-10 lg:mb-12 text-center">
           <h2 className="font-serif text-5xl md:text-7xl lg:text-8xl tracking-tight text-white/90">
-            Hayal
+            <StableLocaleText tKey="hayal.sectionName" nowrap className="text-inherit" />
           </h2>
         </div>
 
