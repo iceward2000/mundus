@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import SectionWrapper from "../SectionWrapper";
 import clsx from "clsx";
 import { StableLocaleText } from "@/components/StableLocaleText";
@@ -26,36 +26,50 @@ export default function Muvaffakiyet() {
 
   const DATA = MUVAFFAKIYET_SLIDES;
   const TOTAL = DATA.length;
+  const MOBILE_LOOP_COPIES = 3;
   const [activeIndex, setActiveIndex] = useState(0);
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
-  const [mobileCanScroll, setMobileCanScroll] = useState({
-    left: false,
-    right: true,
-  });
+  const mobileLoopData = useMemo(
+    () =>
+      Array.from({ length: TOTAL * MOBILE_LOOP_COPIES }, (_, index) => ({
+        item: DATA[index % TOTAL],
+        loopIndex: index,
+      })),
+    [DATA, TOTAL]
+  );
 
   const wrap = useCallback(
     (index: number) => ((index % TOTAL) + TOTAL) % TOTAL,
     [TOTAL]
   );
 
-  const updateMobileScrollState = useCallback(() => {
+  const normalizeMobileLoopPosition = useCallback(() => {
     const el = mobileScrollRef.current;
     if (!el) return;
+    if (TOTAL <= 0) return;
 
-    const threshold = 6;
-    setMobileCanScroll({
-      left: el.scrollLeft > threshold,
-      right: el.scrollLeft < el.scrollWidth - el.clientWidth - threshold,
-    });
-  }, []);
+    const oneSetWidth = el.clientWidth * TOTAL;
+    if (oneSetWidth <= 0) return;
+
+    if (el.scrollLeft < oneSetWidth * 0.5) {
+      el.scrollLeft += oneSetWidth;
+    } else if (el.scrollLeft > oneSetWidth * 1.5) {
+      el.scrollLeft -= oneSetWidth;
+    }
+  }, [TOTAL]);
 
   useEffect(() => {
     const el = mobileScrollRef.current;
     if (!el) return;
+    if (TOTAL <= 0) return;
 
-    updateMobileScrollState();
-    const onScroll = () => updateMobileScrollState();
-    const onResize = () => updateMobileScrollState();
+    const centerLoop = () => {
+      el.scrollLeft = el.clientWidth * TOTAL;
+    };
+
+    centerLoop();
+    const onScroll = () => normalizeMobileLoopPosition();
+    const onResize = () => centerLoop();
 
     el.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
@@ -64,7 +78,7 @@ export default function Muvaffakiyet() {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
-  }, [updateMobileScrollState]);
+  }, [normalizeMobileLoopPosition, TOTAL]);
 
   const handleMobileNavigate = (dir: 1 | -1) => {
     const el = mobileScrollRef.current;
@@ -103,9 +117,9 @@ export default function Muvaffakiyet() {
             className="md:hidden overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             <div className="flex">
-              {DATA.map((item) => (
+              {mobileLoopData.map(({ item, loopIndex }) => (
                 <article
-                  key={item.id}
+                  key={`${item.id}-${loopIndex}`}
                   className="w-full min-w-full shrink-0 snap-start text-center px-1"
                 >
                   <div className="mx-auto max-w-2xl">
@@ -116,14 +130,10 @@ export default function Muvaffakiyet() {
                       <button
                         type="button"
                         onClick={() => handleMobileNavigate(-1)}
-                        disabled={!mobileCanScroll.left}
                         aria-label={lang === "tr" ? "Onceki" : "Previous"}
                         className={clsx(
                           "absolute left-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
-                          "active:scale-95 disabled:cursor-default",
-                          mobileCanScroll.left
-                            ? "opacity-100"
-                            : "opacity-40 border-white/10 text-white/40"
+                          "active:scale-95 opacity-100"
                         )}
                       >
                         <ChevronLeft className="h-4 w-4 mx-auto" />
@@ -136,14 +146,10 @@ export default function Muvaffakiyet() {
                       <button
                         type="button"
                         onClick={() => handleMobileNavigate(1)}
-                        disabled={!mobileCanScroll.right}
                         aria-label={lang === "tr" ? "Sonraki" : "Next"}
                         className={clsx(
                           "absolute right-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
-                          "active:scale-95 disabled:cursor-default",
-                          mobileCanScroll.right
-                            ? "opacity-100"
-                            : "opacity-40 border-white/10 text-white/40"
+                          "active:scale-95 opacity-100"
                         )}
                       >
                         <ChevronRight className="h-4 w-4 mx-auto" />
