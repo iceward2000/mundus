@@ -203,6 +203,9 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     let isPinching = false;
     let pinchStartDistance = 0;
     let pinchStartAltitude = compactLayout ? 2.35 : 2.5;
+    let pinchStartLat = 0;
+    let pinchStartLng = 0;
+    const pinchZoomSensitivity = compactLayout ? 1.9 : 1;
 
     const getTouchDistance = (touches: TouchList) => {
       if (touches.length < 2) return 0;
@@ -260,10 +263,15 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     const handleTouchStart = (event: TouchEvent) => {
       if (!compactLayout) return;
       if (event.touches.length < 2) return;
+      event.preventDefault();
       isPinching = true;
       pinchStartDistance = getTouchDistance(event.touches);
-      pinchStartAltitude = globeEl.current.pointOfView().altitude ?? 2.35;
+      const startPointOfView = globeEl.current.pointOfView();
+      pinchStartAltitude = startPointOfView.altitude ?? 2.35;
+      pinchStartLat = startPointOfView.lat ?? 0;
+      pinchStartLng = startPointOfView.lng ?? 0;
       // Two-finger gesture should zoom only.
+      controls.enabled = false;
       controls.enableRotate = false;
       pauseAutoRotate();
     };
@@ -276,8 +284,16 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       event.preventDefault();
 
       const rawScale = pinchStartDistance / currentDistance;
-      const nextAltitude = clamp(pinchStartAltitude * rawScale, 0.85, 3.8);
-      globeEl.current.pointOfView({ altitude: nextAltitude }, 0);
+      const scaledZoom = Math.pow(rawScale, pinchZoomSensitivity);
+      const nextAltitude = clamp(pinchStartAltitude * scaledZoom, 0.7, 4.6);
+      globeEl.current.pointOfView(
+        {
+          lat: pinchStartLat,
+          lng: pinchStartLng,
+          altitude: nextAltitude,
+        },
+        0
+      );
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
@@ -285,12 +301,13 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       if (!isPinching) return;
       isPinching = false;
       pinchStartDistance = 0;
+      controls.enabled = true;
       controls.enableRotate = true;
       scheduleResumeAutoRotate();
     };
 
     if (canvas) {
-      canvas.addEventListener("touchstart", handleTouchStart, { passive: true });
+      canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
       canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
       canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
       canvas.addEventListener("touchcancel", handleTouchEnd, { passive: true });
