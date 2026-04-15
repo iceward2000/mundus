@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 export default function SparklingFrames() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const [isActivated, setIsActivated] = useState(false);
 
   useEffect(() => {
@@ -33,8 +34,9 @@ export default function SparklingFrames() {
     const triggerEl = sectionRef.current;
 
     const canvas = canvasRef.current;
+    const sticky = stickyRef.current;
     const context = canvas?.getContext("2d");
-    if (!canvas || !context || !triggerEl) return;
+    if (!canvas || !context || !triggerEl || !sticky) return;
 
     const frameCount = 145;
     const currentFrame = (index: number) =>
@@ -57,8 +59,10 @@ export default function SparklingFrames() {
     }
 
     const setCanvasSize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      // Use sticky container dimensions instead of innerHeight to avoid
+      // mobile browser UI show/hide resizing the sequence unexpectedly.
+      canvas.width = sticky.clientWidth;
+      canvas.height = sticky.clientHeight;
       render();
     };
     window.addEventListener("resize", setCanvasSize);
@@ -145,7 +149,10 @@ export default function SparklingFrames() {
       className="sparkling-frames-section relative z-10 w-full"
       style={{ height: "500vh" }}
     >
-      <div className="sparkling-frames-sticky sticky top-0 w-full h-screen">
+      <div
+        ref={stickyRef}
+        className="sparkling-frames-sticky sticky top-0 w-full h-[100svh]"
+      >
         <canvas
           ref={canvasRef}
           className="sparkling-frames-canvas absolute left-0 w-full h-full"

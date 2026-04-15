@@ -401,7 +401,7 @@ export default function AgeVerificationOverlay() {
       {isOverlayVisible && (
         <div
           ref={overlayRef}
-          className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black touch-none"
+          className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black touch-manipulation overscroll-none"
           onPointerEnter={handlePointerEnter}
           onPointerMove={handlePointerMove}
           onPointerDown={handlePointerDown}
@@ -522,7 +522,7 @@ export default function AgeVerificationOverlay() {
             audioSrc="/audio/mundus-entrance-audio.mp3"
             sourceId="entrance"
             hidden={!showGlassContainer}
-            className="z-50"
+            className="z-[65]"
           />
         </div>
       )}
