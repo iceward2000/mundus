@@ -53,6 +53,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const [hoveredPolygon, setHoveredPolygon] = useState<any>(null);
   const [ready, setReady] = useState(false);
   const [compactLayout, setCompactLayout] = useState(false);
+  const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
 
   // Some overseas territories are grouped under a sovereign country in this dataset.
   // For the South America part of France, we relabel to Guyana to match site data.
@@ -194,6 +195,14 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   }, []);
 
   useEffect(() => {
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const apply = () => setIsMobileTouchDevice(coarsePointer.matches);
+    apply();
+    coarsePointer.addEventListener("change", apply);
+    return () => coarsePointer.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
     if (!ready || !globeEl.current) return;
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
@@ -205,7 +214,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     let pinchStartAltitude = compactLayout ? 2.35 : 2.5;
     let pinchStartLat = 0;
     let pinchStartLng = 0;
-    const pinchZoomSensitivity = compactLayout ? 1.9 : 1;
+    const pinchZoomSensitivity = compactLayout ? 2.15 : 1;
 
     const getTouchDistance = (touches: TouchList) => {
       if (touches.length < 2) return 0;
@@ -232,7 +241,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
 
     controls.autoRotate = !compactLayout;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
-    controls.enableZoom = !compactLayout;
+    controls.enableZoom = true;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
@@ -250,7 +259,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.TWO = 1; // THREE.TOUCH.PAN (pan is disabled above)
+      ).touches.TWO = 2; // THREE.TOUCH.DOLLY_PAN (pan disabled, so zoom gets priority)
     }
 
     if ("enableDamping" in controls) {
@@ -261,7 +270,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     globeEl.current.pointOfView({ altitude: compactLayout ? 2.35 : 2.5 });
 
     const handleTouchStart = (event: TouchEvent) => {
-      if (!compactLayout) return;
+      if (!isMobileTouchDevice) return;
       if (event.touches.length < 2) return;
       event.preventDefault();
       isPinching = true;
@@ -277,7 +286,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     };
 
     const handleTouchMove = (event: TouchEvent) => {
-      if (!compactLayout || !isPinching || event.touches.length < 2) return;
+      if (!isMobileTouchDevice || !isPinching || event.touches.length < 2) return;
       const currentDistance = getTouchDistance(event.touches);
       if (!pinchStartDistance || !currentDistance) return;
 
@@ -327,7 +336,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);
     };
-  }, [ready, dimensions.width, dimensions.height, compactLayout]);
+  }, [ready, dimensions.width, dimensions.height, compactLayout, isMobileTouchDevice]);
 
   const polygonFeatures = useMemo(() => {
     const features: any[] = [];
