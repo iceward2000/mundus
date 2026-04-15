@@ -501,18 +501,6 @@ export default function AgeVerificationOverlay() {
                     >
                       <StableLocaleText tKey="overlay.yes" nowrap className="text-inherit" />
                     </span>
-                    {loadProgress > 0 && (
-                      <span
-                        className={clsx(
-                          "text-[10px] tabular-nums font-light transition-colors duration-500",
-                          loadComplete
-                            ? "text-white/55 group-hover:text-black/70"
-                            : "text-white/40"
-                        )}
-                      >
-                        {loadProgress}%
-                      </span>
-                    )}
                   </div>
                 </button>
 
