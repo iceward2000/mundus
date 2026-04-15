@@ -123,7 +123,7 @@ export default function VideoAudioToggle({
         aria-label={isPlaying ? "Video sesini kapat" : "Video sesini aç"}
         className={clsx(
           "absolute bottom-5 right-5 sm:bottom-8 sm:right-8 z-40",
-          "w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full",
+          "relative overflow-hidden w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full",
           "bg-black/35 backdrop-blur-md border border-white/20 text-white/80",
           "hover:bg-black/50 hover:text-white transition-all duration-300",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
@@ -161,8 +161,13 @@ export default function VideoAudioToggle({
             <path d="M11 5L6 9H3v6h3l5 4V5z" />
             <path d="M15.5 8.5a5 5 0 010 7" />
             <path d="M18 6a8.5 8.5 0 010 12" />
-            <path d="M4 4l16 16" />
           </svg>
+        )}
+        {!isPlaying && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute h-[2px] w-6 sm:w-7 rounded-full bg-primary/90 shadow-[0_0_10px_rgba(212,175,55,0.55)] rotate-45"
+          />
         )}
       </button>
     </>

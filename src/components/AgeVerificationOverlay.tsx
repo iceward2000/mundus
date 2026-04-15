@@ -203,6 +203,22 @@ export default function AgeVerificationOverlay() {
     window.location.href = "https://www.google.com";
   };
 
+  const handleDecisionButtonClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    action: () => void
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // On mobile Safari/Chrome, ensure no hidden/underlying input keeps focus.
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+
+    action();
+  };
+
   // 3D Perspective — pointer events: mouse + touch share move; reset only on real mouse leave
   const applyTiltFromPoint = useCallback((clientX: number, clientY: number) => {
     if (!glassCardRef.current || !videoWrapperRef.current) return;
@@ -413,9 +429,8 @@ export default function AgeVerificationOverlay() {
           </div>
 
           <div
-            className="absolute pointer-events-auto transition-opacity duration-700"
+            className="absolute z-[60] pointer-events-auto transition-opacity duration-700"
             style={{
-              zIndex: 3,
               top: "max(1.5rem, env(safe-area-inset-top, 0px))",
               right: "max(1.5rem, env(safe-area-inset-right, 0px))",
               opacity: showGlassContainer ? 1 : 0,
@@ -460,7 +475,8 @@ export default function AgeVerificationOverlay() {
 
               <div className="flex flex-col sm:flex-row gap-4 w-full" style={{ transform: "translateZ(60px)" }}>
                 <button
-                  onClick={handleEnter}
+                  type="button"
+                  onClick={(event) => handleDecisionButtonClick(event, handleEnter)}
                   disabled={!loadComplete}
                   className={clsx(
                     "flex-1 relative overflow-hidden group py-4 px-6 rounded-xl border transition-all duration-500",
@@ -485,8 +501,15 @@ export default function AgeVerificationOverlay() {
                     >
                       <StableLocaleText tKey="overlay.yes" nowrap className="text-inherit" />
                     </span>
-                    {!loadComplete && loadProgress > 0 && (
-                      <span className="text-[10px] tabular-nums font-light text-white/40">
+                    {loadProgress > 0 && (
+                      <span
+                        className={clsx(
+                          "text-[10px] tabular-nums font-light transition-colors duration-500",
+                          loadComplete
+                            ? "text-white/55 group-hover:text-black/70"
+                            : "text-white/40"
+                        )}
+                      >
                         {loadProgress}%
                       </span>
                     )}
@@ -494,7 +517,8 @@ export default function AgeVerificationOverlay() {
                 </button>
 
                 <button
-                  onClick={handleExit}
+                  type="button"
+                  onClick={(event) => handleDecisionButtonClick(event, handleExit)}
                   className="flex-1 py-4 px-6 rounded-xl border border-white/10 bg-transparent hover:bg-black/40 hover:border-white/40 transition-all duration-500 flex items-center justify-center cursor-pointer group"
                 >
                   <span className="text-white/60 group-hover:text-white transition-colors duration-300 tracking-[0.2em] text-sm font-medium uppercase drop-shadow-sm">

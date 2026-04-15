@@ -268,8 +268,12 @@ export default function Matematik() {
   )[activeIndex];
 
   return (
-    <SectionWrapper id="matematik" fullHeight={false} className="overflow-hidden md:!overflow-visible">
-      <div ref={sectionRef} className="max-w-7xl mx-auto w-full py-10 md:py-20">
+    <SectionWrapper
+      id="matematik"
+      fullHeight={false}
+      className="overflow-hidden md:!overflow-visible !pt-4 md:!pt-6 !pb-16 md:!pb-20"
+    >
+      <div ref={sectionRef} className="max-w-7xl mx-auto w-full pt-4 pb-10 md:pt-6 md:pb-20">
         {/* Header */}
         <div className="mat-header text-center mb-10 md:mb-14">
           <span className="text-primary text-sm tracking-widest uppercase">

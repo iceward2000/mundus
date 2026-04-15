@@ -241,6 +241,9 @@ const SketchReveal = () => {
   const shapeModeRef = useRef<ShapeMode>("diamond");
   shapeModeRef.current = shapeMode;
 
+  /** Set in the drawing effect so the panel "reset" can clear the canvas. */
+  const clearDrawingRef = useRef<(() => void) | null>(null);
+
   const handleConfigChange = useCallback(
     (key: keyof SketchConfig, value: number) => {
       setConfig((prev) => ({ ...prev, [key]: value }));
@@ -568,16 +571,21 @@ const SketchReveal = () => {
       }
     };
 
-    const handleClearAll = () => {
-      if (window.scrollY > 100) return;
-      if (!isDrawingEnabled.current) return;
-
+    const clearCanvasAndStrokeState = () => {
       ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
       points = [];
       currentWidth = configRef.current.maxWidth;
       widthVelocity = 0;
       smoothVelocity = 0;
       hasDrawn = false;
+    };
+
+    clearDrawingRef.current = clearCanvasAndStrokeState;
+
+    const handleClearAll = () => {
+      if (window.scrollY > 100) return;
+      if (!isDrawingEnabled.current) return;
+      clearCanvasAndStrokeState();
     };
 
     const handleEraseAndStamp = (x: number, y: number) => {
@@ -711,6 +719,7 @@ const SketchReveal = () => {
     window.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
+      clearDrawingRef.current = null;
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mousedown", onLeftClick);
@@ -843,6 +852,7 @@ const SketchReveal = () => {
             onClick={() => {
               setConfig(DEFAULT_CONFIG);
               setShapeMode("diamond");
+              clearDrawingRef.current?.();
             }}
             className="sketch-panel-reset"
           >

@@ -23,7 +23,7 @@ export default function Hikaye() {
     <SectionWrapper
       id="hikaye"
       fullHeight={false}
-      className="py-24 md:py-32 !overflow-visible"
+      className="pt-24 md:pt-32 pb-6 md:pb-8 !overflow-visible"
     >
       <div className="max-w-6xl mx-auto w-full">
         {/* ── Full-bleed image stage (breaks out of content width) ── */}
