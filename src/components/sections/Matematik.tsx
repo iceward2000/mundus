@@ -81,9 +81,11 @@ export default function Matematik() {
 
   // Scroll-based timeline line animation
   useEffect(() => {
-    if (!timelineRef.current || !lineRef.current) return;
+    if (!timelineRef.current || !lineRef.current || prefersReducedMotion) return;
 
     const ctx = gsap.context(() => {
+      gsap.set(lineRef.current, { transformOrigin: "top center", scaleY: 0 });
+
       gsap.to(lineRef.current, {
         scrollTrigger: {
           trigger: timelineRef.current,
@@ -91,19 +93,13 @@ export default function Matematik() {
           end: "bottom 70%",
           scrub: 1,
         },
-        height: "100%",
+        scaleY: 1,
         ease: "none",
       });
     }, timelineRef);
 
     return () => ctx.revert();
-  }, []);
-
-  // Recalculate ScrollTrigger positions when items change
-  useEffect(() => {
-    const timer = setTimeout(() => ScrollTrigger.refresh(), 200);
-    return () => clearTimeout(timer);
-  }, [activeIndex]);
+  }, [prefersReducedMotion]);
 
   // Activate timeline dots as the line reaches them
   useEffect(() => {
@@ -151,9 +147,21 @@ export default function Matematik() {
       gsap.fromTo(
         items,
         { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, stagger: 0.05, duration: d, ease: "power2.out", delay: 0.06, onComplete: () => setIsAnimating(false) }
+        {
+          opacity: 1,
+          y: 0,
+          stagger: 0.05,
+          duration: d,
+          ease: "power2.out",
+          delay: 0.06,
+          onComplete: () => {
+            ScrollTrigger.refresh();
+            setIsAnimating(false);
+          },
+        }
       );
     } else {
+      ScrollTrigger.refresh();
       setIsAnimating(false);
     }
   }, [activeIndex, prefersReducedMotion]);
@@ -370,7 +378,7 @@ export default function Matematik() {
                 <div className="mat-guide-line absolute left-[16px] top-0 h-full -translate-x-1/2 z-0" />
                 <div
                   ref={lineRef}
-                  className="mat-line absolute left-[16px] top-0 h-0 -translate-x-1/2 z-[1]"
+                  className="mat-line absolute left-[16px] top-0 h-full -translate-x-1/2 z-[1]"
                 />
 
                 {current.items.map((item, i) => (

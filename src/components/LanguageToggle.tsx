@@ -44,8 +44,8 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
       aria-label={`Switch to ${label}`}
       className={clsx(
         "tracking-[0.12em] whitespace-nowrap transition-colors duration-300",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg",
-        "text-neutral-400 hover:text-white font-extrabold",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg",
+        "text-white/90 hover:text-white font-extrabold",
         "text-[10px] sm:text-sm px-1.5 py-1 -mx-1.5 -my-1"
       )}
     >

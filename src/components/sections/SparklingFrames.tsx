@@ -65,7 +65,11 @@ export default function SparklingFrames() {
       canvas.height = sticky.clientHeight;
       render();
     };
-    window.addEventListener("resize", setCanvasSize);
+    const resizeObserver = new ResizeObserver(() => {
+      setCanvasSize();
+      ScrollTrigger.refresh();
+    });
+    resizeObserver.observe(sticky);
     setCanvasSize();
 
     function render() {
@@ -95,6 +99,7 @@ export default function SparklingFrames() {
         start: "top top",
         end: "bottom bottom",
         scrub: 0.15,
+        invalidateOnRefresh: true,
       },
     });
 
@@ -135,7 +140,8 @@ export default function SparklingFrames() {
     }, 0);
 
     return () => {
-      window.removeEventListener("resize", setCanvasSize);
+      resizeObserver.disconnect();
+      tl.kill();
       ScrollTrigger.getAll().forEach((t) => {
         if (t.vars.trigger === triggerEl) t.kill();
       });
@@ -147,7 +153,7 @@ export default function SparklingFrames() {
       ref={sectionRef}
       id="sparkling-frames"
       className="sparkling-frames-section relative z-10 w-full"
-      style={{ height: "500vh" }}
+      style={{ height: "500svh" }}
     >
       <div
         ref={stickyRef}
