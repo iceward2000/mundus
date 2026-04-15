@@ -29,8 +29,6 @@ export default function Navigation() {
   const LANG_LABELS: Record<Lang, string> = { tr: "TÜRKÇE", en: "ENGLISH" };
   const nextLang: Lang = lang === "tr" ? "en" : "tr";
 
-  const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
-
   // Derived states for different modes
   const [transitionProgress, setTransitionProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -71,6 +69,10 @@ export default function Navigation() {
   );
 
   useEffect(() => {
+    const desktop =
+      window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768;
+    if (!desktop) return;
+
     const verified = sessionStorage.getItem("mundus-age-verified") === "true";
     if (verified) {
       setShowAudioToggle(true);
@@ -221,104 +223,40 @@ export default function Navigation() {
     });
   }, [prefersReducedMotion]);
 
-  const topHud = (
-    <div
-      className={clsx(
-        "fixed z-[70] pointer-events-none flex items-center",
-        isMobile
-          ? "top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] gap-2.5"
-          : "top-8 right-8 gap-5"
-      )}
-    >
-      <audio ref={audioRef} src="/audio/loop.mp3" loop preload="none" />
-
-      {showAudioToggle && (
-        <button
-          type="button"
-          className={clsx(
-            "relative flex items-center justify-center focus:outline-none cursor-pointer pointer-events-auto shrink-0 touch-manipulation",
-            isMobile ? "w-10 h-5" : "w-12 h-6"
-          )}
-          style={{ animation: "audioToggleReveal 0.5s ease-out both" }}
-          onClick={toggleAudio}
-          onKeyDown={handleAudioKeyDown}
-          aria-label={playing ? "Müziği Durdur" : "Müziği Oynat"}
-          tabIndex={0}
-        >
-          <div className="relative w-full h-full flex items-center overflow-hidden">
-            <div
-              className={`absolute left-0 right-0 h-[1px] bg-primary transition-all duration-300 ease-out ${
-                playing ? "opacity-0 scale-x-50" : "opacity-80 scale-x-100"
-              }`}
-            />
-            <div
-              className={`absolute inset-0 bg-primary transition-opacity duration-300 ease-out ${
-                playing
-                  ? "opacity-80 animate-audio-wave animate-mask-scroll"
-                  : "opacity-0"
-              }`}
-              style={{
-                maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
-                WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
-                maskRepeat: "repeat-x",
-                WebkitMaskRepeat: "repeat-x",
-                maskSize: "50px 100%",
-                WebkitMaskSize: "50px 100%",
-              }}
-            />
-          </div>
-        </button>
-      )}
-
-      <div className="flex items-baseline gap-0.5 font-serif text-[color:var(--foreground)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
-        <span
-          ref={counterRef}
-          className={clsx(
-            "font-light tabular-nums leading-none",
-            isMobile ? "text-2xl" : "text-4xl"
-          )}
-        >
-          0
-        </span>
-        <span className={clsx("opacity-70", isMobile ? "text-xs" : "text-sm")}>%</span>
-      </div>
-    </div>
-  );
-
   // Mobile Navigation - Bottom pill with dots
   if (isMobile) {
     return (
-      <>
-        {topHud}
-        <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-transparent px-3 py-2 rounded-full border border-white/0 shadow-none">
-          <div className="flex gap-2 items-center">
-            {SECTIONS.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => handleScrollTo(section.id)}
-                className={clsx(
-                  "relative w-2 h-2 rounded-full transition-all duration-300",
-                  activeId === section.id
-                    ? "bg-primary scale-110"
-                    : "bg-white/20 hover:bg-white/40"
-                )}
-                aria-label={t(`nav.${section.id}` as TranslationKey)}
-              >
-                {activeId === section.id && (
-                  <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-50" />
-                )}
-              </button>
-            ))}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-transparent px-3 py-2 rounded-full border border-white/0 shadow-none">
+        <div className="flex gap-2 items-center">
+          {SECTIONS.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => handleScrollTo(section.id)}
+              className={clsx(
+                "relative w-2 h-2 rounded-full transition-all duration-300",
+                activeId === section.id
+                  ? "bg-primary scale-110"
+                  : "bg-white/20 hover:bg-white/40"
+              )}
+              aria-label={t(`nav.${section.id}` as TranslationKey)}
+            >
+              {activeId === section.id && (
+                <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-50" />
+              )}
+            </button>
+          ))}
 
-            <span className="w-px h-3 bg-white/15 mx-0.5" />
+          <span className="w-px h-3 bg-white/15 mx-0.5" />
 
-            <LanguageToggle variant="nav" />
-          </div>
-        </nav>
-      </>
+          <LanguageToggle variant="nav" />
+        </div>
+      </nav>
     );
   }
 
+  // Calculate interpolated values based on scroll progress
+  const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
+  
   // Container position: fixed left-0, vertically centered
   // We remove the container-level horizontal translation to stagger items individually
   
@@ -537,7 +475,54 @@ export default function Navigation() {
         </div>
       </nav>
 
-      {topHud}
+      {/* Top-right HUD: audio toggle + scroll percentage — single aligned row */}
+      {!isMobile && (
+        <div className="fixed top-8 right-8 z-[70] pointer-events-none flex items-center gap-5">
+          <audio ref={audioRef} src="/audio/loop.mp3" loop preload="none" />
+
+          {showAudioToggle && (
+            <button
+              className="relative flex items-center justify-center w-12 h-6 focus:outline-none cursor-pointer pointer-events-auto shrink-0"
+              style={{ animation: "audioToggleReveal 0.5s ease-out both" }}
+              onClick={toggleAudio}
+              onKeyDown={handleAudioKeyDown}
+              aria-label={playing ? "Müziği Durdur" : "Müziği Oynat"}
+              tabIndex={0}
+            >
+              <div className="relative w-full h-full flex items-center overflow-hidden">
+                {/* Flat line — paused state */}
+                <div
+                  className={`absolute left-0 right-0 h-[1px] bg-primary transition-all duration-300 ease-out ${
+                    playing ? "opacity-0 scale-x-50" : "opacity-80 scale-x-100"
+                  }`}
+                />
+                {/* Scrolling sine-wave — playing state */}
+                <div
+                  className={`absolute inset-0 bg-primary transition-opacity duration-300 ease-out ${
+                    playing
+                      ? "opacity-80 animate-audio-wave animate-mask-scroll"
+                      : "opacity-0"
+                  }`}
+                  style={{
+                    maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
+                    WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
+                    maskRepeat: "repeat-x",
+                    WebkitMaskRepeat: "repeat-x",
+                    maskSize: "50px 100%",
+                    WebkitMaskSize: "50px 100%",
+                  }}
+                />
+              </div>
+            </button>
+          )}
+
+          <div className="flex items-baseline gap-1 font-serif text-[color:var(--foreground)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+            <span ref={counterRef} className="text-4xl font-light tabular-nums leading-none">0</span>
+            <span className="text-sm opacity-70">%</span>
+          </div>
+        </div>
+      )}
+
     </>
   );
 }

@@ -130,6 +130,29 @@ export default function AgeVerificationOverlay() {
     }
   }, [revealInteractiveOverlay]);
 
+  // iOS Safari can restore from bfcache and replay CSS animations.
+  // If this tab/session is already verified, force the logo into static mode.
+  useEffect(() => {
+    const syncStaticLogoForVerifiedSession = () => {
+      if (sessionStorage.getItem("mundus-age-verified") !== "true") return;
+      setShowLogo(true);
+      setIsStatic(true);
+      setIntersectBlendActive(false);
+    };
+
+    const handlePageShow = () => {
+      syncStaticLogoForVerifiedSession();
+    };
+
+    document.addEventListener("visibilitychange", syncStaticLogoForVerifiedSession);
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", syncStaticLogoForVerifiedSession);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
   // Autoplay fallback
   useEffect(() => {
     if (!isOverlayVisible || !videoRef.current) return;
@@ -171,6 +194,9 @@ export default function AgeVerificationOverlay() {
     /** Persist verification for this tab/session. Other components listen for mundus-entered. */
     sessionStorage.setItem("mundus-age-verified", "true");
     window.dispatchEvent(new Event("mundus-entered"));
+    // Lock logo to static state so Safari tab restores do not replay intro keyframes.
+    setIsStatic(true);
+    setIntersectBlendActive(false);
 
     if (!contentWrapperRef.current || !overlayRef.current) return;
 
@@ -401,7 +427,7 @@ export default function AgeVerificationOverlay() {
       {isOverlayVisible && (
         <div
           ref={overlayRef}
-          className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black touch-manipulation overscroll-none"
+          className="age-overlay fixed inset-0 z-[10000] overflow-hidden pointer-events-auto bg-black touch-none"
           onPointerEnter={handlePointerEnter}
           onPointerMove={handlePointerMove}
           onPointerDown={handlePointerDown}
@@ -501,6 +527,18 @@ export default function AgeVerificationOverlay() {
                     >
                       <StableLocaleText tKey="overlay.yes" nowrap className="text-inherit" />
                     </span>
+                    {loadProgress > 0 && (
+                      <span
+                        className={clsx(
+                          "text-[10px] tabular-nums font-light transition-colors duration-500",
+                          loadComplete
+                            ? "text-white/55 group-hover:text-black/70"
+                            : "text-white/40"
+                        )}
+                      >
+                        {loadProgress}%
+                      </span>
+                    )}
                   </div>
                 </button>
 
@@ -522,7 +560,7 @@ export default function AgeVerificationOverlay() {
             audioSrc="/audio/mundus-entrance-audio.mp3"
             sourceId="entrance"
             hidden={!showGlassContainer}
-            className="z-[65]"
+            className="z-50"
           />
         </div>
       )}

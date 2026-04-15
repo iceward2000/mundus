@@ -122,9 +122,7 @@ export default function VideoAudioToggle({
         onClick={toggleAudio}
         aria-label={isPlaying ? "Video sesini kapat" : "Video sesini aç"}
         className={clsx(
-          "absolute z-40 touch-manipulation",
-          "bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))]",
-          "sm:bottom-8 sm:right-8",
+          "absolute bottom-5 right-5 sm:bottom-8 sm:right-8 z-40",
           "overflow-hidden w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full",
           "bg-black/35 backdrop-blur-md border border-white/20 text-white/80",
           "hover:bg-black/50 hover:text-white transition-all duration-300",
