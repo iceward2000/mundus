@@ -316,6 +316,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     };
 
     if (canvas) {
+      canvas.style.touchAction = "none";
       canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
       canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
       canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
@@ -405,7 +406,8 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden touch-none"
+      className="globe-gesture-lock w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden touch-none"
+      style={{ touchAction: "none", overflow: "hidden" }}
       data-lenis-prevent // Prevents Lenis from hijacking scroll/drag events on the globe
     >
       {canRenderGlobe && (

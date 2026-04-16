@@ -172,7 +172,7 @@ export const translations = {
     "lang.en": "English",
   },
   en: {
-    "overlay.question": "Are you 18 or older?",
+    "overlay.question": "Are you of legal drinking age in your country?",
     "overlay.yes": "Yes",
     "overlay.no": "No",
     "overlay.videoPause": "Pause background video",

@@ -1456,3 +1456,13 @@ textarea:-webkit-autofill:focus {
   transform-origin: center center;
   transform-box: fill-box;
 }
+
+/* Globe interaction lock: route pinch/swipe gestures to WebGL controls */
+.globe-gesture-lock {
+  touch-action: none;
+  overflow: hidden;
+}
+
+.globe-gesture-lock canvas {
+  touch-action: none;
+}
