@@ -6,5 +6,6 @@ export const SECTIONS = [
   { id: "hayal", title: "Hayal", subtitle: "Vizyon" },
   { id: "cocktail-demo", title: "Kokteyller", subtitle: "Deneyimleyin" },
   { id: "muvaffakiyet", title: "Muvaffakiyet", subtitle: "Başarı" },
+  { id: "team", title: "Ekip", subtitle: "İş Ortakları" },
   { id: "contact", title: "İletişim", subtitle: "Yolculuğa Başlayın" },
 ];

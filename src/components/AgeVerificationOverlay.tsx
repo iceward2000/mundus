@@ -518,7 +518,7 @@ export default function AgeVerificationOverlay() {
                     />
                   )}
 
-                  <div className="relative z-10 flex items-center justify-center gap-2">
+                  <div className="relative z-10 flex items-center justify-center">
                     <span
                       className={clsx(
                         "tracking-[0.2em] text-sm font-medium uppercase transition-colors duration-500",
@@ -527,18 +527,6 @@ export default function AgeVerificationOverlay() {
                     >
                       <StableLocaleText tKey="overlay.yes" nowrap className="text-inherit" />
                     </span>
-                    {loadProgress > 0 && (
-                      <span
-                        className={clsx(
-                          "text-[10px] tabular-nums font-light transition-colors duration-500",
-                          loadComplete
-                            ? "text-white/55 group-hover:text-black/70"
-                            : "text-white/40"
-                        )}
-                      >
-                        {loadProgress}%
-                      </span>
-                    )}
                   </div>
                 </button>
 

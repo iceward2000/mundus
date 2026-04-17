@@ -4,9 +4,11 @@ import Hero from "@/components/sections/Hero";
 import Hikaye from "@/components/sections/Hikaye";
 import Matematik from "@/components/sections/Matematik";
 import GlobeSection from "@/components/sections/GlobeSection";
+import RakiFrames from "@/components/sections/RakiFrames";
 import Hayal from "@/components/sections/Hayal";
 import CocktailDemo from "@/components/sections/CocktailDemo";
 import Muvaffakiyet from "@/components/sections/Muvaffakiyet";
+import Team from "@/components/sections/Team";
 import SparklingFrames from "@/components/sections/SparklingFrames";
 import Contact from "@/components/sections/Contact";
 
@@ -19,10 +21,12 @@ export default function Home() {
       <Hero />
       <Hikaye />
       <Matematik />
+      <RakiFrames />
       <GlobeSection />
       <Hayal />
       <CocktailDemo />
       <Muvaffakiyet />
+      <Team />
       <SparklingFrames />
       <Contact />
     </main>
