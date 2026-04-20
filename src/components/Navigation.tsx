@@ -26,6 +26,7 @@ export default function Navigation() {
 
   const [playing, setPlaying] = useState(false);
   const [showAudioToggle, setShowAudioToggle] = useState(false);
+  const [scrollPercent, setScrollPercent] = useState(0);
 
   const LANG_LABELS: Record<Lang, string> = { tr: "TÜRKÇE", en: "ENGLISH" };
   const nextLang: Lang = lang === "tr" ? "en" : "tr";
@@ -75,10 +76,6 @@ export default function Navigation() {
   );
 
   useEffect(() => {
-    const desktop =
-      window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768;
-    if (!desktop) return;
-
     const verified = sessionStorage.getItem("mundus-age-verified") === "true";
     if (verified) {
       setShowAudioToggle(true);
@@ -88,6 +85,32 @@ export default function Navigation() {
       return () => window.removeEventListener("mundus-entered", handle);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const updateScrollProgress = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+      const clamped = Math.max(0, Math.min(100, progress));
+      setScrollPercent(clamped);
+      if (counterRef.current) {
+        counterRef.current.innerText = clamped.toString();
+      }
+    };
+
+    updateScrollProgress();
+    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+    window.addEventListener("resize", updateScrollProgress);
+    window.addEventListener("orientationchange", updateScrollProgress);
+
+    return () => {
+      window.removeEventListener("scroll", updateScrollProgress);
+      window.removeEventListener("resize", updateScrollProgress);
+      window.removeEventListener("orientationchange", updateScrollProgress);
+    };
+  }, [isHydrated]);
 
   useEffect(() => {
     const onVideoAudioActivate = () => {
@@ -160,18 +183,6 @@ export default function Navigation() {
     if (!isDesktopNow) return;
 
     const ctx = gsap.context(() => {
-      // Global scroll percentage counter
-      ScrollTrigger.create({
-        trigger: "body",
-        start: "top top",
-        end: "bottom bottom",
-        onUpdate: (self) => {
-          if (counterRef.current) {
-            counterRef.current.innerText = Math.round(self.progress * 100).toString();
-          }
-        },
-      });
-
       // Active section highlighting
       SECTIONS.forEach((section) => {
         ScrollTrigger.create({
@@ -246,7 +257,43 @@ export default function Navigation() {
 
   if (isMobile) {
     return (
-      <div className="fixed top-5 right-4 z-[70] pointer-events-auto mix-blend-difference text-white">
+      <div className="fixed top-5 right-4 z-[70] pointer-events-auto flex items-center gap-4 mix-blend-difference text-white">
+        {showAudioToggle && (
+          <button
+            className="relative flex items-center justify-center w-10 h-6 focus:outline-none cursor-pointer shrink-0"
+            onClick={toggleAudio}
+            onKeyDown={handleAudioKeyDown}
+            aria-label={playing ? "Müziği Durdur" : "Müziği Oynat"}
+            tabIndex={0}
+          >
+            <div className="relative w-full h-full flex items-center overflow-hidden">
+              <div
+                className={`absolute left-0 right-0 h-[1px] bg-primary transition-all duration-300 ease-out ${
+                  playing ? "opacity-0 scale-x-50" : "opacity-80 scale-x-100"
+                }`}
+              />
+              <div
+                className={`absolute inset-0 bg-primary transition-opacity duration-300 ease-out ${
+                  playing ? "opacity-80 animate-audio-wave animate-mask-scroll" : "opacity-0"
+                }`}
+                style={{
+                  maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
+                  WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M0 12 Q 25 2, 50 12 T 100 12' vector-effect='non-scaling-stroke' /%3E%3C/svg%3E")`,
+                  maskRepeat: "repeat-x",
+                  WebkitMaskRepeat: "repeat-x",
+                  maskSize: "50px 100%",
+                  WebkitMaskSize: "50px 100%",
+                }}
+              />
+            </div>
+          </button>
+        )}
+
+        <div className="flex items-baseline gap-0.5 font-serif text-white">
+          <span className="text-2xl font-light tabular-nums leading-none">{scrollPercent}</span>
+          <span className="text-[11px] opacity-70">%</span>
+        </div>
+
         <LanguageToggle variant="nav" />
       </div>
     );

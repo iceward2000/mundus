@@ -20,6 +20,11 @@ import { LanguageProvider } from "@/context/LanguageContext";
 export const metadata: Metadata = {
   title: "Mundus | Premium İçecek Danışmanlığı",
   description: "Stratejik mükemmellikle içki markalarını yükseltiyoruz.",
+  icons: {
+    icon: "/favicon-mundus.png",
+    shortcut: "/favicon-mundus.png",
+    apple: "/favicon-mundus.png",
+  },
 };
 
 /** Enables env(safe-area-inset-*) under the notch / Dynamic Island (iOS, etc.). */
