@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { useState, type CSSProperties, type MouseEvent } from "react";
 import SectionWrapper from "@/components/SectionWrapper";
 import { StableLocaleText } from "@/components/StableLocaleText";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -56,6 +57,36 @@ const TEAM_MEMBERS: TeamMember[] = [
 
 export default function Team() {
   const prefersReducedMotion = usePrefersReducedMotion();
+  const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null);
+
+  const getCardIntensity = (index: number) => {
+    if (prefersReducedMotion || activeCardIndex === null) return 0;
+    const distance = Math.abs(activeCardIndex - index);
+    if (distance === 0) return 1;
+    if (distance === 1) return 0.38;
+    if (distance === 2) return 0.16;
+    return 0;
+  };
+
+  const handleCardMouseMove = (
+    event: MouseEvent<HTMLElement>,
+    index: number
+  ) => {
+    if (prefersReducedMotion) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    const normalizedX = (x - 50) / 50;
+    const normalizedY = (y - 50) / 50;
+    const hueShift = normalizedX * 14 + normalizedY * 8;
+    const lightShift = -normalizedY * 7 + Math.abs(normalizedX) * 2;
+
+    event.currentTarget.style.setProperty("--team-mx", `${x.toFixed(2)}%`);
+    event.currentTarget.style.setProperty("--team-my", `${y.toFixed(2)}%`);
+    event.currentTarget.style.setProperty("--team-hue-shift", hueShift.toFixed(2));
+    event.currentTarget.style.setProperty("--team-light-shift", `${lightShift.toFixed(2)}%`);
+    setActiveCardIndex(index);
+  };
 
   return (
     <SectionWrapper
@@ -89,27 +120,58 @@ export default function Team() {
               )}
             >
               <article
+                onMouseEnter={() => !prefersReducedMotion && setActiveCardIndex(index)}
+                onMouseLeave={(event) => {
+                  if (prefersReducedMotion) return;
+                  event.currentTarget.style.setProperty("--team-mx", "50%");
+                  event.currentTarget.style.setProperty("--team-my", "50%");
+                  event.currentTarget.style.setProperty("--team-hue-shift", "0");
+                  event.currentTarget.style.setProperty("--team-light-shift", "0%");
+                  setActiveCardIndex(null);
+                }}
+                onMouseMove={(event) => handleCardMouseMove(event, index)}
+                style={
+                  {
+                    "--team-mx": "50%",
+                    "--team-my": "50%",
+                    "--team-hue-shift": 0,
+                    "--team-light-shift": "0%",
+                    "--team-glass-intensity": getCardIntensity(index),
+                  } as CSSProperties
+                }
                 className={clsx(
-                  "group relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/15 bg-white/[0.03] p-6 sm:p-7",
+                  "team-glass-card group relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/20 bg-white/[0.04] p-6 sm:p-7",
                   "shadow-[0_10px_40px_rgba(0,0,0,0.35)]",
                   "focus-within:ring-2 focus-within:ring-primary/50",
+                  prefersReducedMotion && "team-glass-card--reduced-motion",
                   index % 2 === 0 ? "md:mr-8" : "md:ml-8",
                   !prefersReducedMotion &&
-                    "transition-transform duration-500 ease-out hover:-translate-y-1 hover:border-primary/50"
+                    "transition-transform duration-500 ease-out hover:-translate-y-1"
                 )}
               >
                 <div
                   aria-hidden
                   className={clsx(
-                    "pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.16),_transparent_58%)] opacity-70",
-                    !prefersReducedMotion && "transition-opacity duration-500 group-hover:opacity-100"
+                    "team-glass-base pointer-events-none absolute inset-0",
+                    prefersReducedMotion && "opacity-80"
                   )}
+                />
+                <div
+                  aria-hidden
+                  className={clsx(
+                    "team-glass-spotlight pointer-events-none absolute inset-0",
+                    !prefersReducedMotion && "transition-opacity duration-300"
+                  )}
+                />
+                <div
+                  aria-hidden
+                  className={clsx("team-glass-specular pointer-events-none absolute inset-0")}
                 />
 
                 <div
                   aria-hidden
                   className={clsx(
-                    "absolute top-1/2 hidden h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-primary/55 bg-black shadow-[0_0_0_4px_rgba(212,175,55,0.12)] md:block",
+                    "absolute top-1/2 hidden h-2.5 w-2.5 -translate-y-1/2 rounded-full border border-cyan-200/60 bg-black shadow-[0_0_0_4px_rgba(167,243,255,0.15)] md:block",
                     index % 2 === 0 ? "-right-[1.15rem]" : "-left-[1.15rem]"
                   )}
                 />

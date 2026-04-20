@@ -190,16 +190,28 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     const mq = window.matchMedia("(max-width: 1023px)");
     const apply = () => setCompactLayout(mq.matches);
     apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
+
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+    }
+
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
   }, []);
 
   useEffect(() => {
     const coarsePointer = window.matchMedia("(pointer: coarse)");
     const apply = () => setIsMobileTouchDevice(coarsePointer.matches);
     apply();
-    coarsePointer.addEventListener("change", apply);
-    return () => coarsePointer.removeEventListener("change", apply);
+
+    if (typeof coarsePointer.addEventListener === "function") {
+      coarsePointer.addEventListener("change", apply);
+      return () => coarsePointer.removeEventListener("change", apply);
+    }
+
+    coarsePointer.addListener(apply);
+    return () => coarsePointer.removeListener(apply);
   }, []);
 
   useEffect(() => {
