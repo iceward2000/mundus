@@ -15,6 +15,7 @@ import { StableLocaleText } from "@/components/StableLocaleText";
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 export default function Navigation() {
+  const [isHydrated, setIsHydrated] = useState(false);
   const [activeId, setActiveId] = useState<string>("");
   const navRef = useRef<HTMLElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
@@ -37,13 +38,17 @@ export default function Navigation() {
   const isSidebarMode = transitionProgress > 0.95;
 
   useEffect(() => {
-    if (isMobile) return;
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated || isMobile) return;
     setActiveId(SECTIONS[0].id);
     const isScrolled = window.scrollY > 100;
     if (isScrolled) {
       setTransitionProgress(1);
     }
-  }, [isMobile]);
+  }, [isHydrated, isMobile]);
 
   // ── Audio toggle logic ──────────────────────────────────────────────────
   const toggleAudio = useCallback(() => {
@@ -99,7 +104,10 @@ export default function Navigation() {
   }, []);
 
   useLayoutEffect(() => {
-    if (isMobile) return;
+    if (!isHydrated) return;
+    const isDesktopNow =
+      window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768;
+    if (!isDesktopNow) return;
 
     const ctx = gsap.context(() => {
       const proxy = { value: transitionProgress };
@@ -142,11 +150,14 @@ export default function Navigation() {
     });
 
     return () => ctx.revert();
-  }, [isMobile]); // Run once per mode
+  }, [isHydrated]); // Run once after hydration on desktop
 
 
   useLayoutEffect(() => {
-    if (isMobile) return;
+    if (!isHydrated) return;
+    const isDesktopNow =
+      window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768;
+    if (!isDesktopNow) return;
 
     const ctx = gsap.context(() => {
       // Global scroll percentage counter
@@ -176,7 +187,7 @@ export default function Navigation() {
       });
     });
     return () => ctx.revert();
-  }, [isMobile]);
+  }, [isHydrated]);
 
   // Close accordion when leaving sidebar mode
   useEffect(() => {
@@ -229,6 +240,10 @@ export default function Navigation() {
   }, [prefersReducedMotion]);
 
   // Mobile: remove section navigation and keep only language access
+  if (!isHydrated) {
+    return null;
+  }
+
   if (isMobile) {
     return (
       <div className="fixed top-5 right-4 z-[70] pointer-events-auto mix-blend-difference text-white">

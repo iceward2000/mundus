@@ -2,23 +2,36 @@
 
 import { useEffect, useState } from "react";
 
+const getIsMobileSnapshot = () => {
+  if (typeof window === "undefined") return false;
+  const isTouch = window.matchMedia("(pointer: coarse)").matches;
+  const isSmallScreen = window.innerWidth < 768;
+  return isTouch || isSmallScreen;
+};
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(getIsMobileSnapshot);
 
   useEffect(() => {
-    const checkMobile = () => {
-      // Use pointer: coarse as a reliable way to detect touch devices
-      // or max-width for layout purposes.
-      // The prompt suggests matchMedia('(pointer: fine)') for Lenis desktop detection.
-      // We'll use a standard mobile breakpoint for layout logic.
-      const isTouch = window.matchMedia("(pointer: coarse)").matches;
-      const isSmallScreen = window.innerWidth < 768;
-      setIsMobile(isTouch || isSmallScreen);
-    };
+    const pointerQuery = window.matchMedia("(pointer: coarse)");
+    const checkMobile = () => setIsMobile(getIsMobileSnapshot());
 
     checkMobile();
     window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+
+    if (typeof pointerQuery.addEventListener === "function") {
+      pointerQuery.addEventListener("change", checkMobile);
+      return () => {
+        window.removeEventListener("resize", checkMobile);
+        pointerQuery.removeEventListener("change", checkMobile);
+      };
+    }
+
+    pointerQuery.addListener(checkMobile);
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+      pointerQuery.removeListener(checkMobile);
+    };
   }, []);
 
   return isMobile;
