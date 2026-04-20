@@ -51,6 +51,7 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export default function CocktailReveal() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
   const hasInteractedRef = useRef(false);
@@ -113,14 +114,15 @@ export default function CocktailReveal() {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || prefersReducedMotion) return;
+    const layer = layerRef.current;
+    if (!container || !layer || prefersReducedMotion) return;
     const effectState = state.current;
 
     const getSpawnSize = () => {
       if (!isMobile) {
         return { width: 400, height: 600 };
       }
-      const width = Math.round(Math.min(Math.max(container.clientWidth * 0.58, 180), 280));
+      const width = Math.round(Math.min(Math.max(layer.clientWidth * 0.58, 180), 280));
       return { width, height: Math.round(width * 1.5) };
     };
 
@@ -152,8 +154,8 @@ export default function CocktailReveal() {
       let targetX = x - (imgWidth / 2) + 20;
       let targetY = y - (imgHeight / 2) + 20;
 
-      const maxX = container.clientWidth - imgWidth;
-      const maxY = container.clientHeight - imgHeight;
+      const maxX = layer.clientWidth - imgWidth;
+      const maxY = layer.clientHeight - imgHeight;
       targetX = Math.max(0, Math.min(targetX, maxX));
       targetY = Math.max(0, Math.min(targetY, maxY));
 
@@ -172,7 +174,7 @@ export default function CocktailReveal() {
       img.style.pointerEvents = "none";
       img.style.zIndex = "10";
 
-      container.appendChild(img);
+      layer.appendChild(img);
       effectState.activeLayers.push(img);
       animTarget = img;
 
@@ -189,16 +191,16 @@ export default function CocktailReveal() {
       });
 
       setTimeout(() => {
-        if (animTarget.parentNode === container) {
-          container.removeChild(animTarget);
+        if (animTarget.parentNode === layer) {
+          layer.removeChild(animTarget);
         }
         effectState.activeLayers = effectState.activeLayers.filter(l => l !== animTarget);
       }, runtimeConfig.fadeDuration + 200);
 
       if (effectState.activeLayers.length > runtimeConfig.maxLayers) {
         const toRemove = effectState.activeLayers.shift();
-        if (toRemove && toRemove.parentNode === container) {
-          container.removeChild(toRemove);
+        if (toRemove && toRemove.parentNode === layer) {
+          layer.removeChild(toRemove);
         }
       }
 
@@ -303,6 +305,7 @@ export default function CocktailReveal() {
         isMobile ? "touch-pan-y" : "touch-none"
       }`}
     >
+      <div ref={layerRef} aria-hidden className="pointer-events-none absolute inset-0" />
       {prefersReducedMotion && <ReducedMotionFallback />}
 
       {isMobile && !prefersReducedMotion && (
