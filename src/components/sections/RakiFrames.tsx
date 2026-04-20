@@ -13,11 +13,12 @@ const INTRO_LINES = [
 ];
 const LAST_LINE_PREFIX = "E haydi o zaman, gönülden ";
 const LAST_LINE_ACTION = "bi tık";
-const SEREFE_TEXT = "ŞEREFE";
+const SEREFE_TEXT = "şerefe";
 const FORWARD_DURATION = 2.25;
 const GATE_PROGRESS = 0.34;
 const FLAP_CYCLE = " ABCDEFGHIJKLMNOPRSTUVYZÇĞİÖŞÜ";
 const FRAME_EASE = "none";
+const MOBILE_FRAME_CROP_BIAS = 0.78;
 
 type Phase =
   | "intro"
@@ -47,7 +48,7 @@ export default function RakiFrames() {
   const [isActivated, setIsActivated] = useState(false);
 
   const isGateActive = phase === "gate";
-  const showPoem = phase === "intro" || phase === "gate" || phase === "animating-reverse";
+  const showPoem = phase === "intro" || phase === "gate";
   const isActionStandalone = phase === "animating-forward" || phase === "completed";
 
   useEffect(() => {
@@ -179,7 +180,12 @@ export default function RakiFrames() {
       const img = images[frameState.frame - 1];
       if (!img?.complete || !img.width || !img.height) return;
 
-      const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+      const coverScale = Math.max(canvas.width / img.width, canvas.height / img.height);
+      const containScale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const scale = isMobile
+        ? containScale + (coverScale - containScale) * MOBILE_FRAME_CROP_BIAS
+        : coverScale;
       const x = canvas.width / 2 - (img.width / 2) * scale;
       const y = canvas.height / 2 - (img.height / 2) * scale;
       context.drawImage(img, x, y, img.width * scale, img.height * scale);
@@ -439,26 +445,32 @@ export default function RakiFrames() {
       if (phaseRef.current !== "completed") return;
       activeTweenRef.current?.kill();
       setPhaseState("animating-reverse");
-      runSplitFlap(LAST_LINE_ACTION);
       setActionFlapVisual({ autoAlpha: 1, y: 0, filter: "blur(0px)" });
       clearPoemText();
 
-      const reverseState = { frame: frameCount, poem: 0 };
+      const reverseState = { frame: frameCount };
       renderFrame(frameCount);
       activeTweenRef.current = gsap.to(reverseState, {
         frame: 1,
-        poem: 1,
         ease: FRAME_EASE,
         duration: FORWARD_DURATION,
         onUpdate: () => {
           const frame = Math.round(reverseState.frame);
           renderFrame(frame);
-          updateIntroText(reverseState.poem);
         },
         onComplete: () => {
           setPhaseState("gate");
           setGateActive(true);
           setActionText(LAST_LINE_ACTION);
+          const poemState = { progress: 0 };
+          gsap.to(poemState, {
+            progress: 1,
+            duration: 1.05,
+            ease: "power2.out",
+            onUpdate: () => {
+              updateIntroText(poemState.progress);
+            },
+          });
           activeTweenRef.current = null;
         },
       });
@@ -539,7 +551,7 @@ export default function RakiFrames() {
                 >
                   <span
                     ref={actionFlapRef}
-                    className="inline-block rounded-[0.15em] bg-black/35 px-[0.16em] font-mono tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
+                    className="inline-block px-[0.16em] font-mono tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
                   >
                     <span ref={actionTextRef} className="inline-block will-change-transform">
                       {actionText}
