@@ -16,9 +16,10 @@ const LAST_LINE_ACTION = "bi tık";
 const SEREFE_TEXT = "şerefe";
 const FORWARD_DURATION = 2.25;
 const GATE_PROGRESS = 0.34;
-const FLAP_CYCLE = " ABCDEFGHIJKLMNOPRSTUVYZÇĞİÖŞÜ";
+const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
+const HINT_BUMP_COOLDOWN_MS = 260;
 
 type Phase =
   | "intro"
@@ -40,6 +41,7 @@ export default function RakiFrames() {
   const reverseActionRef = useRef<() => void>(() => {});
   const gateLockCleanupRef = useRef<(() => void) | null>(null);
   const scrollHintAttemptsRef = useRef(0);
+  const lastHintBumpAtRef = useRef(0);
   const activeTweenRef = useRef<gsap.core.Animation | null>(null);
   const phaseRef = useRef<Phase>("intro");
   const [phase, setPhase] = useState<Phase>("intro");
@@ -262,8 +264,8 @@ export default function RakiFrames() {
     setCanvasSize();
 
     const getHintLevel = (attemptCount: number) => {
-      if (attemptCount >= 9) return 2;
-      if (attemptCount >= 4) return 1;
+      if (attemptCount >= 20) return 2;
+      if (attemptCount >= 8) return 1;
       return 0;
     };
 
@@ -275,6 +277,9 @@ export default function RakiFrames() {
       document.body.style.touchAction = "none";
 
       const bumpHint = () => {
+        const now = performance.now();
+        if (now - lastHintBumpAtRef.current < HINT_BUMP_COOLDOWN_MS) return;
+        lastHintBumpAtRef.current = now;
         scrollHintAttemptsRef.current += 1;
         setScrollHintLevel(getHintLevel(scrollHintAttemptsRef.current));
       };
@@ -324,6 +329,7 @@ export default function RakiFrames() {
         gateLockCleanupRef.current();
         gateLockCleanupRef.current = null;
         scrollHintAttemptsRef.current = 0;
+        lastHintBumpAtRef.current = 0;
         setScrollHintLevel(0);
       }
     };
@@ -569,11 +575,11 @@ export default function RakiFrames() {
               }`}
             >
               {scrollHintLevel === 0 &&
-                '"bi tık" yazisina tikla - sonraki sahne hemen baslayacak'}
+                'bu bölümü geçmek için "bi tık"a tıkla'}
               {scrollHintLevel === 1 &&
-                'Kaydirma su an kilitli: devam etmek icin "bi tık"a tikla'}
+                'hadi anam, tıkla şuna'}
               {scrollHintLevel === 2 &&
-                'Ne kadar kaydirirsan kaydir buradan gecis yok - "bi tık" zorunlu'}
+                'iyi sen bilirsin, sabaha kadar kaydırabilirsin, tıklamadan geçemeyeceksin'}
             </p>
           </div>
         </div>
