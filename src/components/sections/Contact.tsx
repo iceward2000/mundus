@@ -45,8 +45,12 @@ export default function Contact() {
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const hasCssSupports =
+      typeof CSS !== "undefined" && typeof CSS.supports === "function";
     const hasBackdropSupport =
-      CSS.supports("backdrop-filter: blur(2px)") || CSS.supports("-webkit-backdrop-filter: blur(2px)");
+      hasCssSupports &&
+      (CSS.supports("backdrop-filter: blur(2px)") ||
+        CSS.supports("-webkit-backdrop-filter: blur(2px)"));
     const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
     const cores = navigator.hardwareConcurrency ?? 8;
     const lowPowerDevice = memory <= 4 || cores <= 4;
@@ -60,11 +64,13 @@ export default function Contact() {
     const applyViewport = () => setIsMobileViewport(mobileMediaQuery.matches);
     applyViewport();
 
-    const handleChange = (event: MediaQueryListEvent) => {
+    const handleChange = (
+      event: MediaQueryListEvent | MediaQueryList
+    ) => {
       setIsMobileViewport(event.matches);
     };
 
-    if (mobileMediaQuery.addEventListener) {
+    if (typeof mobileMediaQuery.addEventListener === "function") {
       mobileMediaQuery.addEventListener("change", handleChange);
       return () => mobileMediaQuery.removeEventListener("change", handleChange);
     }

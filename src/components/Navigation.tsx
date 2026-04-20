@@ -37,12 +37,13 @@ export default function Navigation() {
   const isSidebarMode = transitionProgress > 0.95;
 
   useEffect(() => {
+    if (isMobile) return;
     setActiveId(SECTIONS[0].id);
     const isScrolled = window.scrollY > 100;
     if (isScrolled) {
       setTransitionProgress(1);
     }
-  }, []);
+  }, [isMobile]);
 
   // ── Audio toggle logic ──────────────────────────────────────────────────
   const toggleAudio = useCallback(() => {
@@ -98,6 +99,8 @@ export default function Navigation() {
   }, []);
 
   useLayoutEffect(() => {
+    if (isMobile) return;
+
     const ctx = gsap.context(() => {
       const proxy = { value: transitionProgress };
 
@@ -139,10 +142,12 @@ export default function Navigation() {
     });
 
     return () => ctx.revert();
-  }, []); // Run once on mount
+  }, [isMobile]); // Run once per mode
 
 
   useLayoutEffect(() => {
+    if (isMobile) return;
+
     const ctx = gsap.context(() => {
       // Global scroll percentage counter
       ScrollTrigger.create({
@@ -171,7 +176,7 @@ export default function Navigation() {
       });
     });
     return () => ctx.revert();
-  }, []);
+  }, [isMobile]);
 
   // Close accordion when leaving sidebar mode
   useEffect(() => {
