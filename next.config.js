@@ -16,6 +16,7 @@ const nextConfig = {
         '**/public/rakı frame/**',
         '**/public/rakı frame 2/**',
         '**/public/sparkling frame/**',
+        '**/public/new-sparkling-frames/**',
         '**/public/videos/**',
       ],
     };

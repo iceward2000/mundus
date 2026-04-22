@@ -376,8 +376,14 @@ export const COUNTRY_TR_NAMES: Record<string, string> = {
   "Northern Cyprus": "Kuzey Kıbrıs Türk Cumhuriyeti",
 };
 
-export function getCheersForCountry(adminName: string): { trName: string, cheers: string } {
+type SupportedLang = "tr" | "en";
+
+export function getCheersForCountry(
+  adminName: string,
+  lang: SupportedLang = "tr"
+): { displayName: string; cheers: string } {
   const trName = COUNTRY_TR_NAMES[adminName] || adminName;
+  const displayName = lang === "tr" ? trName : adminName;
   const cheers = CHEERS_DATA[trName] || CHEERS_DATA[adminName] || "Cheers";
-  return { trName, cheers };
+  return { displayName, cheers };
 }

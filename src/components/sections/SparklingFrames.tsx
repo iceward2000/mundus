@@ -38,9 +38,13 @@ export default function SparklingFrames() {
     const context = canvas?.getContext("2d");
     if (!canvas || !context || !triggerEl || !sticky) return;
 
-    const frameCount = 145;
-    const currentFrame = (index: number) =>
-      `/sparkling%20frame%203/${index}.png`;
+    const frameCount = 115;
+    const frameStart = 35;
+    const sparklingFramesFolder = "new-sparkling-frames";
+    const currentFrame = (index: number) => {
+      const sourceFrame = String(frameStart + index - 1).padStart(4, "0");
+      return `/${sparklingFramesFolder}/frame_${sourceFrame}.png`;
+    };
 
     const images: HTMLImageElement[] = [];
     const frameState = { frame: 1 };

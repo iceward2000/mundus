@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { getCheersForCountry } from "@/lib/cheersData";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Dynamically import Globe to avoid SSR issues
 const Globe = dynamic(() => import("react-globe.gl"), {
@@ -34,18 +35,8 @@ const GEOJSON_FALLBACK =
 const getPathPoints = (d: any) => d.coords;
 const getPathPointLat = (p: any) => p[1];
 const getPathPointLng = (p: any) => p[0];
-const getPolygonLabel = ({ properties: d }: any) => {
-  const countryName = d.DISPLAY_ADMIN || d.ADMIN;
-  const { trName, cheers } = getCheersForCountry(countryName);
-  return `
-    <div style="background: rgba(15, 23, 42, 0.9); color: white; padding: 12px 16px; border-radius: 8px; font-family: sans-serif; backdrop-filter: blur(8px); border: 1px solid rgba(212, 175, 55, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-      <h3 style="font-weight: bold; font-size: 1.2em; margin: 0 0 4px 0; color: #d4af37;">${trName}</h3>
-      ${cheers ? `<div style="font-size: 1.1em; color: #e2e8f0; font-style: italic;">"${cheers}"</div>` : ''}
-    </div>
-  `;
-};
-
 export default function GlobeViz({ markers = [] }: GlobeVizProps) {
+  const { lang } = useLanguage();
   const globeEl = useRef<any>(undefined);
   const [countries, setCountries] = useState<{ features: any[] }>({ features: [] });
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -54,6 +45,20 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const [ready, setReady] = useState(false);
   const [compactLayout, setCompactLayout] = useState(false);
   const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
+
+  const getPolygonLabel = useCallback(
+    ({ properties: d }: any) => {
+      const countryName = d.DISPLAY_ADMIN || d.ADMIN;
+      const { displayName, cheers } = getCheersForCountry(countryName, lang);
+      return `
+        <div style="background: rgba(15, 23, 42, 0.9); color: white; padding: 12px 16px; border-radius: 8px; font-family: sans-serif; backdrop-filter: blur(8px); border: 1px solid rgba(212, 175, 55, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+          <h3 style="font-weight: bold; font-size: 1.2em; margin: 0 0 4px 0; color: #d4af37;">${displayName}</h3>
+          ${cheers ? `<div style="font-size: 1.1em; color: #e2e8f0; font-style: italic;">"${cheers}"</div>` : ""}
+        </div>
+      `;
+    },
+    [lang]
+  );
 
   // Some overseas territories are grouped under a sovereign country in this dataset.
   // For the South America part of France, we relabel to Guyana to match site data.

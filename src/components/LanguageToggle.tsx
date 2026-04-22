@@ -8,13 +8,15 @@ interface Props {
   variant?: "overlay" | "nav";
 }
 
-const LABELS = { tr: "TÜRKÇE", en: "ENGLISH" } as const;
+const OVERLAY_LABELS = { tr: "TÜRKÇE", en: "ENGLISH" } as const;
+const NAV_LABELS = { tr: "TR", en: "EN" } as const;
 
 export default function LanguageToggle({ variant = "nav" }: Props) {
   const { lang, setLang } = useLanguage();
 
   const nextLang = lang === "tr" ? "en" : "tr";
-  const label = LABELS[nextLang];
+  const labels = variant === "overlay" ? OVERLAY_LABELS : NAV_LABELS;
+  const label = labels[nextLang];
 
   if (variant === "overlay") {
     return (
@@ -28,8 +30,8 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
         )}
       >
         <StableLocaleText
-          tr={LABELS.tr}
-          en={LABELS.en}
+          tr={OVERLAY_LABELS.tr}
+          en={OVERLAY_LABELS.en}
           activeLang={nextLang}
           nowrap
           className="text-inherit"
@@ -50,8 +52,8 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
       )}
     >
       <StableLocaleText
-        tr={LABELS.tr}
-        en={LABELS.en}
+        tr={NAV_LABELS.tr}
+        en={NAV_LABELS.en}
         activeLang={nextLang}
         nowrap
         className="text-inherit"

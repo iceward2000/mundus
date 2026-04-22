@@ -84,7 +84,7 @@ export default function RakiFrames() {
     const canvas = canvasElement;
     const context = canvasContext;
 
-    const frameStart = 1;
+    const frameStart = 0;
     const frameEnd = 44;
     const frameCount = frameEnd - frameStart + 1;
     const totalIntroCharacters =
