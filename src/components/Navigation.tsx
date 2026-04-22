@@ -79,11 +79,22 @@ export default function Navigation() {
     const verified = sessionStorage.getItem("mundus-age-verified") === "true";
     if (verified) {
       setShowAudioToggle(true);
-    } else {
-      const handle = () => setShowAudioToggle(true);
-      window.addEventListener("mundus-entered", handle);
-      return () => window.removeEventListener("mundus-entered", handle);
     }
+
+    const handleEntered = () => {
+      setShowAudioToggle(true);
+      const a = audioRef.current;
+      if (!a) return;
+      window.dispatchEvent(new Event("mundus-global-audio-activate"));
+      a.volume = 0.5;
+      a
+        .play()
+        .then(() => setPlaying(true))
+        .catch(() => setPlaying(false));
+    };
+
+    window.addEventListener("mundus-entered", handleEntered);
+    return () => window.removeEventListener("mundus-entered", handleEntered);
   }, []);
 
   useEffect(() => {
@@ -258,6 +269,8 @@ export default function Navigation() {
   if (isMobile) {
     return (
       <div className="fixed top-5 right-4 z-[70] pointer-events-auto flex items-center gap-4 mix-blend-difference text-white">
+        <audio ref={audioRef} src="/audio/loop.mp3" loop preload="none" />
+
         {showAudioToggle && (
           <button
             className="relative flex items-center justify-center w-10 h-6 focus:outline-none cursor-pointer shrink-0"

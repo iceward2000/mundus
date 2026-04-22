@@ -548,6 +548,7 @@ export default function AgeVerificationOverlay() {
             audioSrc="/audio/mundus-entrance-audio.mp3"
             sourceId="entrance"
             hidden={!showGlassContainer}
+            autoplay
             className="z-50"
           />
         </div>

@@ -9,6 +9,7 @@ type VideoAudioToggleProps = {
   sourceId: string;
   className?: string;
   hidden?: boolean;
+  autoplay?: boolean;
 };
 
 export default function VideoAudioToggle({
@@ -17,9 +18,12 @@ export default function VideoAudioToggle({
   sourceId,
   className,
   hidden = false,
+  autoplay = false,
 }: VideoAudioToggleProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const hasUserToggledRef = useRef(false);
+  const hasAutoplayedRef = useRef(false);
 
   const syncToVideo = useCallback(() => {
     const video = videoRef.current;
@@ -59,6 +63,7 @@ export default function VideoAudioToggle({
   }, [sourceId, syncToVideo]);
 
   const toggleAudio = useCallback(() => {
+    hasUserToggledRef.current = true;
     if (isPlaying) {
       stopAudio();
       return;
@@ -106,6 +111,42 @@ export default function VideoAudioToggle({
       video.removeEventListener("loadedmetadata", syncOnVideoUpdate);
     };
   }, [isPlaying, syncToVideo, videoRef]);
+
+  useEffect(() => {
+    if (!autoplay || hidden || hasAutoplayedRef.current || hasUserToggledRef.current) return;
+
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = 0.5;
+
+    const tryAutoplay = () => {
+      if (hasAutoplayedRef.current || hasUserToggledRef.current) return;
+      window.dispatchEvent(
+        new CustomEvent("mundus-video-audio-activate", { detail: { sourceId } })
+      );
+      syncToVideo();
+      audio
+        .play()
+        .then(() => {
+          hasAutoplayedRef.current = true;
+          setIsPlaying(true);
+        })
+        .catch(() => {
+          setIsPlaying(false);
+        });
+    };
+
+    tryAutoplay();
+    window.addEventListener("pointerdown", tryAutoplay, { passive: true });
+    window.addEventListener("keydown", tryAutoplay);
+    window.addEventListener("touchstart", tryAutoplay, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", tryAutoplay);
+      window.removeEventListener("keydown", tryAutoplay);
+      window.removeEventListener("touchstart", tryAutoplay);
+    };
+  }, [autoplay, hidden, sourceId, syncToVideo]);
 
   useEffect(() => {
     return () => {

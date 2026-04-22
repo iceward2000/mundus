@@ -120,35 +120,35 @@ export default function Muvaffakiyet() {
               {mobileLoopData.map(({ item, loopIndex }) => (
                 <article
                   key={`${item.id}-${loopIndex}`}
-                  className="w-full min-w-full shrink-0 snap-start text-left px-1"
+                  className="w-full min-w-full shrink-0 snap-start px-1"
                 >
-                  <div className="mx-auto max-w-2xl">
-                    <h3 className="font-serif mb-3 text-2xl text-primary">
+                  <div className="mx-auto flex max-w-2xl flex-col px-2">
+                    <h3 className="mb-3 text-center font-serif text-2xl text-primary">
                       <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
                     </h3>
-                    <div className="relative">
+                    <p className="text-center font-light text-sm leading-relaxed text-white/70">
+                      <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
+                    </p>
+
+                    <div className="mt-5 flex items-center justify-center gap-3">
                       <button
                         type="button"
                         onClick={() => handleMobileNavigate(-1)}
                         aria-label={lang === "tr" ? "Onceki" : "Previous"}
                         className={clsx(
-                          "absolute left-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
+                          "z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
                           "active:scale-95 opacity-100"
                         )}
                       >
                         <ChevronLeft className="h-4 w-4 mx-auto" />
                       </button>
 
-                      <p className="font-light leading-relaxed text-sm text-white/70 px-10">
-                        <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
-                      </p>
-
                       <button
                         type="button"
                         onClick={() => handleMobileNavigate(1)}
                         aria-label={lang === "tr" ? "Sonraki" : "Next"}
                         className={clsx(
-                          "absolute right-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
+                          "z-20 h-8 w-8 rounded-full border border-white/25 bg-black/45 text-white/85 backdrop-blur-sm transition-all",
                           "active:scale-95 opacity-100"
                         )}
                       >

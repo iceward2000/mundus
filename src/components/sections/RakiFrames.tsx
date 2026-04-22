@@ -51,7 +51,7 @@ export default function RakiFrames() {
 
   const isGateActive = phase === "gate";
   const showPoem = phase === "intro" || phase === "gate";
-  const isActionStandalone = phase === "animating-forward" || phase === "completed";
+  const isActionStandalone = phase === "completed" || phase === "animating-reverse";
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -426,10 +426,10 @@ export default function RakiFrames() {
             autoAlpha: 0,
             y: -14,
             filter: "blur(9px)",
-            duration: 0.72,
+            duration: 1.05,
             ease: "power2.inOut",
           },
-          "+=0.12"
+          "+=0.45"
         )
         .to(forwardState, {
           frame: frameCount,
@@ -530,7 +530,9 @@ export default function RakiFrames() {
 
               <p
                 className={`min-h-[1.3em] whitespace-nowrap ${
-                  isActionStandalone ? "flex justify-center text-center" : ""
+                  isActionStandalone
+                    ? "absolute left-0 top-0 w-full text-left"
+                    : ""
                 }`}
               >
                 <span
