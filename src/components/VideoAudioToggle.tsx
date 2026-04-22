@@ -205,10 +205,16 @@ export default function VideoAudioToggle({
           </svg>
         )}
         {!isPlaying && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute h-[2px] w-6 sm:w-7 rounded-full bg-primary/90 shadow-[0_0_10px_rgba(212,175,55,0.55)] rotate-45"
-          />
+          <>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute h-[4px] w-7 sm:w-8 rounded-full bg-black/90 rotate-45"
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute h-[2.5px] w-7 sm:w-8 rounded-full bg-primary shadow-[0_0_12px_rgba(212,175,55,0.75)] rotate-45"
+            />
+          </>
         )}
       </button>
     </>
