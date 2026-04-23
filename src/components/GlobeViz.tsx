@@ -17,6 +17,8 @@ const Globe = dynamic(() => import("react-globe.gl"), {
 
 interface GlobeVizProps {
   markers?: any[];
+  mobileAltitude?: number;
+  onMobileAltitudeChange?: (altitude: number) => void;
 }
 
 // Static colors for stable rendering
@@ -49,7 +51,11 @@ const normalizeLng = (lng: number) => {
   return normalized;
 };
 
-export default function GlobeViz({ markers = [] }: GlobeVizProps) {
+export default function GlobeViz({
+  markers = [],
+  mobileAltitude,
+  onMobileAltitudeChange,
+}: GlobeVizProps) {
   const { lang } = useLanguage();
   const globeEl = useRef<any>(undefined);
   const [countries, setCountries] = useState<{ features: any[] }>({ features: [] });
@@ -59,8 +65,14 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const [ready, setReady] = useState(false);
   const [compactLayout, setCompactLayout] = useState(false);
   const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
-  const [mobileAltitude, setMobileAltitude] = useState(DEFAULT_ALTITUDE_MOBILE);
+  const [internalMobileAltitude, setInternalMobileAltitude] = useState(DEFAULT_ALTITUDE_MOBILE);
   const mobileAltitudeRef = useRef(DEFAULT_ALTITUDE_MOBILE);
+  const isMobileAltitudeControlled = typeof mobileAltitude === "number";
+  const activeMobileAltitude = clampValue(
+    isMobileAltitudeControlled ? mobileAltitude : internalMobileAltitude,
+    MIN_ALTITUDE,
+    MAX_ALTITUDE
+  );
 
   const getPolygonLabel = useCallback(
     ({ properties: d }: any) => {
@@ -246,12 +258,16 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       MIN_ALTITUDE,
       MAX_ALTITUDE
     );
-    setMobileAltitude(currentAltitude);
-  }, [ready, isMobileTouchDevice, compactLayout]);
+    if (isMobileAltitudeControlled) {
+      onMobileAltitudeChange?.(currentAltitude);
+      return;
+    }
+    setInternalMobileAltitude(currentAltitude);
+  }, [ready, isMobileTouchDevice, compactLayout, isMobileAltitudeControlled, onMobileAltitudeChange]);
 
   useEffect(() => {
-    mobileAltitudeRef.current = mobileAltitude;
-  }, [mobileAltitude]);
+    mobileAltitudeRef.current = activeMobileAltitude;
+  }, [activeMobileAltitude]);
 
   useEffect(() => {
     if (!ready || !globeEl.current || !isMobileTouchDevice) return;
@@ -260,11 +276,11 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       {
         lat: currentPointOfView.lat ?? 0,
         lng: currentPointOfView.lng ?? 0,
-        altitude: clampValue(mobileAltitude, MIN_ALTITUDE, MAX_ALTITUDE),
+        altitude: activeMobileAltitude,
       },
       0
     );
-  }, [ready, isMobileTouchDevice, mobileAltitude]);
+  }, [ready, isMobileTouchDevice, activeMobileAltitude]);
 
   useEffect(() => {
     if (!ready || !globeEl.current) return;
@@ -524,24 +540,6 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
         </div>
       )}
 
-      {canRenderGlobe && isMobileTouchDevice && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-xl border border-white/20 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
-          <input
-            type="range"
-            min={MIN_ALTITUDE}
-            max={MAX_ALTITUDE}
-            step={0.01}
-            value={mobileAltitude}
-            onChange={(event) =>
-              setMobileAltitude(
-                clampValue(Number(event.target.value), MIN_ALTITUDE, MAX_ALTITUDE)
-              )
-            }
-            aria-label="Globe zoom"
-            className="w-[70vw] max-w-[320px] min-w-[220px] h-10 accent-amber-400 cursor-pointer"
-          />
-        </div>
-      )}
     </div>
   );
 }

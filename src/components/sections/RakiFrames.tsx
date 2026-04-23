@@ -528,10 +528,15 @@ export default function RakiFrames() {
               </div>
 
               <p className="min-h-[1.3em] whitespace-nowrap">
-                <span
-                  ref={lastPrefixRef}
-                  className={`transition-opacity duration-150 ${showPoem ? "opacity-100" : "opacity-0"}`}
-                />
+                <span className="relative inline-block">
+                  <span aria-hidden className="invisible">
+                    {LAST_LINE_PREFIX}
+                  </span>
+                  <span
+                    ref={lastPrefixRef}
+                    className={`absolute inset-0 transition-opacity duration-150 ${showPoem ? "opacity-100" : "opacity-0"}`}
+                  />
+                </span>
                 <button
                   type="button"
                   onClick={() => {

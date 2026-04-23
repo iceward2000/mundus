@@ -45,6 +45,8 @@ const MARKERS = [
 export default function GlobeSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [mountGlobe, setMountGlobe] = useState(false);
+  const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
+  const [mobileAltitude, setMobileAltitude] = useState(2.35);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -63,6 +65,20 @@ export default function GlobeSection() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const apply = () => setIsMobileTouchDevice(coarsePointer.matches);
+    apply();
+
+    if (typeof coarsePointer.addEventListener === "function") {
+      coarsePointer.addEventListener("change", apply);
+      return () => coarsePointer.removeEventListener("change", apply);
+    }
+
+    coarsePointer.addListener(apply);
+    return () => coarsePointer.removeListener(apply);
+  }, []);
+
   return (
     <SectionWrapper
       id="global-presence"
@@ -75,23 +91,41 @@ export default function GlobeSection() {
       >
         <div className="w-full h-full">
           {mountGlobe ? (
-            <GlobeViz markers={MARKERS} />
+            <GlobeViz
+              markers={MARKERS}
+              mobileAltitude={mobileAltitude}
+              onMobileAltitudeChange={setMobileAltitude}
+            />
           ) : (
             <div className="w-full h-full bg-slate-950" />
           )}
         </div>
 
-        <h2
-          className="absolute bottom-[6%] inset-x-0 z-10 pointer-events-none
-                     text-center text-lg sm:text-xl md:text-2xl
-                     font-['Syne'] select-none text-white/90 mix-blend-difference"
-          style={{
-            letterSpacing: "0.25em",
-            fontWeight: 300,
-          }}
-        >
-          <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />
-        </h2>
+        <div className="absolute bottom-[6%] inset-x-0 z-10 flex flex-col items-center gap-3 px-4">
+          <h2
+            className="pointer-events-none text-center text-lg sm:text-xl md:text-2xl
+                       font-['Syne'] select-none text-white/90 mix-blend-difference"
+            style={{
+              letterSpacing: "0.25em",
+              fontWeight: 300,
+            }}
+          >
+            <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />
+          </h2>
+
+          {mountGlobe && isMobileTouchDevice && (
+            <input
+              type="range"
+              min={0.7}
+              max={4.6}
+              step={0.01}
+              value={mobileAltitude}
+              onChange={(event) => setMobileAltitude(Number(event.target.value))}
+              aria-label="Globe zoom"
+              className="w-[72vw] max-w-[340px] min-w-[220px] h-10 accent-amber-400 cursor-pointer"
+            />
+          )}
+        </div>
       </div>
     </SectionWrapper>
   );
