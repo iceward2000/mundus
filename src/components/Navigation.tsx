@@ -62,6 +62,18 @@ export default function Navigation() {
     setPlaying((p) => !p);
   }, [playing]);
 
+  const tryStartLoopAudio = useCallback(() => {
+    const a = audioRef.current;
+    if (!a) return;
+
+    window.dispatchEvent(new Event("mundus-global-audio-activate"));
+    a.volume = 0.5;
+    a
+      .play()
+      .then(() => setPlaying(true))
+      .catch(() => setPlaying(false));
+  }, []);
+
   const handleAudioKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -76,23 +88,33 @@ export default function Navigation() {
     const verified = sessionStorage.getItem("mundus-age-verified") === "true";
     if (verified) {
       setShowAudioToggle(true);
+      tryStartLoopAudio();
+
+      const retryAutoplay = () => {
+        const audio = audioRef.current;
+        if (!audio || !audio.paused) return;
+        tryStartLoopAudio();
+      };
+
+      window.addEventListener("pointerdown", retryAutoplay, { passive: true });
+      window.addEventListener("touchstart", retryAutoplay, { passive: true });
+      window.addEventListener("keydown", retryAutoplay);
+
+      return () => {
+        window.removeEventListener("pointerdown", retryAutoplay);
+        window.removeEventListener("touchstart", retryAutoplay);
+        window.removeEventListener("keydown", retryAutoplay);
+      };
     }
 
     const handleEntered = () => {
       setShowAudioToggle(true);
-      const a = audioRef.current;
-      if (!a) return;
-      window.dispatchEvent(new Event("mundus-global-audio-activate"));
-      a.volume = 0.5;
-      a
-        .play()
-        .then(() => setPlaying(true))
-        .catch(() => setPlaying(false));
+      tryStartLoopAudio();
     };
 
     window.addEventListener("mundus-entered", handleEntered);
     return () => window.removeEventListener("mundus-entered", handleEntered);
-  }, []);
+  }, [tryStartLoopAudio]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -266,7 +288,7 @@ export default function Navigation() {
   if (isMobile) {
     return (
       <div className="fixed top-5 right-4 z-[70] pointer-events-auto flex items-center gap-4 mix-blend-difference text-white">
-        <audio ref={audioRef} src="/audio/loop.mp3" loop preload="none" />
+        <audio ref={audioRef} src="/audio/loop.mp3" loop preload="metadata" />
 
         {showAudioToggle && (
           <button
@@ -483,7 +505,7 @@ export default function Navigation() {
       {/* Top-right HUD: audio toggle + scroll percentage + language switcher */}
       {!isMobile && (
         <div className="fixed top-8 right-8 z-[70] pointer-events-none flex items-center gap-5">
-          <audio ref={audioRef} src="/audio/loop.mp3" loop preload="none" />
+          <audio ref={audioRef} src="/audio/loop.mp3" loop preload="metadata" />
 
           {showAudioToggle && (
             <button

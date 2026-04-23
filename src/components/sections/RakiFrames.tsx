@@ -51,7 +51,6 @@ export default function RakiFrames() {
 
   const isGateActive = phase === "gate";
   const showPoem = phase === "intro" || phase === "gate";
-  const isActionStandalone = phase === "completed" || phase === "animating-reverse";
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -528,13 +527,7 @@ export default function RakiFrames() {
                 ))}
               </div>
 
-              <p
-                className={`min-h-[1.3em] whitespace-nowrap ${
-                  isActionStandalone
-                    ? "absolute left-0 top-0 w-full text-left"
-                    : ""
-                }`}
-              >
+              <p className="min-h-[1.3em] whitespace-nowrap">
                 <span
                   ref={lastPrefixRef}
                   className={`transition-opacity duration-150 ${showPoem ? "opacity-100" : "opacity-0"}`}

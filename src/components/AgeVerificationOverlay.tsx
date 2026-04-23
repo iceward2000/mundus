@@ -549,6 +549,7 @@ export default function AgeVerificationOverlay() {
             sourceId="entrance"
             hidden={!showGlassContainer}
             autoplay
+            allowAutoplayWhenHidden
             className="z-50"
           />
         </div>

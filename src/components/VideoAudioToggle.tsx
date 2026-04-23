@@ -10,6 +10,7 @@ type VideoAudioToggleProps = {
   className?: string;
   hidden?: boolean;
   autoplay?: boolean;
+  allowAutoplayWhenHidden?: boolean;
 };
 
 export default function VideoAudioToggle({
@@ -19,6 +20,7 @@ export default function VideoAudioToggle({
   className,
   hidden = false,
   autoplay = false,
+  allowAutoplayWhenHidden = false,
 }: VideoAudioToggleProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,7 +35,8 @@ export default function VideoAudioToggle({
     }
     const targetTime = video.currentTime % audio.duration;
     const drift = Math.abs(audio.currentTime - targetTime);
-    if (drift > 0.2) {
+    // Correct only when significantly out of sync to avoid audible seeking artifacts.
+    if (drift > 0.45) {
       audio.currentTime = targetTime;
     }
   }, [videoRef]);
@@ -92,28 +95,29 @@ export default function VideoAudioToggle({
     const video = videoRef.current;
     if (!video) return;
 
-    const syncOnVideoUpdate = () => {
+    const syncOnVideoStateChange = () => {
       if (!isPlaying) return;
       syncToVideo();
     };
 
-    video.addEventListener("timeupdate", syncOnVideoUpdate);
-    video.addEventListener("seeking", syncOnVideoUpdate);
-    video.addEventListener("seeked", syncOnVideoUpdate);
-    video.addEventListener("ratechange", syncOnVideoUpdate);
-    video.addEventListener("loadedmetadata", syncOnVideoUpdate);
+    video.addEventListener("seeking", syncOnVideoStateChange);
+    video.addEventListener("seeked", syncOnVideoStateChange);
+    video.addEventListener("ratechange", syncOnVideoStateChange);
+    video.addEventListener("loadedmetadata", syncOnVideoStateChange);
+    video.addEventListener("play", syncOnVideoStateChange);
 
     return () => {
-      video.removeEventListener("timeupdate", syncOnVideoUpdate);
-      video.removeEventListener("seeking", syncOnVideoUpdate);
-      video.removeEventListener("seeked", syncOnVideoUpdate);
-      video.removeEventListener("ratechange", syncOnVideoUpdate);
-      video.removeEventListener("loadedmetadata", syncOnVideoUpdate);
+      video.removeEventListener("seeking", syncOnVideoStateChange);
+      video.removeEventListener("seeked", syncOnVideoStateChange);
+      video.removeEventListener("ratechange", syncOnVideoStateChange);
+      video.removeEventListener("loadedmetadata", syncOnVideoStateChange);
+      video.removeEventListener("play", syncOnVideoStateChange);
     };
   }, [isPlaying, syncToVideo, videoRef]);
 
   useEffect(() => {
-    if (!autoplay || hidden || hasAutoplayedRef.current || hasUserToggledRef.current) return;
+    if (!autoplay || hasAutoplayedRef.current || hasUserToggledRef.current) return;
+    if (hidden && !allowAutoplayWhenHidden) return;
 
     const audio = audioRef.current;
     if (!audio) return;
@@ -146,17 +150,18 @@ export default function VideoAudioToggle({
       window.removeEventListener("keydown", tryAutoplay);
       window.removeEventListener("touchstart", tryAutoplay);
     };
-  }, [autoplay, hidden, sourceId, syncToVideo]);
+  }, [allowAutoplayWhenHidden, autoplay, hidden, sourceId, syncToVideo]);
 
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
-      audioRef.current?.pause();
+      audio?.pause();
     };
   }, []);
 
   return (
     <>
-      <audio ref={audioRef} src={audioSrc} loop preload="none" />
+      <audio ref={audioRef} src={audioSrc} loop preload="metadata" />
 
       <button
         type="button"
