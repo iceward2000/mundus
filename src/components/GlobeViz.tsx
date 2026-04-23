@@ -525,7 +525,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       )}
 
       {canRenderGlobe && isMobileTouchDevice && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 rounded-xl border border-white/20 bg-slate-900/75 px-2 py-4 backdrop-blur-sm">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-xl border border-white/20 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
           <input
             type="range"
             min={MIN_ALTITUDE}
@@ -538,8 +538,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
               )
             }
             aria-label="Globe zoom"
-            className="h-32 w-8"
-            style={{ writingMode: "vertical-lr", direction: "rtl" }}
+            className="w-[70vw] max-w-[320px] min-w-[220px] h-10 accent-amber-400 cursor-pointer"
           />
         </div>
       )}

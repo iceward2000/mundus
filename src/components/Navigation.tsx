@@ -20,6 +20,8 @@ export default function Navigation() {
   const navRef = useRef<HTMLElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hasLoopStartedRef = useRef(false);
+  const loopMutedByUserRef = useRef(false);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
   const { t } = useLanguage();
@@ -53,24 +55,34 @@ export default function Navigation() {
     const a = audioRef.current;
     if (!a) return;
     if (playing) {
+      loopMutedByUserRef.current = true;
       a.pause();
     } else {
+      loopMutedByUserRef.current = false;
       window.dispatchEvent(new Event("mundus-global-audio-activate"));
       a.volume = 0.5;
-      a.play().catch(console.error);
+      a
+        .play()
+        .then(() => {
+          hasLoopStartedRef.current = true;
+        })
+        .catch(console.error);
     }
     setPlaying((p) => !p);
   }, [playing]);
 
   const tryStartLoopAudio = useCallback(() => {
     const a = audioRef.current;
-    if (!a) return;
+    if (!a || loopMutedByUserRef.current) return;
 
     window.dispatchEvent(new Event("mundus-global-audio-activate"));
     a.volume = 0.5;
     a
       .play()
-      .then(() => setPlaying(true))
+      .then(() => {
+        hasLoopStartedRef.current = true;
+        setPlaying(true);
+      })
       .catch(() => setPlaying(false));
   }, []);
 
@@ -92,7 +104,9 @@ export default function Navigation() {
 
       const retryAutoplay = () => {
         const audio = audioRef.current;
-        if (!audio || !audio.paused) return;
+        if (!audio || !audio.paused || hasLoopStartedRef.current || loopMutedByUserRef.current) {
+          return;
+        }
         tryStartLoopAudio();
       };
 

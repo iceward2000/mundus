@@ -213,11 +213,11 @@ export default function VideoAudioToggle({
           <>
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute h-[4px] w-7 sm:w-8 rounded-full bg-black/90 rotate-45"
+              className="pointer-events-none absolute h-[4px] w-7 sm:w-8 rounded-full bg-white rotate-45"
             />
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute h-[2.5px] w-7 sm:w-8 rounded-full bg-primary shadow-[0_0_12px_rgba(212,175,55,0.75)] rotate-45"
+              className="pointer-events-none absolute h-[2.5px] w-7 sm:w-8 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.65)] rotate-45"
             />
           </>
         )}

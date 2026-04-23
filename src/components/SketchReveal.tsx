@@ -234,6 +234,7 @@ const SketchReveal = () => {
   const [panelOpen, setPanelOpen] = useState(false);
   const [shapeMode, setShapeMode] = useState<ShapeMode>("diamond");
   const [panelVisible, setPanelVisible] = useState(false);
+  const [isCoarsePointerDevice, setIsCoarsePointerDevice] = useState(false);
 
   const configRef = useRef<SketchConfig>(DEFAULT_CONFIG);
   configRef.current = config;
@@ -251,6 +252,20 @@ const SketchReveal = () => {
     []
   );
 
+  useEffect(() => {
+    const coarsePointer = window.matchMedia("(hover: none) and (pointer: coarse)");
+    const apply = () => setIsCoarsePointerDevice(coarsePointer.matches);
+    apply();
+
+    if (typeof coarsePointer.addEventListener === "function") {
+      coarsePointer.addEventListener("change", apply);
+      return () => coarsePointer.removeEventListener("change", apply);
+    }
+
+    coarsePointer.addListener(apply);
+    return () => coarsePointer.removeListener(apply);
+  }, []);
+
   // ── Scroll-based visibility ────────────────────────────────
   // The canvas container is position:fixed so IntersectionObserver
   // always reports it as visible. Instead we track scrollY directly:
@@ -258,9 +273,7 @@ const SketchReveal = () => {
   // drawing area), disappears once they scroll past.
   useEffect(() => {
     const check = () => {
-      const isCoarsePointer =
-        window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-      setPanelVisible(isCoarsePointer || window.scrollY < window.innerHeight);
+      setPanelVisible(!isCoarsePointerDevice && window.scrollY < window.innerHeight);
     };
     check();
     window.addEventListener("scroll", check, { passive: true });
@@ -269,7 +282,7 @@ const SketchReveal = () => {
       window.removeEventListener("scroll", check);
       window.removeEventListener("resize", check);
     };
-  }, []);
+  }, [isCoarsePointerDevice]);
 
   // ── Main drawing effect (runs once) ───────────────────────
   useEffect(() => {
@@ -757,6 +770,7 @@ const SketchReveal = () => {
       </div>
 
       {/* ── Floating Control Panel ─────────────────────────── */}
+      {!isCoarsePointerDevice && (
       <div
         className={`sketch-panel-wrapper ${panelVisible ? "sketch-panel-in-view" : ""}`}
       >
@@ -866,6 +880,7 @@ const SketchReveal = () => {
           </button>
         </div>
       </div>
+      )}
     </>
   );
 };
