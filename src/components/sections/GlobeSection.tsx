@@ -100,6 +100,7 @@ export default function GlobeSection() {
               markers={MARKERS}
               mobileAltitude={mobileAltitude}
               onMobileAltitudeChange={setMobileAltitude}
+              isMobileMode={isMobileTouchDevice}
             />
           ) : (
             <div className="w-full h-full bg-slate-950" />

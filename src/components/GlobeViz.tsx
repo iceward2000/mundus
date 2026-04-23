@@ -19,6 +19,7 @@ interface GlobeVizProps {
   markers?: any[];
   mobileAltitude?: number;
   onMobileAltitudeChange?: (altitude: number) => void;
+  isMobileMode?: boolean;
 }
 
 // Static colors for stable rendering
@@ -45,12 +46,6 @@ const DEFAULT_ALTITUDE_MOBILE = 2.35;
 const clampValue = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-const normalizeLng = (lng: number) => {
-  let normalized = ((lng + 180) % 360 + 360) % 360 - 180;
-  if (normalized === -180) normalized = 180;
-  return normalized;
-};
-
 const isTouchDevice = () =>
   window.matchMedia("(pointer: coarse)").matches ||
   navigator.maxTouchPoints > 0 ||
@@ -60,6 +55,7 @@ export default function GlobeViz({
   markers = [],
   mobileAltitude,
   onMobileAltitudeChange,
+  isMobileMode,
 }: GlobeVizProps) {
   const { lang } = useLanguage();
   const globeEl = useRef<any>(undefined);
@@ -78,6 +74,8 @@ export default function GlobeViz({
     MIN_ALTITUDE,
     MAX_ALTITUDE
   );
+  const effectiveMobileMode =
+    typeof isMobileMode === "boolean" ? isMobileMode : isMobileTouchDevice;
 
   const getPolygonLabel = useCallback(
     ({ properties: d }: any) => {
@@ -253,7 +251,7 @@ export default function GlobeViz({
   }, []);
 
   useEffect(() => {
-    if (!ready || !globeEl.current || !isMobileTouchDevice) return;
+    if (!ready || !globeEl.current || !effectiveMobileMode) return;
     const fallbackAltitude = compactLayout
       ? DEFAULT_ALTITUDE_MOBILE
       : DEFAULT_ALTITUDE_DESKTOP;
@@ -268,14 +266,20 @@ export default function GlobeViz({
       return;
     }
     setInternalMobileAltitude(currentAltitude);
-  }, [ready, isMobileTouchDevice, compactLayout, isMobileAltitudeControlled, onMobileAltitudeChange]);
+  }, [
+    ready,
+    effectiveMobileMode,
+    compactLayout,
+    isMobileAltitudeControlled,
+    onMobileAltitudeChange,
+  ]);
 
   useEffect(() => {
     mobileAltitudeRef.current = activeMobileAltitude;
   }, [activeMobileAltitude]);
 
   useEffect(() => {
-    if (!ready || !globeEl.current || !isMobileTouchDevice) return;
+    if (!ready || !globeEl.current || !effectiveMobileMode) return;
     const currentPointOfView = globeEl.current.pointOfView();
     globeEl.current.pointOfView(
       {
@@ -285,21 +289,15 @@ export default function GlobeViz({
       },
       0
     );
-  }, [ready, isMobileTouchDevice, activeMobileAltitude]);
+  }, [ready, effectiveMobileMode, activeMobileAltitude]);
 
   useEffect(() => {
     if (!ready || !globeEl.current) return;
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
     const controls = globeEl.current.controls();
-    const hostEl = containerRef.current;
     const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
-    let isHorizontalDragging = false;
-    let dragStartX = 0;
-    let dragStartLng = 0;
-    let lockedLat = 0;
-    const horizontalRotateSensitivity = compactLayout ? 0.18 : 0.14;
 
     const pauseAutoRotate = () => {
       clearTimeout(resumeRotateTimer);
@@ -314,29 +312,29 @@ export default function GlobeViz({
       }, 3500);
     };
 
-    controls.autoRotate = !compactLayout && !isMobileTouchDevice;
+    controls.autoRotate = !compactLayout && !effectiveMobileMode;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
-    controls.enableZoom = !isMobileTouchDevice;
+    controls.enableZoom = !effectiveMobileMode;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
-    controls.enableRotate = !isMobileTouchDevice;
-    controls.enabled = !isMobileTouchDevice;
+    controls.enableRotate = !effectiveMobileMode;
+    controls.enabled = !effectiveMobileMode;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
     controls.minDistance = 120;
     controls.maxDistance = 1000;
 
     if ("touches" in controls) {
-      // Mobile: disable built-in touch gestures; touch input is handled manually.
+      // Mobile: disable built-in touch gestures entirely.
       (
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.ONE = isMobileTouchDevice ? 1 : 0; // THREE.TOUCH.PAN (pan disabled) or ROTATE
+      ).touches.ONE = effectiveMobileMode ? 1 : 0; // THREE.TOUCH.PAN (pan disabled) or ROTATE
       (
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.TWO = isMobileTouchDevice ? 1 : 2; // THREE.TOUCH.PAN (disabled) or DOLLY_PAN
+      ).touches.TWO = effectiveMobileMode ? 1 : 2; // THREE.TOUCH.PAN (disabled) or DOLLY_PAN
     }
 
     if ("enableDamping" in controls) {
@@ -345,87 +343,17 @@ export default function GlobeViz({
     }
 
     globeEl.current.pointOfView({
-      altitude: isMobileTouchDevice
+      altitude: effectiveMobileMode
         ? clampValue(mobileAltitudeRef.current, MIN_ALTITUDE, MAX_ALTITUDE)
         : compactLayout
           ? DEFAULT_ALTITUDE_MOBILE
           : DEFAULT_ALTITUDE_DESKTOP,
     });
 
-    const handleTouchStart = (event: TouchEvent) => {
-      if (!isMobileTouchDevice) return;
-      if (event.touches.length !== 1) {
-        // Pinch zoom is intentionally disabled on mobile.
-        event.preventDefault();
-        event.stopPropagation();
-        isHorizontalDragging = false;
-        return;
-      }
-
-      const touch = event.touches[0];
-      const currentPointOfView = globeEl.current.pointOfView();
-      event.preventDefault();
-      event.stopPropagation();
-      isHorizontalDragging = true;
-      dragStartX = touch.clientX;
-      dragStartLng = currentPointOfView.lng ?? 0;
-      lockedLat = currentPointOfView.lat ?? 0;
-      pauseAutoRotate();
-    };
-
-    const handleTouchMove = (event: TouchEvent) => {
-      if (!isMobileTouchDevice) return;
-      if (event.touches.length !== 1) {
-        // Block any two-finger movement so only slider controls zoom.
-        event.preventDefault();
-        event.stopPropagation();
-        isHorizontalDragging = false;
-        return;
-      }
-      if (!isHorizontalDragging) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      const touch = event.touches[0];
-      const deltaX = touch.clientX - dragStartX;
-      const nextLng = normalizeLng(dragStartLng - deltaX * horizontalRotateSensitivity);
-      globeEl.current.pointOfView(
-        {
-          lat: lockedLat,
-          lng: nextLng,
-          altitude: clampValue(mobileAltitudeRef.current, MIN_ALTITUDE, MAX_ALTITUDE),
-        },
-        0
-      );
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      if (!isMobileTouchDevice) return;
-      if (!isHorizontalDragging) return;
-      if (event.touches.length > 0) return;
-      isHorizontalDragging = false;
-      scheduleResumeAutoRotate();
-    };
-
-    const preventGestureZoom = (event: Event) => {
-      if (!isMobileTouchDevice) return;
-      event.preventDefault();
-    };
-
     if (canvas) {
       canvas.style.touchAction = "none";
-      canvas.style.pointerEvents = isMobileTouchDevice ? "none" : "auto";
-      // iOS Safari pinch gesture events.
-      canvas.addEventListener("gesturestart", preventGestureZoom, { passive: false });
-      canvas.addEventListener("gesturechange", preventGestureZoom, { passive: false });
-      canvas.addEventListener("gestureend", preventGestureZoom, { passive: false });
-    }
-
-    if (hostEl && isMobileTouchDevice) {
-      hostEl.addEventListener("touchstart", handleTouchStart, { passive: false });
-      hostEl.addEventListener("touchmove", handleTouchMove, { passive: false });
-      hostEl.addEventListener("touchend", handleTouchEnd, { passive: true });
-      hostEl.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+      // Mobile: no direct touch interaction with globe canvas.
+      canvas.style.pointerEvents = effectiveMobileMode ? "none" : "auto";
     }
 
     controls.addEventListener("start", pauseAutoRotate);
@@ -434,16 +362,7 @@ export default function GlobeViz({
     return () => {
       clearTimeout(resumeRotateTimer);
       if (canvas) {
-        canvas.removeEventListener("gesturestart", preventGestureZoom);
-        canvas.removeEventListener("gesturechange", preventGestureZoom);
-        canvas.removeEventListener("gestureend", preventGestureZoom);
         canvas.style.pointerEvents = "auto";
-      }
-      if (hostEl) {
-        hostEl.removeEventListener("touchstart", handleTouchStart);
-        hostEl.removeEventListener("touchmove", handleTouchMove);
-        hostEl.removeEventListener("touchend", handleTouchEnd);
-        hostEl.removeEventListener("touchcancel", handleTouchEnd);
       }
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);
@@ -453,7 +372,7 @@ export default function GlobeViz({
     dimensions.width,
     dimensions.height,
     compactLayout,
-    isMobileTouchDevice,
+    effectiveMobileMode,
   ]);
 
   const polygonFeatures = useMemo(() => {
