@@ -35,6 +35,20 @@ const GEOJSON_FALLBACK =
 const getPathPoints = (d: any) => d.coords;
 const getPathPointLat = (p: any) => p[1];
 const getPathPointLng = (p: any) => p[0];
+const MIN_ALTITUDE = 0.7;
+const MAX_ALTITUDE = 4.6;
+const DEFAULT_ALTITUDE_DESKTOP = 2.5;
+const DEFAULT_ALTITUDE_MOBILE = 2.35;
+
+const clampValue = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const normalizeLng = (lng: number) => {
+  let normalized = ((lng + 180) % 360 + 360) % 360 - 180;
+  if (normalized === -180) normalized = 180;
+  return normalized;
+};
+
 export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const { lang } = useLanguage();
   const globeEl = useRef<any>(undefined);
@@ -45,6 +59,8 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   const [ready, setReady] = useState(false);
   const [compactLayout, setCompactLayout] = useState(false);
   const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
+  const [mobileAltitude, setMobileAltitude] = useState(DEFAULT_ALTITUDE_MOBILE);
+  const mobileAltitudeRef = useRef(DEFAULT_ALTITUDE_MOBILE);
 
   const getPolygonLabel = useCallback(
     ({ properties: d }: any) => {
@@ -220,29 +236,48 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
   }, []);
 
   useEffect(() => {
+    if (!ready || !globeEl.current || !isMobileTouchDevice) return;
+    const fallbackAltitude = compactLayout
+      ? DEFAULT_ALTITUDE_MOBILE
+      : DEFAULT_ALTITUDE_DESKTOP;
+    const currentPointOfView = globeEl.current.pointOfView();
+    const currentAltitude = clampValue(
+      currentPointOfView.altitude ?? fallbackAltitude,
+      MIN_ALTITUDE,
+      MAX_ALTITUDE
+    );
+    setMobileAltitude(currentAltitude);
+  }, [ready, isMobileTouchDevice, compactLayout]);
+
+  useEffect(() => {
+    mobileAltitudeRef.current = mobileAltitude;
+  }, [mobileAltitude]);
+
+  useEffect(() => {
+    if (!ready || !globeEl.current || !isMobileTouchDevice) return;
+    const currentPointOfView = globeEl.current.pointOfView();
+    globeEl.current.pointOfView(
+      {
+        lat: currentPointOfView.lat ?? 0,
+        lng: currentPointOfView.lng ?? 0,
+        altitude: clampValue(mobileAltitude, MIN_ALTITUDE, MAX_ALTITUDE),
+      },
+      0
+    );
+  }, [ready, isMobileTouchDevice, mobileAltitude]);
+
+  useEffect(() => {
     if (!ready || !globeEl.current) return;
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
     const controls = globeEl.current.controls();
     const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
-    let isPinching = false;
-    let suppressSingleTouchUntilRelease = false;
-    let pinchStartDistance = 0;
-    let pinchStartAltitude = compactLayout ? 2.35 : 2.5;
-    let pinchStartLat = 0;
-    let pinchStartLng = 0;
-    const pinchZoomSensitivity = compactLayout ? 2.15 : 1;
-
-    const getTouchDistance = (touches: TouchList) => {
-      if (touches.length < 2) return 0;
-      const dx = touches[0].clientX - touches[1].clientX;
-      const dy = touches[0].clientY - touches[1].clientY;
-      return Math.hypot(dx, dy);
-    };
-
-    const clamp = (value: number, min: number, max: number) =>
-      Math.min(max, Math.max(min, value));
+    let isHorizontalDragging = false;
+    let dragStartX = 0;
+    let dragStartLng = 0;
+    let lockedLat = 0;
+    const horizontalRotateSensitivity = compactLayout ? 0.18 : 0.14;
 
     const pauseAutoRotate = () => {
       clearTimeout(resumeRotateTimer);
@@ -259,7 +294,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
 
     controls.autoRotate = !compactLayout && !isMobileTouchDevice;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
-    controls.enableZoom = true;
+    controls.enableZoom = !isMobileTouchDevice;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
     controls.enableRotate = !isMobileTouchDevice;
@@ -268,8 +303,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     controls.maxDistance = 1000;
 
     if ("touches" in controls) {
-      // Mobile: disable built-in touch gestures (manual pinch handler owns zoom).
-      // Desktop/tablet pointer: keep one-finger rotate and built-in two-finger dolly behavior.
+      // Mobile: disable built-in touch gestures; touch input is handled manually.
       (
         controls as {
           touches: { ONE: number; TWO: number };
@@ -287,71 +321,57 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       (controls as { dampingFactor: number }).dampingFactor = 0.06;
     }
 
-    globeEl.current.pointOfView({ altitude: compactLayout ? 2.35 : 2.5 });
+    globeEl.current.pointOfView({
+      altitude: isMobileTouchDevice
+        ? clampValue(mobileAltitudeRef.current, MIN_ALTITUDE, MAX_ALTITUDE)
+        : compactLayout
+          ? DEFAULT_ALTITUDE_MOBILE
+          : DEFAULT_ALTITUDE_DESKTOP,
+    });
 
     const handleTouchStart = (event: TouchEvent) => {
       if (!isMobileTouchDevice) return;
-      if (suppressSingleTouchUntilRelease && event.touches.length === 1) {
-        // Keep rotation locked until the pinch gesture fully ends.
-        controls.enabled = false;
-        controls.enableRotate = false;
+      if (event.touches.length !== 1) {
+        // Pinch zoom is intentionally disabled on mobile.
+        event.preventDefault();
+        isHorizontalDragging = false;
         return;
       }
-      if (event.touches.length < 2) return;
+
+      const touch = event.touches[0];
+      const currentPointOfView = globeEl.current.pointOfView();
       event.preventDefault();
       event.stopPropagation();
-      isPinching = true;
-      suppressSingleTouchUntilRelease = true;
-      pinchStartDistance = getTouchDistance(event.touches);
-      const startPointOfView = globeEl.current.pointOfView();
-      pinchStartAltitude = startPointOfView.altitude ?? 2.35;
-      pinchStartLat = startPointOfView.lat ?? 0;
-      pinchStartLng = startPointOfView.lng ?? 0;
-      // Two-finger gesture should zoom only.
-      controls.enabled = false;
-      controls.enableRotate = false;
+      isHorizontalDragging = true;
+      dragStartX = touch.clientX;
+      dragStartLng = currentPointOfView.lng ?? 0;
+      lockedLat = currentPointOfView.lat ?? 0;
       pauseAutoRotate();
     };
 
     const handleTouchMove = (event: TouchEvent) => {
       if (!isMobileTouchDevice) return;
-      if (suppressSingleTouchUntilRelease && event.touches.length === 1) {
-        event.preventDefault();
-        return;
-      }
-      if (!isPinching || event.touches.length < 2) return;
-      const currentDistance = getTouchDistance(event.touches);
-      if (!pinchStartDistance || !currentDistance) return;
+      if (!isHorizontalDragging || event.touches.length !== 1) return;
 
       event.preventDefault();
       event.stopPropagation();
-
-      const rawScale = pinchStartDistance / currentDistance;
-      const scaledZoom = Math.pow(rawScale, pinchZoomSensitivity);
-      const nextAltitude = clamp(pinchStartAltitude * scaledZoom, 0.7, 4.6);
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - dragStartX;
+      const nextLng = normalizeLng(dragStartLng - deltaX * horizontalRotateSensitivity);
       globeEl.current.pointOfView(
         {
-          lat: pinchStartLat,
-          lng: pinchStartLng,
-          altitude: nextAltitude,
+          lat: lockedLat,
+          lng: nextLng,
+          altitude: clampValue(mobileAltitudeRef.current, MIN_ALTITUDE, MAX_ALTITUDE),
         },
         0
       );
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
-      if (!isPinching && !suppressSingleTouchUntilRelease) return;
-      if (event.touches.length > 0) {
-        // Do not hand the interaction back to one-finger rotate mid-pinch.
-        controls.enabled = false;
-        controls.enableRotate = false;
-        return;
-      }
-      isPinching = false;
-      suppressSingleTouchUntilRelease = false;
-      pinchStartDistance = 0;
-      controls.enabled = true;
-      controls.enableRotate = !isMobileTouchDevice;
+      if (!isHorizontalDragging) return;
+      if (event.touches.length > 0) return;
+      isHorizontalDragging = false;
       scheduleResumeAutoRotate();
     };
 
@@ -377,7 +397,13 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);
     };
-  }, [ready, dimensions.width, dimensions.height, compactLayout, isMobileTouchDevice]);
+  }, [
+    ready,
+    dimensions.width,
+    dimensions.height,
+    compactLayout,
+    isMobileTouchDevice,
+  ]);
 
   const polygonFeatures = useMemo(() => {
     const features: any[] = [];
@@ -495,6 +521,26 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       {ready && !canRenderGlobe && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-950 text-slate-500 text-sm">
           <span className="animate-pulse">Loading…</span>
+        </div>
+      )}
+
+      {canRenderGlobe && isMobileTouchDevice && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 rounded-xl border border-white/20 bg-slate-900/75 px-2 py-4 backdrop-blur-sm">
+          <input
+            type="range"
+            min={MIN_ALTITUDE}
+            max={MAX_ALTITUDE}
+            step={0.01}
+            value={mobileAltitude}
+            onChange={(event) =>
+              setMobileAltitude(
+                clampValue(Number(event.target.value), MIN_ALTITUDE, MAX_ALTITUDE)
+              )
+            }
+            aria-label="Globe zoom"
+            className="h-32 w-8"
+            style={{ writingMode: "vertical-lr", direction: "rtl" }}
+          />
         </div>
       )}
     </div>
