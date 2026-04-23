@@ -257,27 +257,29 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       }, 3500);
     };
 
-    controls.autoRotate = !compactLayout;
+    controls.autoRotate = !compactLayout && !isMobileTouchDevice;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
     controls.enableZoom = true;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
+    controls.enableRotate = !isMobileTouchDevice;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
     controls.minDistance = 120;
     controls.maxDistance = 1000;
 
     if ("touches" in controls) {
-      // 1 finger rotates the globe. 2-finger zoom is handled manually on mobile.
+      // Mobile: disable built-in touch gestures (manual pinch handler owns zoom).
+      // Desktop/tablet pointer: keep one-finger rotate and built-in two-finger dolly behavior.
       (
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.ONE = 0; // THREE.TOUCH.ROTATE
+      ).touches.ONE = isMobileTouchDevice ? 1 : 0; // THREE.TOUCH.PAN (pan disabled) or ROTATE
       (
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.TWO = 2; // THREE.TOUCH.DOLLY_PAN (pan disabled, so zoom gets priority)
+      ).touches.TWO = isMobileTouchDevice ? 1 : 2; // THREE.TOUCH.PAN (disabled) or DOLLY_PAN
     }
 
     if ("enableDamping" in controls) {
@@ -297,6 +299,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       }
       if (event.touches.length < 2) return;
       event.preventDefault();
+      event.stopPropagation();
       isPinching = true;
       suppressSingleTouchUntilRelease = true;
       pinchStartDistance = getTouchDistance(event.touches);
@@ -321,6 +324,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       if (!pinchStartDistance || !currentDistance) return;
 
       event.preventDefault();
+      event.stopPropagation();
 
       const rawScale = pinchStartDistance / currentDistance;
       const scaledZoom = Math.pow(rawScale, pinchZoomSensitivity);
@@ -347,7 +351,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
       suppressSingleTouchUntilRelease = false;
       pinchStartDistance = 0;
       controls.enabled = true;
-      controls.enableRotate = true;
+      controls.enableRotate = !isMobileTouchDevice;
       scheduleResumeAutoRotate();
     };
 

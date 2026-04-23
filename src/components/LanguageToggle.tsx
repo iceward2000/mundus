@@ -10,11 +10,13 @@ interface Props {
 
 const OVERLAY_LABELS = { tr: "TÜRKÇE", en: "ENGLISH" } as const;
 const OVERLAY_SHORT_LABELS = { tr: "TR", en: "EN" } as const;
+const NAV_LABELS = { tr: "TR", en: "EN" } as const;
 
 export default function LanguageToggle({ variant = "nav" }: Props) {
   const { lang, setLang } = useLanguage();
 
   const nextLang = lang === "tr" ? "en" : "tr";
+  const navLabel = NAV_LABELS[nextLang];
 
   if (variant === "overlay") {
     const shortLabel = OVERLAY_SHORT_LABELS[nextLang];
@@ -45,30 +47,23 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-1 text-[10px] sm:text-sm tracking-[0.12em] font-extrabold text-white">
-      <button
-        onClick={() => setLang("en")}
-        aria-label="Switch to EN"
-        className={clsx(
-          "transition-colors duration-300 px-1 py-0.5 rounded",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-          lang === "en" ? "text-white" : "text-white/60 hover:text-white/90"
-        )}
-      >
-        EN
-      </button>
-      <span className="text-white/50 select-none">/</span>
-      <button
-        onClick={() => setLang("tr")}
-        aria-label="Switch to TR"
-        className={clsx(
-          "transition-colors duration-300 px-1 py-0.5 rounded",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-          lang === "tr" ? "text-white" : "text-white/60 hover:text-white/90"
-        )}
-      >
-        TR
-      </button>
-    </div>
+    <button
+      onClick={() => setLang(nextLang)}
+      aria-label={`Switch to ${navLabel}`}
+      className={clsx(
+        "tracking-[0.12em] whitespace-nowrap transition-colors duration-300",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg",
+        "text-white/90 hover:text-white font-extrabold",
+        "text-[10px] sm:text-sm px-1.5 py-1 -mx-1.5 -my-1"
+      )}
+    >
+      <StableLocaleText
+        tr={NAV_LABELS.tr}
+        en={NAV_LABELS.en}
+        activeLang={nextLang}
+        nowrap
+        className="text-inherit"
+      />
+    </button>
   );
 }
