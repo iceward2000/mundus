@@ -84,7 +84,7 @@ export default function RakiFrames() {
     const canvas = canvasElement;
     const context = canvasContext;
 
-    const frameStart = 0;
+    const frameStart = 1;
     const frameEnd = 44;
     const frameCount = frameEnd - frameStart + 1;
     const totalIntroCharacters =
@@ -415,9 +415,6 @@ export default function RakiFrames() {
           onComplete: () => {
             clearPoemText();
           },
-        })
-        .add(() => {
-          renderFrame(1);
         })
         .add(runSplitFlap(SEREFE_TEXT) ?? gsap.timeline())
         .to(

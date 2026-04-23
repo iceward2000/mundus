@@ -80,12 +80,11 @@ export default function Hero() {
   return (
     <SectionWrapper
       id="hero"
-      fullHeight={false}
-      className="relative items-center overflow-hidden py-8 text-center md:min-h-screen md:flex md:flex-col md:justify-center md:py-20"
+      className="relative items-center overflow-hidden !py-0 min-h-[100svh] justify-end pb-10 text-center md:!py-20 md:min-h-screen md:justify-center md:pb-0"
     >
       {/* Main content - positioned to work with centered nav */}
-      <div ref={containerRef} className="relative z-10 flex flex-col items-center pt-6 md:pt-24 lg:pt-28">
-        <h1 ref={titleRef} className="m-0 w-[260px] md:w-[400px] lg:w-[580px] xl:w-[720px]">
+      <div ref={containerRef} className="relative z-10 flex flex-col items-center pt-0 md:pt-24 lg:pt-28">
+        <h1 ref={titleRef} className="m-0 leading-none w-[260px] md:w-[400px] lg:w-[580px] xl:w-[720px]">
           <img
             src="/mundus-text-logo.svg"
             alt="MUNDUS"

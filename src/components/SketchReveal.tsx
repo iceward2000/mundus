@@ -258,11 +258,17 @@ const SketchReveal = () => {
   // drawing area), disappears once they scroll past.
   useEffect(() => {
     const check = () => {
-      setPanelVisible(window.scrollY < window.innerHeight);
+      const isCoarsePointer =
+        window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+      setPanelVisible(isCoarsePointer || window.scrollY < window.innerHeight);
     };
     check();
     window.addEventListener("scroll", check, { passive: true });
-    return () => window.removeEventListener("scroll", check);
+    window.addEventListener("resize", check);
+    return () => {
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
   }, []);
 
   // ── Main drawing effect (runs once) ───────────────────────
