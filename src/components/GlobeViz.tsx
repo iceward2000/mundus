@@ -227,6 +227,7 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
     let isPinching = false;
+    let suppressSingleTouchUntilRelease = false;
     let pinchStartDistance = 0;
     let pinchStartAltitude = compactLayout ? 2.35 : 2.5;
     let pinchStartLat = 0;
@@ -288,9 +289,16 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
 
     const handleTouchStart = (event: TouchEvent) => {
       if (!isMobileTouchDevice) return;
+      if (suppressSingleTouchUntilRelease && event.touches.length === 1) {
+        // Keep rotation locked until the pinch gesture fully ends.
+        controls.enabled = false;
+        controls.enableRotate = false;
+        return;
+      }
       if (event.touches.length < 2) return;
       event.preventDefault();
       isPinching = true;
+      suppressSingleTouchUntilRelease = true;
       pinchStartDistance = getTouchDistance(event.touches);
       const startPointOfView = globeEl.current.pointOfView();
       pinchStartAltitude = startPointOfView.altitude ?? 2.35;
@@ -303,7 +311,12 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     };
 
     const handleTouchMove = (event: TouchEvent) => {
-      if (!isMobileTouchDevice || !isPinching || event.touches.length < 2) return;
+      if (!isMobileTouchDevice) return;
+      if (suppressSingleTouchUntilRelease && event.touches.length === 1) {
+        event.preventDefault();
+        return;
+      }
+      if (!isPinching || event.touches.length < 2) return;
       const currentDistance = getTouchDistance(event.touches);
       if (!pinchStartDistance || !currentDistance) return;
 
@@ -323,9 +336,15 @@ export default function GlobeViz({ markers = [] }: GlobeVizProps) {
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
-      if (event.touches.length >= 2) return;
-      if (!isPinching) return;
+      if (!isPinching && !suppressSingleTouchUntilRelease) return;
+      if (event.touches.length > 0) {
+        // Do not hand the interaction back to one-finger rotate mid-pinch.
+        controls.enabled = false;
+        controls.enableRotate = false;
+        return;
+      }
       isPinching = false;
+      suppressSingleTouchUntilRelease = false;
       pinchStartDistance = 0;
       controls.enabled = true;
       controls.enableRotate = true;

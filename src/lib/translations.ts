@@ -194,7 +194,7 @@ export const translations = {
     "nav.audioPlay": "Play music",
     "nav.audioPause": "Pause music",
 
-    "hero.subtitle": "Turkish Alcoholic Beverage Consulting",
+    "hero.subtitle": "Turkish Alcoholic Beverage Consultancy",
 
     "sketch.panelTitle": "Sketch Tuning",
     "sketch.toggleCollapse": "Collapse sketch controls",

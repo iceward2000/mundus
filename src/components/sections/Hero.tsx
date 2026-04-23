@@ -85,13 +85,13 @@ export default function Hero() {
           <img
             src="/mundus-text-logo.svg"
             alt="MUNDUS"
-            className="w-full h-auto select-none [mask-image:linear-gradient(to_bottom,white_40%,rgba(255,255,255,0.5))] [-webkit-mask-image:linear-gradient(to_bottom,white_40%,rgba(255,255,255,0.5))]"
+            className="block w-full h-auto select-none"
             draggable={false}
           />
         </h1>
         <p
           ref={subtitleRef}
-          className="mt-8 text-base md:text-lg lg:text-xl font-light tracking-[0.25em] text-primary/90 uppercase"
+          className="mt-0 text-base md:text-lg lg:text-xl font-light tracking-[0.25em] text-primary/90 uppercase"
         >
           <StableLocaleText tKey="hero.subtitle" fill className="text-inherit" />
         </p>

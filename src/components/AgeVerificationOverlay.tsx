@@ -485,7 +485,7 @@ export default function AgeVerificationOverlay() {
               <img
                 src="/mundus-text-logo.svg"
                 alt="MUNDUS"
-                className="w-[160px] sm:w-[200px] h-auto select-none mb-8 drop-shadow-lg"
+                className="w-[160px] sm:w-[200px] h-auto select-none mb-8"
                 draggable={false}
                 style={{ transform: "translateZ(30px)" }}
               />

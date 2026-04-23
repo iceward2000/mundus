@@ -8,7 +8,7 @@ import { SECTIONS } from "@/lib/constants";
 import clsx from "clsx";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { useLanguage, type Lang, type TranslationKey } from "@/context/LanguageContext";
+import { useLanguage, type TranslationKey } from "@/context/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import { StableLocaleText } from "@/components/StableLocaleText";
 
@@ -22,14 +22,11 @@ export default function Navigation() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
-  const { lang, setLang, t } = useLanguage();
+  const { t } = useLanguage();
 
   const [playing, setPlaying] = useState(false);
   const [showAudioToggle, setShowAudioToggle] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(0);
-
-  const LANG_LABELS: Record<Lang, string> = { tr: "TÜRKÇE", en: "ENGLISH" };
-  const nextLang: Lang = lang === "tr" ? "en" : "tr";
 
   // Derived states for different modes
   const [transitionProgress, setTransitionProgress] = useState(0);
@@ -464,56 +461,6 @@ export default function Navigation() {
             );
           })}
 
-          {/* Language switcher — last nav item, identical structure to section items */}
-          {(() => {
-            const langIndex = SECTIONS.length;
-            const totalNavItems = SECTIONS.length + 1;
-            const itemDuration = 0.5;
-            const staggerStep = (1 - itemDuration) / (totalNavItems - 1);
-            const staggerDelay = langIndex * staggerStep;
-            const langProgress = Math.max(0, Math.min(1, (transitionProgress - staggerDelay) / itemDuration));
-            const langScale = lerp(1.1, 1, langProgress);
-            const langVertical = lerp(0, sidebarVH, langProgress);
-            const langLineOpacity = lerp(1, 0, langProgress);
-
-            return (
-              <li
-                className="nav-item relative will-change-transform"
-                style={{
-                  transform: `translateX(calc((50vw - 50%) * ${1 - langProgress})) translateY(${langVertical}vh) scale(${langScale})`,
-                  marginBottom: 0,
-                  ...(isSidebarMode ? {
-                    opacity: isAccordionOpen ? 1 : 0,
-                    transition: `opacity 0.35s cubic-bezier(0.19, 1, 0.22, 1) ${isAccordionOpen ? langIndex * 60 : 0}ms`,
-                    pointerEvents: (isAccordionOpen ? 'auto' : 'none') as React.CSSProperties['pointerEvents'],
-                  } : {}),
-                }}
-              >
-                <button
-                  onClick={() => setLang(nextLang)}
-                  className={clsx(
-                    "group flex items-center gap-3 transition-colors duration-300 text-left",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg px-2 py-1 -mx-2 -my-1",
-                    "text-neutral-400 hover:text-white font-extrabold"
-                  )}
-                >
-                  <span
-                    className="h-[1px] bg-current transition-all duration-300"
-                    style={{ width: 0, opacity: langLineOpacity }}
-                  />
-                  <span className="tracking-wide text-sm whitespace-nowrap">
-                    <StableLocaleText
-                      tr={LANG_LABELS.tr}
-                      en={LANG_LABELS.en}
-                      activeLang={nextLang}
-                      nowrap
-                      className="text-inherit"
-                    />
-                  </span>
-                </button>
-              </li>
-            );
-          })()}
         </ul>
 
         {/* Scroll indicator - only visible in center mode */}
@@ -533,7 +480,7 @@ export default function Navigation() {
         </div>
       </nav>
 
-      {/* Top-right HUD: audio toggle + scroll percentage — single aligned row */}
+      {/* Top-right HUD: audio toggle + scroll percentage + language switcher */}
       {!isMobile && (
         <div className="fixed top-8 right-8 z-[70] pointer-events-none flex items-center gap-5">
           <audio ref={audioRef} src="/audio/loop.mp3" loop preload="none" />
@@ -577,6 +524,10 @@ export default function Navigation() {
           <div className="flex items-baseline gap-1 font-serif text-[color:var(--foreground)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
             <span ref={counterRef} className="text-4xl font-light tabular-nums leading-none">0</span>
             <span className="text-sm opacity-70">%</span>
+          </div>
+
+          <div className="pointer-events-auto mix-blend-difference">
+            <LanguageToggle variant="nav" />
           </div>
         </div>
       )}
