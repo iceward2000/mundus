@@ -314,6 +314,7 @@ export default function GlobeViz({
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
     controls.enableRotate = !isMobileTouchDevice;
+    controls.enabled = !isMobileTouchDevice;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
     controls.minDistance = 120;
     controls.maxDistance = 1000;
@@ -350,6 +351,7 @@ export default function GlobeViz({
       if (event.touches.length !== 1) {
         // Pinch zoom is intentionally disabled on mobile.
         event.preventDefault();
+        event.stopPropagation();
         isHorizontalDragging = false;
         return;
       }
@@ -367,7 +369,14 @@ export default function GlobeViz({
 
     const handleTouchMove = (event: TouchEvent) => {
       if (!isMobileTouchDevice) return;
-      if (!isHorizontalDragging || event.touches.length !== 1) return;
+      if (event.touches.length !== 1) {
+        // Block any two-finger movement so only slider controls zoom.
+        event.preventDefault();
+        event.stopPropagation();
+        isHorizontalDragging = false;
+        return;
+      }
+      if (!isHorizontalDragging) return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -385,10 +394,16 @@ export default function GlobeViz({
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
+      if (!isMobileTouchDevice) return;
       if (!isHorizontalDragging) return;
       if (event.touches.length > 0) return;
       isHorizontalDragging = false;
       scheduleResumeAutoRotate();
+    };
+
+    const preventGestureZoom = (event: Event) => {
+      if (!isMobileTouchDevice) return;
+      event.preventDefault();
     };
 
     if (canvas) {
@@ -397,6 +412,10 @@ export default function GlobeViz({
       canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
       canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
       canvas.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+      // iOS Safari pinch gesture events.
+      canvas.addEventListener("gesturestart", preventGestureZoom, { passive: false });
+      canvas.addEventListener("gesturechange", preventGestureZoom, { passive: false });
+      canvas.addEventListener("gestureend", preventGestureZoom, { passive: false });
     }
 
     controls.addEventListener("start", pauseAutoRotate);
@@ -409,6 +428,9 @@ export default function GlobeViz({
         canvas.removeEventListener("touchmove", handleTouchMove);
         canvas.removeEventListener("touchend", handleTouchEnd);
         canvas.removeEventListener("touchcancel", handleTouchEnd);
+        canvas.removeEventListener("gesturestart", preventGestureZoom);
+        canvas.removeEventListener("gesturechange", preventGestureZoom);
+        canvas.removeEventListener("gestureend", preventGestureZoom);
       }
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);

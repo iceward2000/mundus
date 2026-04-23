@@ -20,6 +20,7 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
+const COMPLETED_ACTION_OFFSET_Y = 12;
 
 type Phase =
   | "intro"
@@ -376,7 +377,11 @@ export default function RakiFrames() {
         if (phaseRef.current !== "completed") return;
         clearPoemText();
         setActionText(SEREFE_TEXT);
-        setActionFlapVisual({ autoAlpha: 1, y: 0, filter: "blur(0px)" });
+        setActionFlapVisual({
+          autoAlpha: 1,
+          y: COMPLETED_ACTION_OFFSET_Y,
+          filter: "blur(0px)",
+        });
         renderFrame(frameCount);
       },
       onLeaveBack: () => {
@@ -397,7 +402,11 @@ export default function RakiFrames() {
           renderFrame(frameCount);
           clearPoemText();
           setActionText(SEREFE_TEXT);
-          setActionFlapVisual({ autoAlpha: 1, y: 0, filter: "blur(0px)" });
+          setActionFlapVisual({
+            autoAlpha: 1,
+            y: COMPLETED_ACTION_OFFSET_Y,
+            filter: "blur(0px)",
+          });
           setPhaseState("completed");
           activeTweenRef.current = null;
         },
@@ -450,23 +459,16 @@ export default function RakiFrames() {
       if (phaseRef.current !== "completed") return;
       activeTweenRef.current?.kill();
       setPhaseState("animating-reverse");
-      setActionFlapVisual({ autoAlpha: 1, y: 0, filter: "blur(0px)" });
       clearPoemText();
 
       const reverseState = { frame: frameCount };
       renderFrame(frameCount);
-      activeTweenRef.current = gsap.to(reverseState, {
-        frame: 1,
-        ease: FRAME_EASE,
-        duration: FORWARD_DURATION,
-        onUpdate: () => {
-          const frame = Math.round(reverseState.frame);
-          renderFrame(frame);
-        },
+      const reverseTimeline = gsap.timeline({
         onComplete: () => {
           setPhaseState("gate");
           setGateActive(true);
           setActionText(LAST_LINE_ACTION);
+          setActionFlapVisual({ autoAlpha: 1, y: 0, filter: "blur(0px)" });
           const poemState = { progress: 0 };
           gsap.to(poemState, {
             progress: 1,
@@ -479,6 +481,26 @@ export default function RakiFrames() {
           activeTweenRef.current = null;
         },
       });
+
+      reverseTimeline
+        .to(actionFlapRef.current, {
+          autoAlpha: 0,
+          y: COMPLETED_ACTION_OFFSET_Y + 14,
+          filter: "blur(9px)",
+          duration: 0.48,
+          ease: "power2.inOut",
+        })
+        .to(reverseState, {
+          frame: 1,
+          ease: FRAME_EASE,
+          duration: FORWARD_DURATION,
+          onUpdate: () => {
+            const frame = Math.round(reverseState.frame);
+            renderFrame(frame);
+          },
+        });
+
+      activeTweenRef.current = reverseTimeline;
     };
 
     gsap.set(introOverlay, { autoAlpha: 1 });
