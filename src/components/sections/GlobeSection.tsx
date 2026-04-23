@@ -5,6 +5,11 @@ import GlobeViz from "../GlobeViz";
 import SectionWrapper from "../SectionWrapper";
 import { StableLocaleText } from "@/components/StableLocaleText";
 
+const isTouchDevice = () =>
+  window.matchMedia("(pointer: coarse)").matches ||
+  navigator.maxTouchPoints > 0 ||
+  "ontouchstart" in window;
+
 const MARKERS = [
   { lat: 37.0902, lng: -95.7129, label: "Amerika Birleşik Devletleri", description: "Küresel Merkez & Teknoloji Üssü" },
   { lat: 56.1304, lng: -106.3468, label: "Kanada", description: "Kuzey Operasyonları" },
@@ -67,7 +72,7 @@ export default function GlobeSection() {
 
   useEffect(() => {
     const coarsePointer = window.matchMedia("(pointer: coarse)");
-    const apply = () => setIsMobileTouchDevice(coarsePointer.matches);
+    const apply = () => setIsMobileTouchDevice(isTouchDevice());
     apply();
 
     if (typeof coarsePointer.addEventListener === "function") {

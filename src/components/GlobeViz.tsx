@@ -51,6 +51,11 @@ const normalizeLng = (lng: number) => {
   return normalized;
 };
 
+const isTouchDevice = () =>
+  window.matchMedia("(pointer: coarse)").matches ||
+  navigator.maxTouchPoints > 0 ||
+  "ontouchstart" in window;
+
 export default function GlobeViz({
   markers = [],
   mobileAltitude,
@@ -118,7 +123,7 @@ export default function GlobeViz({
   const getPolygonCapColor = useCallback(
     (d: any) => {
       if (d === hoveredPolygon) {
-        return "rgba(212, 175, 55, 0.42)";
+        return "#C0C0C0";
       }
       return "#E8E9EB";
     },
@@ -235,7 +240,7 @@ export default function GlobeViz({
 
   useEffect(() => {
     const coarsePointer = window.matchMedia("(pointer: coarse)");
-    const apply = () => setIsMobileTouchDevice(coarsePointer.matches);
+    const apply = () => setIsMobileTouchDevice(isTouchDevice());
     apply();
 
     if (typeof coarsePointer.addEventListener === "function") {
@@ -287,6 +292,7 @@ export default function GlobeViz({
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
     const controls = globeEl.current.controls();
+    const hostEl = containerRef.current;
     const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
     let isHorizontalDragging = false;
@@ -408,14 +414,18 @@ export default function GlobeViz({
 
     if (canvas) {
       canvas.style.touchAction = "none";
-      canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
-      canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
-      canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
-      canvas.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+      canvas.style.pointerEvents = isMobileTouchDevice ? "none" : "auto";
       // iOS Safari pinch gesture events.
       canvas.addEventListener("gesturestart", preventGestureZoom, { passive: false });
       canvas.addEventListener("gesturechange", preventGestureZoom, { passive: false });
       canvas.addEventListener("gestureend", preventGestureZoom, { passive: false });
+    }
+
+    if (hostEl && isMobileTouchDevice) {
+      hostEl.addEventListener("touchstart", handleTouchStart, { passive: false });
+      hostEl.addEventListener("touchmove", handleTouchMove, { passive: false });
+      hostEl.addEventListener("touchend", handleTouchEnd, { passive: true });
+      hostEl.addEventListener("touchcancel", handleTouchEnd, { passive: true });
     }
 
     controls.addEventListener("start", pauseAutoRotate);
@@ -424,13 +434,16 @@ export default function GlobeViz({
     return () => {
       clearTimeout(resumeRotateTimer);
       if (canvas) {
-        canvas.removeEventListener("touchstart", handleTouchStart);
-        canvas.removeEventListener("touchmove", handleTouchMove);
-        canvas.removeEventListener("touchend", handleTouchEnd);
-        canvas.removeEventListener("touchcancel", handleTouchEnd);
         canvas.removeEventListener("gesturestart", preventGestureZoom);
         canvas.removeEventListener("gesturechange", preventGestureZoom);
         canvas.removeEventListener("gestureend", preventGestureZoom);
+        canvas.style.pointerEvents = "auto";
+      }
+      if (hostEl) {
+        hostEl.removeEventListener("touchstart", handleTouchStart);
+        hostEl.removeEventListener("touchmove", handleTouchMove);
+        hostEl.removeEventListener("touchend", handleTouchEnd);
+        hostEl.removeEventListener("touchcancel", handleTouchEnd);
       }
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);
