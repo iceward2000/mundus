@@ -200,6 +200,26 @@ export default function RakiFrames() {
       return flapTl;
     };
 
+    const showCompletedAction = (animated: boolean) => {
+      setActionFlapVisual({
+        autoAlpha: 1,
+        y: completedActionOffsetY,
+        filter: "blur(0px)",
+      });
+
+      if (!animated) {
+        setActionText(SEREFE_TEXT);
+        return;
+      }
+
+      const completedFlap = runSplitFlap(SEREFE_TEXT);
+      if (!completedFlap) return;
+      activeTweenRef.current = completedFlap;
+      completedFlap.eventCallback("onComplete", () => {
+        activeTweenRef.current = null;
+      });
+    };
+
     const renderFrame = (frame: number) => {
       frameState.frame = Math.max(1, Math.min(frameCount, frame));
       context.fillStyle = getCanvasBackgroundColor();
@@ -419,12 +439,7 @@ export default function RakiFrames() {
       onEnterBack: () => {
         if (phaseRef.current !== "completed") return;
         clearPoemText();
-        setActionText(SEREFE_TEXT);
-        setActionFlapVisual({
-          autoAlpha: 1,
-            y: completedActionOffsetY,
-          filter: "blur(0px)",
-        });
+        showCompletedAction(false);
         renderFrame(frameCount);
       },
       onLeaveBack: () => {
@@ -444,13 +459,8 @@ export default function RakiFrames() {
         onComplete: () => {
           renderFrame(frameCount);
           clearPoemText();
-          setActionText(SEREFE_TEXT);
-          setActionFlapVisual({
-            autoAlpha: 1,
-            y: completedActionOffsetY,
-            filter: "blur(0px)",
-          });
           setPhaseState("completed");
+          showCompletedAction(true);
           activeTweenRef.current = null;
         },
       });
@@ -630,7 +640,7 @@ export default function RakiFrames() {
                   </span>
                 </button>
                 <span
-                  className={`mt-3 block w-full text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
+                  className={`mt-3 block w-full text-center font-bold leading-[1.28] tracking-[0.06em] text-[#ffe39a] transition-[opacity,transform] duration-250 ${
                     phase === "completed" ? "opacity-100" : "opacity-0"
                   }`}
                   style={{
