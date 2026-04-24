@@ -324,6 +324,15 @@ const SketchReveal = () => {
     let hasDrawn = false;
 
     const resize = () => {
+      const prevDpr = dpr;
+      const prevCssWidth = canvas.width / prevDpr;
+      const prevCssHeight = canvas.height / prevDpr;
+      let snapshot: ImageData | null = null;
+
+      if (canvas.width > 0 && canvas.height > 0) {
+        snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      }
+
       dpr = window.devicePixelRatio || 1;
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -332,11 +341,24 @@ const SketchReveal = () => {
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      if (snapshot) {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = snapshot.width;
+        tempCanvas.height = snapshot.height;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+          tempCtx.putImageData(snapshot, 0, 0);
+          // Keep existing marks visible when mobile viewport height changes on scroll.
+          ctx.drawImage(tempCanvas, 0, 0, prevCssWidth, prevCssHeight, 0, 0, w, h);
+        }
+      }
+
       points = [];
       currentWidth = configRef.current.maxWidth;
       widthVelocity = 0;
       smoothVelocity = 0;
-      hasDrawn = false;
     };
     window.addEventListener("resize", resize);
     resize();

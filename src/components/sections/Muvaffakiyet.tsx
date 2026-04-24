@@ -100,11 +100,11 @@ export default function Muvaffakiyet() {
     <SectionWrapper id="muvaffakiyet" className="py-20">
       <div className="w-full relative z-10">
         {/* Section header */}
-        <div className="mb-12 md:mb-16 text-center">
-          <h2 className="text-4xl md:text-5xl font-serif mt-4">
+        <div className="mb-12 md:mb-16">
+          <h2 className="mt-4 text-center text-4xl font-serif md:text-5xl">
             <StableLocaleText tKey="muvaffakiyet.title" fill className="text-inherit" />
           </h2>
-          <p className="mt-4 text-white/60 max-w-xl mx-auto">
+          <p className="mx-0 mt-4 max-w-xl text-left text-white/60 md:mx-auto md:text-center">
             <StableLocaleText tKey="muvaffakiyet.subtitle" fill className="text-inherit" />
           </p>
         </div>

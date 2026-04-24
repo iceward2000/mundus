@@ -169,7 +169,7 @@ export default function Hayal() {
         {/* ——— Text content below the glass ——— */}
         <div className="mt-10 md:mt-16 lg:mt-20 max-w-5xl mx-auto w-full">
           <div key={activeTab} className="hayal-content-reveal">
-            <p className="text-base md:text-lg lg:text-xl leading-relaxed text-white/85 font-light indent-8 text-balance">
+            <p className="text-base md:text-lg lg:text-xl leading-relaxed text-white/85 font-light text-balance">
               <StableLocaleText
                 tKey={activeTab === "gercek" ? "hayal.gercekText" : "hayal.hayalText"}
                 fill
