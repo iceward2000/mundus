@@ -593,9 +593,15 @@ export default function RakiFrames() {
                   </span>
                 </button>
                 <span
-                  className={`mt-3 block text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-opacity duration-250 ${
+                  className={`mt-3 block text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
                     phase === "completed" ? "opacity-100" : "opacity-0"
                   }`}
+                  style={{
+                    transform:
+                      phase === "completed"
+                        ? `translateY(${COMPLETED_ACTION_OFFSET_Y + 36}px)`
+                        : "translateY(0px)",
+                  }}
                 >
                   {RETURN_TO_POEM_HINT[lang]}
                 </span>
