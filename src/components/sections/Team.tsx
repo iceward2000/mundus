@@ -138,13 +138,13 @@ export default function Team() {
         <div className="relative flex flex-col gap-4 md:gap-6">
           <div
             aria-hidden
-            className="pointer-events-none absolute bottom-0 left-1/2 top-0 hidden w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-white/25 to-transparent md:block"
+            className="pointer-events-none absolute bottom-0 left-5 top-0 w-px bg-gradient-to-b from-transparent via-white/25 to-transparent md:left-1/2 md:-translate-x-1/2"
           />
           {TEAM_MEMBERS.map((member, index) => (
             <div
               key={member.name}
               className={clsx(
-                "relative flex w-full",
+                "relative flex w-full pl-10 md:pl-0",
                 index % 2 === 0 ? "md:justify-start" : "md:justify-end"
               )}
             >
@@ -179,13 +179,12 @@ export default function Team() {
                   } as CSSProperties
                 }
                 className={clsx(
-                  "team-glass-card group relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/20 bg-white/[0.04] p-6 sm:p-7",
+                  "team-glass-card group relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/20 bg-white/[0.04] p-5 sm:p-7",
                   "shadow-[0_10px_40px_rgba(0,0,0,0.35)]",
                   "focus-within:ring-2 focus-within:ring-primary/50",
                   prefersReducedMotion && "team-glass-card--reduced-motion",
                   index % 2 === 0 ? "md:mr-8" : "md:ml-8",
-                  !prefersReducedMotion &&
-                    "transition-transform duration-500 ease-out hover:-translate-y-1"
+                  !prefersReducedMotion && "transition-shadow duration-500 ease-out"
                 )}
               >
                 <div
@@ -205,6 +204,11 @@ export default function Team() {
                 <div
                   aria-hidden
                   className={clsx("team-glass-specular pointer-events-none absolute inset-0")}
+                />
+
+                <div
+                  aria-hidden
+                  className="absolute left-5 top-8 h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-cyan-200/60 bg-black shadow-[0_0_0_4px_rgba(167,243,255,0.15)] md:hidden"
                 />
 
                 <div

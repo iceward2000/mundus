@@ -349,7 +349,7 @@ export default function Navigation() {
           </button>
         )}
 
-        <div className="flex items-baseline gap-0.5 font-serif text-white">
+        <div className="flex items-baseline gap-0.5 font-serif text-white [font-family:'MundusNumbers',var(--font-serif)]">
           <span className="text-2xl font-light tabular-nums leading-none">{scrollPercent}</span>
           <span className="text-[11px] opacity-70">%</span>
         </div>
@@ -571,7 +571,7 @@ export default function Navigation() {
             </button>
           )}
 
-          <div className="flex items-baseline gap-1 font-serif text-[color:var(--foreground)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+          <div className="flex items-baseline gap-1 font-serif text-[color:var(--foreground)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] [font-family:'MundusNumbers',var(--font-serif)]">
             <span ref={counterRef} className="text-4xl font-light tabular-nums leading-none">0</span>
             <span className="text-sm opacity-70">%</span>
           </div>

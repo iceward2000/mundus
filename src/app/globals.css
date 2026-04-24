@@ -12,11 +12,11 @@
 
 @font-face {
   font-family: "MundusNumbers";
-  src: url("/Orbitron/Orbitron-VariableFont_wght.ttf") format("truetype");
-  font-weight: 400 900;
+  src: url("/Syne_Mono/SyneMono-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0030-0039;
+  unicode-range: U+0025, U+002B, U+002C, U+002D, U+002E, U+0030-0039;
 }
 
 :root {
@@ -34,8 +34,8 @@
   --contact-footer: rgba(255, 255, 255, 0.3);
   --contact-input-bg: transparent;
   
-  --font-sans: 'Syne', sans-serif;
-  --font-serif: 'Syne', sans-serif;
+  --font-sans: 'MundusNumbers', 'Syne', sans-serif;
+  --font-serif: 'MundusNumbers', 'Syne', sans-serif;
   --font-mundus: 'Syne', sans-serif;
   font-weight: 500;
   
@@ -158,7 +158,7 @@ html.lenis, html.lenis body {
 
 /* Hero section specific styles */
 #hero {
-  min-height: 100svh;
+  min-height: 20svh;
 }
 
 @media (min-width: 768px) {

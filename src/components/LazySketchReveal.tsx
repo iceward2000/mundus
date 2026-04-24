@@ -11,6 +11,11 @@ export default function LazySketchReveal() {
   const [shouldMount, setShouldMount] = useState(false);
 
   useEffect(() => {
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setShouldMount(false);
+      return;
+    }
+
     const timeoutId = window.setTimeout(() => setShouldMount(true), 800);
     return () => {
       window.clearTimeout(timeoutId);
