@@ -22,8 +22,8 @@ const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
 const MOBILE_COMPLETED_ACTION_OFFSET_Y = 330;
-const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 380;
-const COMPLETED_HINT_GAP_Y = 10;
+const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 420;
+const COMPLETED_HINT_GAP_Y = 1;
 const RETURN_TO_POEM_HINT = {
   tr: "şiire geri dönmek için tıkla",
   en: "click to return to the poem",
