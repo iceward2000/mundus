@@ -203,6 +203,14 @@ export default function Team() {
                 />
                 <div
                   aria-hidden
+                  className="pointer-events-none absolute inset-0 md:hidden"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(235,249,255,0.22) 0%, rgba(194,232,255,0.1) 38%, rgba(194,232,255,0.04) 62%, rgba(255,255,255,0) 100%)",
+                  }}
+                />
+                <div
+                  aria-hidden
                   className={clsx("team-glass-specular pointer-events-none absolute inset-0")}
                 />
 
