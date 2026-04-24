@@ -30,6 +30,12 @@ export default function CocktailDemo() {
     if (!shouldLoadVideo || !videoRef.current) return;
 
     const video = videoRef.current;
+    video.defaultMuted = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
+    video.load();
     const tryPlay = () => {
       video.play().catch(() => {});
     };
@@ -37,10 +43,12 @@ export default function CocktailDemo() {
     tryPlay();
     video.addEventListener("loadeddata", tryPlay);
     video.addEventListener("canplay", tryPlay);
+    video.addEventListener("loadedmetadata", tryPlay);
 
     return () => {
       video.removeEventListener("loadeddata", tryPlay);
       video.removeEventListener("canplay", tryPlay);
+      video.removeEventListener("loadedmetadata", tryPlay);
     };
   }, [shouldLoadVideo]);
 
@@ -59,12 +67,8 @@ export default function CocktailDemo() {
         preload="none"
         className="pointer-events-none absolute inset-0 w-full h-full object-cover object-center"
       >
-        {shouldLoadVideo && (
-          <>
-            <source src="/videos/cocktail-compressed.webm" type="video/webm" />
-            <source src="/videos/cocktail-compressed.mp4" type="video/mp4" />
-          </>
-        )}
+        <source src="/videos/cocktail-compressed.webm" type="video/webm" />
+        <source src="/videos/cocktail-compressed.mp4" type="video/mp4" />
       </video>
 
       <div className="absolute inset-0 z-10 bg-black/30" />

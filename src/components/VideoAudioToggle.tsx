@@ -181,12 +181,27 @@ export default function VideoAudioToggle({
         });
     };
 
+    const tryAutoplayWhenReady = () => {
+      if (hasAutoplayedRef.current || hasUserToggledRef.current) return;
+      tryAutoplay();
+    };
+
+    // Ensure the browser begins fetching the media immediately.
+    audio.load();
     tryAutoplay();
+    audio.addEventListener("loadedmetadata", tryAutoplayWhenReady);
+    audio.addEventListener("canplay", tryAutoplayWhenReady);
+    audio.addEventListener("canplaythrough", tryAutoplayWhenReady);
+    const retryInterval = window.setInterval(tryAutoplayWhenReady, 1200);
     window.addEventListener("pointerdown", tryAutoplay, { passive: true });
     window.addEventListener("keydown", tryAutoplay);
     window.addEventListener("touchstart", tryAutoplay, { passive: true });
 
     return () => {
+      window.clearInterval(retryInterval);
+      audio.removeEventListener("loadedmetadata", tryAutoplayWhenReady);
+      audio.removeEventListener("canplay", tryAutoplayWhenReady);
+      audio.removeEventListener("canplaythrough", tryAutoplayWhenReady);
       window.removeEventListener("pointerdown", tryAutoplay);
       window.removeEventListener("keydown", tryAutoplay);
       window.removeEventListener("touchstart", tryAutoplay);

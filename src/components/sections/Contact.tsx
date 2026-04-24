@@ -121,6 +121,12 @@ export default function Contact() {
     if (!shouldLoadVideo || !videoRef.current) return;
 
     const video = videoRef.current;
+    video.defaultMuted = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
+    video.load();
     const tryPlay = () => {
       video.play().catch(() => {});
     };
@@ -128,10 +134,22 @@ export default function Contact() {
     tryPlay();
     video.addEventListener("loadeddata", tryPlay);
     video.addEventListener("canplay", tryPlay);
+    video.addEventListener("loadedmetadata", tryPlay);
+
+    const retryOnInteraction = () => {
+      tryPlay();
+      window.removeEventListener("touchstart", retryOnInteraction);
+      window.removeEventListener("pointerdown", retryOnInteraction);
+    };
+    window.addEventListener("touchstart", retryOnInteraction, { passive: true });
+    window.addEventListener("pointerdown", retryOnInteraction, { passive: true });
 
     return () => {
       video.removeEventListener("loadeddata", tryPlay);
       video.removeEventListener("canplay", tryPlay);
+      video.removeEventListener("loadedmetadata", tryPlay);
+      window.removeEventListener("touchstart", retryOnInteraction);
+      window.removeEventListener("pointerdown", retryOnInteraction);
     };
   }, [shouldLoadVideo]);
 
@@ -422,12 +440,8 @@ export default function Contact() {
         className="absolute inset-0 w-full h-full object-cover z-0"
         aria-hidden="true"
       >
-        {shouldLoadVideo && (
-          <>
-            <source src="/videos/exit-compressed.webm" type="video/webm" />
-            <source src="/videos/exit-compressed.mp4" type="video/mp4" />
-          </>
-        )}
+        <source src="/videos/exit-compressed.webm" type="video/webm" />
+        <source src="/videos/exit-compressed.mp4" type="video/mp4" />
       </video>
       <VideoAudioToggle
         videoRef={videoRef}

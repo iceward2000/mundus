@@ -158,6 +158,11 @@ export default function AgeVerificationOverlay() {
     if (!isOverlayVisible || !videoRef.current) return;
 
     const video = videoRef.current;
+    video.defaultMuted = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
     const tryPlay = () => {
       video.play().catch(() => {});
     };
@@ -167,6 +172,24 @@ export default function AgeVerificationOverlay() {
     } else {
       video.addEventListener("loadeddata", tryPlay, { once: true });
     }
+
+    video.addEventListener("canplay", tryPlay);
+    video.addEventListener("loadedmetadata", tryPlay);
+
+    const retryOnInteraction = () => {
+      tryPlay();
+      window.removeEventListener("touchstart", retryOnInteraction);
+      window.removeEventListener("pointerdown", retryOnInteraction);
+    };
+    window.addEventListener("touchstart", retryOnInteraction, { passive: true });
+    window.addEventListener("pointerdown", retryOnInteraction, { passive: true });
+
+    return () => {
+      video.removeEventListener("canplay", tryPlay);
+      video.removeEventListener("loadedmetadata", tryPlay);
+      window.removeEventListener("touchstart", retryOnInteraction);
+      window.removeEventListener("pointerdown", retryOnInteraction);
+    };
   }, [isOverlayVisible]);
 
   useEffect(() => {

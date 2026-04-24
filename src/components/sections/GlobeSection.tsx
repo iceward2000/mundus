@@ -5,11 +5,6 @@ import GlobeViz from "../GlobeViz";
 import SectionWrapper from "../SectionWrapper";
 import { StableLocaleText } from "@/components/StableLocaleText";
 
-const isTouchDevice = () =>
-  window.matchMedia("(pointer: coarse)").matches ||
-  navigator.maxTouchPoints > 0 ||
-  "ontouchstart" in window;
-
 const MARKERS = [
   { lat: 37.0902, lng: -95.7129, label: "Amerika Birleşik Devletleri", description: "Küresel Merkez & Teknoloji Üssü" },
   { lat: 56.1304, lng: -106.3468, label: "Kanada", description: "Kuzey Operasyonları" },
@@ -50,8 +45,6 @@ const MARKERS = [
 export default function GlobeSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [mountGlobe, setMountGlobe] = useState(false);
-  const [isMobileInteractionMode, setIsMobileInteractionMode] = useState(false);
-  const [mobileAltitude, setMobileAltitude] = useState(2.35);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -70,39 +63,6 @@ export default function GlobeSection() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const mobileWidth = window.matchMedia("(max-width: 1023px)");
-    const coarsePointer = window.matchMedia("(pointer: coarse)");
-    const apply = () => setIsMobileInteractionMode(mobileWidth.matches || isTouchDevice());
-    apply();
-
-    if (typeof mobileWidth.addEventListener === "function") {
-      mobileWidth.addEventListener("change", apply);
-    } else {
-      mobileWidth.addListener(apply);
-    }
-
-    if (typeof coarsePointer.addEventListener === "function") {
-      coarsePointer.addEventListener("change", apply);
-    } else {
-      coarsePointer.addListener(apply);
-    }
-
-    return () => {
-      if (typeof mobileWidth.removeEventListener === "function") {
-        mobileWidth.removeEventListener("change", apply);
-      } else {
-        mobileWidth.removeListener(apply);
-      }
-
-      if (typeof coarsePointer.removeEventListener === "function") {
-        coarsePointer.removeEventListener("change", apply);
-      } else {
-        coarsePointer.removeListener(apply);
-      }
-    };
-  }, []);
-
   return (
     <SectionWrapper
       id="global-presence"
@@ -115,11 +75,7 @@ export default function GlobeSection() {
       >
         <div className="w-full h-full">
           {mountGlobe ? (
-            <GlobeViz
-              markers={MARKERS}
-              mobileAltitude={mobileAltitude}
-              isMobileMode={isMobileInteractionMode}
-            />
+            <GlobeViz markers={MARKERS} />
           ) : (
             <div className="w-full h-full bg-slate-950" />
           )}
@@ -137,19 +93,6 @@ export default function GlobeSection() {
             <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />
           </h2>
 
-          {mountGlobe && isMobileInteractionMode && (
-            <input
-              type="range"
-              min={0.7}
-              max={4.6}
-              step={0.01}
-              value={mobileAltitude}
-              onInput={(event) => setMobileAltitude(Number((event.target as HTMLInputElement).value))}
-              onChange={(event) => setMobileAltitude(Number(event.target.value))}
-              aria-label="Globe zoom"
-              className="w-[72vw] max-w-[340px] min-w-[220px] h-10 accent-amber-400 cursor-pointer"
-            />
-          )}
         </div>
       </div>
     </SectionWrapper>

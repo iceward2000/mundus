@@ -36,6 +36,12 @@ export default function Hayal() {
     if (!shouldLoadVideo || prefersReducedMotion || !videoRef.current) return;
 
     const video = videoRef.current;
+    video.defaultMuted = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
+    video.load();
     const tryPlay = () => {
       video.play().catch(() => {});
     };
@@ -43,10 +49,12 @@ export default function Hayal() {
     tryPlay();
     video.addEventListener("loadeddata", tryPlay);
     video.addEventListener("canplay", tryPlay);
+    video.addEventListener("loadedmetadata", tryPlay);
 
     return () => {
       video.removeEventListener("loadeddata", tryPlay);
       video.removeEventListener("canplay", tryPlay);
+      video.removeEventListener("loadedmetadata", tryPlay);
     };
   }, [prefersReducedMotion, shouldLoadVideo]);
 
@@ -81,12 +89,8 @@ export default function Hayal() {
               preload="none"
               aria-hidden="true"
             >
-              {shouldLoadVideo && (
-                <>
-                  <source src="/videos/bira-compressed.webm" type="video/webm" />
-                  <source src="/videos/bira-compressed.mp4" type="video/mp4" />
-                </>
-              )}
+              <source src="/videos/bira-compressed.webm" type="video/webm" />
+              <source src="/videos/bira-compressed.mp4" type="video/mp4" />
             </video>
             {/* Keeps tab labels legible while preserving glass depth */}
             <div className="absolute inset-0 bg-black/30" />

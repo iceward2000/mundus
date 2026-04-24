@@ -17,8 +17,6 @@ const Globe = dynamic(() => import("react-globe.gl"), {
 
 interface GlobeVizProps {
   markers?: any[];
-  mobileAltitude?: number;
-  isMobileMode?: boolean;
 }
 
 // Static colors for stable rendering
@@ -37,24 +35,11 @@ const GEOJSON_FALLBACK =
 const getPathPoints = (d: any) => d.coords;
 const getPathPointLat = (p: any) => p[1];
 const getPathPointLng = (p: any) => p[0];
-const MIN_ALTITUDE = 0.7;
-const MAX_ALTITUDE = 4.6;
 const DEFAULT_ALTITUDE_DESKTOP = 2.5;
 const DEFAULT_ALTITUDE_MOBILE = 2.35;
-const MOBILE_ROTATE_SENSITIVITY = 0.18;
-
-const clampValue = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
-
-const isTouchDevice = () =>
-  window.matchMedia("(pointer: coarse)").matches ||
-  navigator.maxTouchPoints > 0 ||
-  "ontouchstart" in window;
 
 export default function GlobeViz({
   markers = [],
-  mobileAltitude,
-  isMobileMode,
 }: GlobeVizProps) {
   const { lang } = useLanguage();
   const globeEl = useRef<any>(undefined);
@@ -64,17 +49,6 @@ export default function GlobeViz({
   const [hoveredPolygon, setHoveredPolygon] = useState<any>(null);
   const [ready, setReady] = useState(false);
   const [compactLayout, setCompactLayout] = useState(false);
-  const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
-  const mobileAltitudeRef = useRef(DEFAULT_ALTITUDE_MOBILE);
-  const mobileLatRef = useRef(0);
-  const mobileLngRef = useRef(0);
-  const activeMobileAltitude = clampValue(
-    typeof mobileAltitude === "number" ? mobileAltitude : DEFAULT_ALTITUDE_MOBILE,
-    MIN_ALTITUDE,
-    MAX_ALTITUDE
-  );
-  const effectiveMobileMode =
-    typeof isMobileMode === "boolean" ? isMobileMode : isMobileTouchDevice;
 
   const getPolygonLabel = useCallback(
     ({ properties: d }: any) => {
@@ -237,51 +211,10 @@ export default function GlobeViz({
   }, []);
 
   useEffect(() => {
-    const coarsePointer = window.matchMedia("(pointer: coarse)");
-    const apply = () => setIsMobileTouchDevice(isTouchDevice());
-    apply();
-
-    if (typeof coarsePointer.addEventListener === "function") {
-      coarsePointer.addEventListener("change", apply);
-      return () => coarsePointer.removeEventListener("change", apply);
-    }
-
-    coarsePointer.addListener(apply);
-    return () => coarsePointer.removeListener(apply);
-  }, []);
-
-  useEffect(() => {
-    if (!ready || !globeEl.current || !effectiveMobileMode) return;
-    const currentPointOfView = globeEl.current.pointOfView();
-    mobileLatRef.current = currentPointOfView.lat ?? 0;
-    mobileLngRef.current = currentPointOfView.lng ?? 0;
-  }, [ready, effectiveMobileMode]);
-
-  useEffect(() => {
-    mobileAltitudeRef.current = activeMobileAltitude;
-  }, [activeMobileAltitude]);
-
-  useEffect(() => {
-    if (!ready || !globeEl.current || !effectiveMobileMode) return;
-    const currentPointOfView = globeEl.current.pointOfView();
-    mobileLatRef.current = currentPointOfView.lat ?? mobileLatRef.current;
-    mobileLngRef.current = currentPointOfView.lng ?? mobileLngRef.current;
-    globeEl.current.pointOfView(
-      {
-        lat: mobileLatRef.current,
-        lng: mobileLngRef.current,
-        altitude: activeMobileAltitude,
-      },
-      0
-    );
-  }, [ready, effectiveMobileMode, activeMobileAltitude]);
-
-  useEffect(() => {
     if (!ready || !globeEl.current) return;
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
     const controls = globeEl.current.controls();
-    const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
 
     const pauseAutoRotate = () => {
@@ -297,30 +230,16 @@ export default function GlobeViz({
       }, 3500);
     };
 
-    controls.autoRotate = !compactLayout && !effectiveMobileMode;
+    controls.autoRotate = !compactLayout;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
-    controls.enableZoom = !effectiveMobileMode;
+    controls.enableZoom = true;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
-    controls.enableRotate = !effectiveMobileMode;
-    controls.enabled = !effectiveMobileMode;
+    controls.enableRotate = true;
+    controls.enabled = true;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
     controls.minDistance = 120;
     controls.maxDistance = 1000;
-
-    if ("touches" in controls) {
-      // Mobile: keep one-finger rotate, block pinch zoom/pan.
-      (
-        controls as {
-          touches: { ONE: number; TWO: number };
-        }
-      ).touches.ONE = 0; // THREE.TOUCH.ROTATE
-      (
-        controls as {
-          touches: { ONE: number; TWO: number };
-        }
-      ).touches.TWO = effectiveMobileMode ? 1 : 2; // THREE.TOUCH.PAN (pan disabled) or DOLLY_PAN
-    }
 
     if ("enableDamping" in controls) {
       (controls as { enableDamping: boolean }).enableDamping = true;
@@ -328,26 +247,16 @@ export default function GlobeViz({
     }
 
     globeEl.current.pointOfView({
-      altitude: effectiveMobileMode
-        ? clampValue(mobileAltitudeRef.current, MIN_ALTITUDE, MAX_ALTITUDE)
-        : compactLayout
-          ? DEFAULT_ALTITUDE_MOBILE
-          : DEFAULT_ALTITUDE_DESKTOP,
+      altitude: compactLayout
+        ? DEFAULT_ALTITUDE_MOBILE
+        : DEFAULT_ALTITUDE_DESKTOP,
     });
-
-    if (canvas) {
-      canvas.style.touchAction = "none";
-      canvas.style.pointerEvents = "auto";
-    }
 
     controls.addEventListener("start", pauseAutoRotate);
     controls.addEventListener("end", scheduleResumeAutoRotate);
 
     return () => {
       clearTimeout(resumeRotateTimer);
-      if (canvas) {
-        canvas.style.pointerEvents = "auto";
-      }
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);
     };
@@ -356,73 +265,7 @@ export default function GlobeViz({
     dimensions.width,
     dimensions.height,
     compactLayout,
-    effectiveMobileMode,
   ]);
-
-  useEffect(() => {
-    if (!ready || !globeEl.current || !effectiveMobileMode) return;
-    const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
-    if (!canvas) return;
-
-    let activeTouchId: number | null = null;
-    let lastX = 0;
-    let lastY = 0;
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) {
-        activeTouchId = null;
-        return;
-      }
-      const touch = event.touches[0];
-      activeTouchId = touch.identifier;
-      lastX = touch.clientX;
-      lastY = touch.clientY;
-    };
-
-    const onTouchMove = (event: TouchEvent) => {
-      if (event.touches.length !== 1 || activeTouchId === null) return;
-      const touch = Array.from(event.touches).find((candidate) => candidate.identifier === activeTouchId);
-      if (!touch) return;
-
-      event.preventDefault();
-      const deltaX = touch.clientX - lastX;
-      const deltaY = touch.clientY - lastY;
-      lastX = touch.clientX;
-      lastY = touch.clientY;
-
-      mobileLngRef.current = ((mobileLngRef.current - deltaX * MOBILE_ROTATE_SENSITIVITY + 540) % 360) - 180;
-      mobileLatRef.current = clampValue(
-        mobileLatRef.current + deltaY * MOBILE_ROTATE_SENSITIVITY,
-        -85,
-        85
-      );
-
-      globeEl.current.pointOfView(
-        {
-          lat: mobileLatRef.current,
-          lng: mobileLngRef.current,
-          altitude: mobileAltitudeRef.current,
-        },
-        0
-      );
-    };
-
-    const onTouchEnd = () => {
-      activeTouchId = null;
-    };
-
-    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-    canvas.addEventListener("touchend", onTouchEnd, { passive: true });
-    canvas.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
-    return () => {
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove", onTouchMove);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchEnd);
-    };
-  }, [ready, effectiveMobileMode]);
 
   const polygonFeatures = useMemo(() => {
     const features: any[] = [];
@@ -491,8 +334,8 @@ export default function GlobeViz({
   return (
     <div
       ref={containerRef}
-      className="globe-gesture-lock w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden touch-none"
-      style={{ touchAction: "none", overflow: "hidden" }}
+      className="globe-gesture-lock w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden"
+      style={{ overflow: "hidden" }}
       data-lenis-prevent // Prevents Lenis from hijacking scroll/drag events on the globe
     >
       {canRenderGlobe && (

@@ -10,6 +10,15 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "MundusNumbers";
+  src: url("/Orbitron/Orbitron-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
 :root {
   --background: #0a0a0a;
   --foreground: #ededed;
@@ -42,7 +51,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-sans);
+  font-family: "MundusNumbers", var(--font-sans);
   letter-spacing: 0.07em;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
