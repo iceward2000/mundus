@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useLanguage } from "@/context/LanguageContext";
 
 const INTRO_LINES = [
   "Göz hizasında derin bi bakış,",
@@ -20,7 +21,11 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
-const COMPLETED_ACTION_OFFSET_Y = 340;
+const COMPLETED_ACTION_OFFSET_Y = 330;
+const RETURN_TO_POEM_HINT = {
+  tr: "şiire geri dönmek için tıkla",
+  en: "click to return to the poem",
+};
 
 type Phase =
   | "intro"
@@ -30,6 +35,7 @@ type Phase =
   | "animating-reverse";
 
 export default function RakiFrames() {
+  const { lang } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
@@ -586,6 +592,13 @@ export default function RakiFrames() {
                     </span>
                   </span>
                 </button>
+                <span
+                  className={`mt-3 block text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-opacity duration-250 ${
+                    phase === "completed" ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  {RETURN_TO_POEM_HINT[lang]}
+                </span>
               </p>
             </div>
 

@@ -10,6 +10,8 @@ interface Props {
 
 const OVERLAY_SHORT_LABELS = { tr: "TR", en: "EN" } as const;
 const NAV_LABELS = { tr: "TR", en: "EN" } as const;
+const BASE_LABEL_STYLE =
+  "text-[10px] tracking-[0.15em] font-medium whitespace-nowrap [font-family:var(--font-mundus)]";
 
 export default function LanguageToggle({ variant = "nav" }: Props) {
   const { lang, setLang } = useLanguage();
@@ -25,7 +27,8 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
         onClick={() => setLang(nextLang)}
         aria-label={`Switch to ${shortLabel}`}
         className={clsx(
-          "text-[10px] tracking-[0.15em] [font-family:var(--font-mundus)] transition-colors duration-300 py-1 px-1 rounded",
+          BASE_LABEL_STYLE,
+          "transition-colors duration-300 py-1 px-1 rounded",
           "focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40",
           "text-neutral-500 hover:text-neutral-200"
         )}
@@ -40,10 +43,10 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
       onClick={() => setLang(nextLang)}
       aria-label={`Switch to ${navLabel}`}
       className={clsx(
-        "tracking-[0.12em] whitespace-nowrap [font-family:var(--font-mundus)] transition-colors duration-300",
+        BASE_LABEL_STYLE,
+        "transition-colors duration-300",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg",
-        "text-white/90 hover:text-white font-extrabold",
-        "text-[10px] sm:text-sm px-1.5 py-1 -mx-1.5 -my-1"
+        "text-white/90 hover:text-white px-1.5 py-1 -mx-1.5 -my-1"
       )}
     >
       <StableLocaleText
