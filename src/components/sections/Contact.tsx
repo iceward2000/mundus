@@ -40,6 +40,8 @@ export default function Contact() {
   const spanMeasureRef = useRef<HTMLSpanElement>(null);
   const fieldContainerRef = useRef<HTMLDivElement>(null);
   const hasMountedRef = useRef(false);
+  const successShownAtRef = useRef(0);
+  const checkmarkTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -153,6 +155,14 @@ export default function Contact() {
     };
   }, [shouldLoadVideo]);
 
+  useEffect(() => {
+    return () => {
+      if (checkmarkTimeoutRef.current !== null) {
+        window.clearTimeout(checkmarkTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // 3D Perspective – cursor-based liquid glass tilt (like AgeVerificationOverlay)
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!inputContainerRef.current) return;
@@ -257,6 +267,11 @@ export default function Contact() {
   };
 
   const handleReset = () => {
+    if (checkmarkTimeoutRef.current !== null) {
+      window.clearTimeout(checkmarkTimeoutRef.current);
+      checkmarkTimeoutRef.current = null;
+    }
+    successShownAtRef.current = 0;
     setSubmitStatus("idle");
     setIsSubmitting(false);
     setCurrentStep(0); // Reset to first step
@@ -293,6 +308,7 @@ export default function Contact() {
   };
 
   const handleSubmit = async () => {
+    successShownAtRef.current = 0;
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
@@ -372,6 +388,7 @@ export default function Contact() {
       if (!response.ok) throw new Error("Failed to send");
 
       setSubmitStatus("success");
+      successShownAtRef.current = Date.now();
       setShowCheckmark(true);
       setFormData({
         fullName: "",
@@ -381,7 +398,10 @@ export default function Contact() {
       });
 
       // 3. Auto-hide checkmark after few seconds
-      setTimeout(() => {
+      if (checkmarkTimeoutRef.current !== null) {
+        window.clearTimeout(checkmarkTimeoutRef.current);
+      }
+      checkmarkTimeoutRef.current = window.setTimeout(() => {
         setShowCheckmark(false);
       }, 3000);
 
@@ -482,7 +502,12 @@ export default function Contact() {
             ref={inputContainerRef}
             style={{ transformStyle: "preserve-3d" }}
             onClick={() => {
-              if (submitStatus === "success") {
+              // Prevent accidental tap-through reset on mobile right after submit.
+              if (
+                submitStatus === "success" &&
+                !showCheckmark &&
+                Date.now() - successShownAtRef.current > 300
+              ) {
                 handleReset();
               }
             }}
