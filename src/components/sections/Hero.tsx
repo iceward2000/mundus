@@ -80,7 +80,7 @@ export default function Hero() {
   return (
     <SectionWrapper
       id="hero"
-      className="relative items-center overflow-hidden !py-0 min-h-[100svh] justify-end pb-10 text-center md:!py-20 md:min-h-screen md:justify-center md:pb-0"
+      className="relative items-center overflow-hidden !py-0 pt-14 min-h-[100svh] justify-end pb-10 text-center md:!py-20 md:pt-0 md:min-h-screen md:justify-center md:pb-0"
     >
       {/* Main content - positioned to work with centered nav */}
       <div ref={containerRef} className="relative z-10 flex flex-col items-center pt-0 md:pt-24 lg:pt-28">
