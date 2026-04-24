@@ -50,7 +50,7 @@ const MARKERS = [
 export default function GlobeSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [mountGlobe, setMountGlobe] = useState(false);
-  const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
+  const [isMobileInteractionMode, setIsMobileInteractionMode] = useState(false);
   const [mobileAltitude, setMobileAltitude] = useState(2.35);
 
   useEffect(() => {
@@ -71,17 +71,36 @@ export default function GlobeSection() {
   }, []);
 
   useEffect(() => {
+    const mobileWidth = window.matchMedia("(max-width: 1023px)");
     const coarsePointer = window.matchMedia("(pointer: coarse)");
-    const apply = () => setIsMobileTouchDevice(isTouchDevice());
+    const apply = () => setIsMobileInteractionMode(mobileWidth.matches || isTouchDevice());
     apply();
+
+    if (typeof mobileWidth.addEventListener === "function") {
+      mobileWidth.addEventListener("change", apply);
+    } else {
+      mobileWidth.addListener(apply);
+    }
 
     if (typeof coarsePointer.addEventListener === "function") {
       coarsePointer.addEventListener("change", apply);
-      return () => coarsePointer.removeEventListener("change", apply);
+    } else {
+      coarsePointer.addListener(apply);
     }
 
-    coarsePointer.addListener(apply);
-    return () => coarsePointer.removeListener(apply);
+    return () => {
+      if (typeof mobileWidth.removeEventListener === "function") {
+        mobileWidth.removeEventListener("change", apply);
+      } else {
+        mobileWidth.removeListener(apply);
+      }
+
+      if (typeof coarsePointer.removeEventListener === "function") {
+        coarsePointer.removeEventListener("change", apply);
+      } else {
+        coarsePointer.removeListener(apply);
+      }
+    };
   }, []);
 
   return (
@@ -99,8 +118,7 @@ export default function GlobeSection() {
             <GlobeViz
               markers={MARKERS}
               mobileAltitude={mobileAltitude}
-              onMobileAltitudeChange={setMobileAltitude}
-              isMobileMode={isMobileTouchDevice}
+              isMobileMode={isMobileInteractionMode}
             />
           ) : (
             <div className="w-full h-full bg-slate-950" />
@@ -119,7 +137,7 @@ export default function GlobeSection() {
             <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />
           </h2>
 
-          {mountGlobe && isMobileTouchDevice && (
+          {mountGlobe && isMobileInteractionMode && (
             <input
               type="range"
               min={0.7}

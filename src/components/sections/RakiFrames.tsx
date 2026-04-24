@@ -20,7 +20,7 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
-const COMPLETED_ACTION_OFFSET_Y = 40;
+const COMPLETED_ACTION_OFFSET_Y = 80;
 
 type Phase =
   | "intro"
