@@ -593,7 +593,7 @@ export default function RakiFrames() {
                   </span>
                 </button>
                 <span
-                  className={`mt-3 block text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
+                  className={`mt-3 block w-full text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
                     phase === "completed" ? "opacity-100" : "opacity-0"
                   }`}
                   style={{
