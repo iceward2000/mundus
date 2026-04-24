@@ -21,7 +21,9 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
-const COMPLETED_ACTION_OFFSET_Y = 330;
+const MOBILE_COMPLETED_ACTION_OFFSET_Y = 330;
+const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 368;
+const COMPLETED_HINT_GAP_Y = 20;
 const RETURN_TO_POEM_HINT = {
   tr: "şiire geri dönmek için tıkla",
   en: "click to return to the poem",
@@ -55,9 +57,13 @@ export default function RakiFrames() {
   const [actionText, setActionText] = useState(LAST_LINE_ACTION);
   const [scrollHintLevel, setScrollHintLevel] = useState(0);
   const [isActivated, setIsActivated] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   const isGateActive = phase === "gate";
   const showPoem = phase === "intro" || phase === "gate";
+  const completedActionOffsetY = isDesktop
+    ? DESKTOP_COMPLETED_ACTION_OFFSET_Y
+    : MOBILE_COMPLETED_ACTION_OFFSET_Y;
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -74,6 +80,15 @@ export default function RakiFrames() {
 
     observer.observe(sectionRef.current);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
+    const syncDesktop = () => setIsDesktop(desktopQuery.matches);
+    syncDesktop();
+    desktopQuery.addEventListener("change", syncDesktop);
+    return () => desktopQuery.removeEventListener("change", syncDesktop);
   }, []);
 
   useEffect(() => {
@@ -385,7 +400,7 @@ export default function RakiFrames() {
         setActionText(SEREFE_TEXT);
         setActionFlapVisual({
           autoAlpha: 1,
-          y: COMPLETED_ACTION_OFFSET_Y,
+          y: completedActionOffsetY,
           filter: "blur(0px)",
         });
         renderFrame(frameCount);
@@ -410,7 +425,7 @@ export default function RakiFrames() {
           setActionText(SEREFE_TEXT);
           setActionFlapVisual({
             autoAlpha: 1,
-            y: COMPLETED_ACTION_OFFSET_Y,
+            y: completedActionOffsetY,
             filter: "blur(0px)",
           });
           setPhaseState("completed");
@@ -491,7 +506,7 @@ export default function RakiFrames() {
       reverseTimeline
         .to(actionFlapRef.current, {
           autoAlpha: 0,
-          y: COMPLETED_ACTION_OFFSET_Y + 14,
+          y: completedActionOffsetY + 14,
           filter: "blur(9px)",
           duration: 0.48,
           ease: "power2.inOut",
@@ -526,7 +541,7 @@ export default function RakiFrames() {
       window.removeEventListener("resize", scheduleCanvasResize);
       window.removeEventListener("orientationchange", scheduleCanvasResize);
     };
-  }, [isActivated]);
+  }, [isActivated, completedActionOffsetY]);
 
   return (
     <section
@@ -599,7 +614,7 @@ export default function RakiFrames() {
                   style={{
                     transform:
                       phase === "completed"
-                        ? `translateY(${COMPLETED_ACTION_OFFSET_Y + 36}px)`
+                        ? `translateY(${completedActionOffsetY + COMPLETED_HINT_GAP_Y}px)`
                         : "translateY(0px)",
                   }}
                 >
