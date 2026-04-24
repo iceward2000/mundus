@@ -22,7 +22,7 @@ const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
 const MOBILE_COMPLETED_ACTION_OFFSET_Y = 330;
-const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 420;
+const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 450;
 const COMPLETED_HINT_GAP_Y = 1;
 const RETURN_TO_POEM_HINT = {
   tr: "şiire geri dönmek için tıkla",
@@ -580,45 +580,47 @@ export default function RakiFrames() {
                     className={`absolute inset-0 transition-opacity duration-150 ${showPoem ? "opacity-100" : "opacity-0"}`}
                   />
                 </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (phase === "completed") reverseActionRef.current();
-                    else unlockActionRef.current();
-                  }}
-                  className={`pointer-events-auto inline bg-transparent px-0 align-baseline font-bold leading-[1.28] transition duration-200 ${
-                    isGateActive || phase === "animating-forward" || phase === "animating-reverse" || phase === "completed"
-                      ? "opacity-100"
-                      : "opacity-0"
-                  } ${
-                    phase === "completed"
-                      ? "cursor-pointer text-[#ffe39a]"
-                      : isGateActive
-                        ? "cursor-pointer text-[#f5d27a] animate-pulse"
-                        : "cursor-default text-[#f5d27a]"
-                  }`}
-                >
-                  <span
-                    ref={actionFlapRef}
-                    className="inline-block px-[0.16em] tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
-                  >
-                    <span ref={actionTextRef} className="inline-block will-change-transform">
-                      {actionText}
-                    </span>
-                  </span>
-                </button>
-                <span
-                  className={`mt-1 block w-full text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
-                    phase === "completed" ? "opacity-100" : "opacity-0"
-                  }`}
-                  style={{
-                    transform:
+                <span className="relative inline-flex flex-col items-center align-baseline">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (phase === "completed") reverseActionRef.current();
+                      else unlockActionRef.current();
+                    }}
+                    className={`pointer-events-auto inline bg-transparent px-0 align-baseline font-bold leading-[1.28] transition duration-200 ${
+                      isGateActive || phase === "animating-forward" || phase === "animating-reverse" || phase === "completed"
+                        ? "opacity-100"
+                        : "opacity-0"
+                    } ${
                       phase === "completed"
-                        ? `translateY(${completedActionOffsetY + COMPLETED_HINT_GAP_Y}px)`
-                        : "translateY(0px)",
-                  }}
-                >
-                  {RETURN_TO_POEM_HINT[lang]}
+                        ? "cursor-pointer text-[#ffe39a]"
+                        : isGateActive
+                          ? "cursor-pointer text-[#f5d27a] animate-pulse"
+                          : "cursor-default text-[#f5d27a]"
+                    }`}
+                  >
+                    <span
+                      ref={actionFlapRef}
+                      className="inline-block px-[0.16em] tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
+                    >
+                      <span ref={actionTextRef} className="inline-block will-change-transform">
+                        {actionText}
+                      </span>
+                    </span>
+                  </button>
+                  <span
+                    className={`mt-1 block whitespace-nowrap text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
+                      phase === "completed" ? "opacity-100" : "opacity-0"
+                    }`}
+                    style={{
+                      transform:
+                        phase === "completed"
+                          ? `translateY(${completedActionOffsetY + COMPLETED_HINT_GAP_Y}px)`
+                          : "translateY(0px)",
+                    }}
+                  >
+                    {RETURN_TO_POEM_HINT[lang]}
+                  </span>
                 </span>
               </p>
             </div>
