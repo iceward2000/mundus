@@ -158,7 +158,13 @@ html.lenis, html.lenis body {
 
 /* Hero section specific styles */
 #hero {
-  min-height: 150vh; /* Extended height for scroll transition */
+  min-height: 100svh;
+}
+
+@media (min-width: 768px) {
+  #hero {
+    min-height: 150vh; /* Extended height for scroll transition on larger screens */
+  }
 }
 
 /* Ensure smooth rendering during scroll animations */
@@ -1606,12 +1612,3 @@ textarea:-webkit-autofill:focus {
   transform-box: fill-box;
 }
 
-/* Globe interaction lock: route pinch/swipe gestures to WebGL controls */
-.globe-gesture-lock {
-  touch-action: none;
-  overflow: hidden;
-}
-
-.globe-gesture-lock canvas {
-  touch-action: none;
-}

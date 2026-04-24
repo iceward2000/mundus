@@ -126,7 +126,7 @@ export default function Muvaffakiyet() {
                     <h3 className="mb-3 text-center font-serif text-2xl text-primary">
                       <StableLocaleText tKey={item.titleKey} fill className="text-inherit" />
                     </h3>
-                    <p className="text-center font-light text-sm leading-relaxed text-white/70">
+                    <p className="text-left font-light text-sm leading-relaxed text-white/70">
                       <StableLocaleText tKey={item.textKey} fill className="text-inherit" />
                     </p>
 

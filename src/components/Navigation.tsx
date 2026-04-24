@@ -76,6 +76,8 @@ export default function Navigation() {
     if (!a || loopMutedByUserRef.current) return;
 
     window.dispatchEvent(new Event("mundus-global-audio-activate"));
+    a.defaultMuted = false;
+    a.muted = false;
     a.volume = 0.5;
     a
       .play()
@@ -97,11 +99,7 @@ export default function Navigation() {
   );
 
   useEffect(() => {
-    const verified = sessionStorage.getItem("mundus-age-verified") === "true";
-    if (verified) {
-      setShowAudioToggle(true);
-      tryStartLoopAudio();
-
+    const attachAutoplayRetryListeners = () => {
       const retryAutoplay = () => {
         const audio = audioRef.current;
         if (!audio || !audio.paused || hasLoopStartedRef.current || loopMutedByUserRef.current) {
@@ -119,15 +117,31 @@ export default function Navigation() {
         window.removeEventListener("touchstart", retryAutoplay);
         window.removeEventListener("keydown", retryAutoplay);
       };
+    };
+
+    let cleanupAutoplayRetryListeners: (() => void) | null = null;
+    const verified = sessionStorage.getItem("mundus-age-verified") === "true";
+    if (verified) {
+      setShowAudioToggle(true);
+      tryStartLoopAudio();
+      cleanupAutoplayRetryListeners = attachAutoplayRetryListeners();
+      return () => {
+        cleanupAutoplayRetryListeners?.();
+      };
     }
 
     const handleEntered = () => {
       setShowAudioToggle(true);
       tryStartLoopAudio();
+      cleanupAutoplayRetryListeners?.();
+      cleanupAutoplayRetryListeners = attachAutoplayRetryListeners();
     };
 
     window.addEventListener("mundus-entered", handleEntered);
-    return () => window.removeEventListener("mundus-entered", handleEntered);
+    return () => {
+      window.removeEventListener("mundus-entered", handleEntered);
+      cleanupAutoplayRetryListeners?.();
+    };
   }, [tryStartLoopAudio]);
 
   useEffect(() => {

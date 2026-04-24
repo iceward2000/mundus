@@ -215,6 +215,7 @@ export default function GlobeViz({
     if (dimensions.width < 1 || dimensions.height < 1) return;
 
     const controls = globeEl.current.controls();
+    const canvas = globeEl.current.renderer()?.domElement as HTMLCanvasElement | undefined;
     let resumeRotateTimer: ReturnType<typeof setTimeout>;
 
     const pauseAutoRotate = () => {
@@ -232,11 +233,11 @@ export default function GlobeViz({
 
     controls.autoRotate = !compactLayout;
     controls.autoRotateSpeed = compactLayout ? 0.35 : 0.5;
-    controls.enableZoom = true;
+    controls.enableZoom = !compactLayout;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
-    controls.enableRotate = true;
-    controls.enabled = true;
+    controls.enableRotate = !compactLayout;
+    controls.enabled = !compactLayout;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
     controls.minDistance = 120;
     controls.maxDistance = 1000;
@@ -252,11 +253,18 @@ export default function GlobeViz({
         : DEFAULT_ALTITUDE_DESKTOP,
     });
 
+    if (canvas) {
+      canvas.style.pointerEvents = compactLayout ? "none" : "auto";
+    }
+
     controls.addEventListener("start", pauseAutoRotate);
     controls.addEventListener("end", scheduleResumeAutoRotate);
 
     return () => {
       clearTimeout(resumeRotateTimer);
+      if (canvas) {
+        canvas.style.pointerEvents = "auto";
+      }
       controls.removeEventListener("start", pauseAutoRotate);
       controls.removeEventListener("end", scheduleResumeAutoRotate);
     };
@@ -334,9 +342,8 @@ export default function GlobeViz({
   return (
     <div
       ref={containerRef}
-      className="globe-gesture-lock w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden"
+      className="w-full h-full min-h-0 lg:min-h-[500px] relative overflow-hidden"
       style={{ overflow: "hidden" }}
-      data-lenis-prevent // Prevents Lenis from hijacking scroll/drag events on the globe
     >
       {canRenderGlobe && (
         <Globe
