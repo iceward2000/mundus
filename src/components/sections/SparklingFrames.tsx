@@ -48,6 +48,7 @@ export default function SparklingFrames() {
 
     const images: HTMLImageElement[] = [];
     const frameState = { frame: 1 };
+    const canvasSizeRef = { width: 0, height: 0, dpr: 1 };
 
     const bgColorRef = { value: "rgb(10, 10, 10)" };
 
@@ -65,8 +66,22 @@ export default function SparklingFrames() {
     const setCanvasSize = () => {
       // Use sticky container dimensions instead of innerHeight to avoid
       // mobile browser UI show/hide resizing the sequence unexpectedly.
-      canvas.width = sticky.clientWidth;
-      canvas.height = sticky.clientHeight;
+      const cssWidth = Math.max(1, sticky.clientWidth);
+      const cssHeight = Math.max(1, sticky.clientHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvasSizeRef.width = cssWidth;
+      canvasSizeRef.height = cssHeight;
+      canvasSizeRef.dpr = dpr;
+
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
       render();
     };
     let resizeRafId: number | null = null;
@@ -84,18 +99,22 @@ export default function SparklingFrames() {
 
     function render() {
       if (images[frameState.frame - 1]?.complete) {
+        const renderWidth = canvasSizeRef.width;
+        const renderHeight = canvasSizeRef.height;
+        if (!renderWidth || !renderHeight) return;
+
         context!.fillStyle = bgColorRef.value;
-        context!.fillRect(0, 0, canvas!.width, canvas!.height);
+        context!.fillRect(0, 0, renderWidth, renderHeight);
 
         const img = images[frameState.frame - 1];
 
         const scale = Math.max(
-          canvas!.width / img.width,
-          canvas!.height / img.height
+          renderWidth / img.width,
+          renderHeight / img.height
         );
 
-        const x = (canvas!.width / 2) - (img.width / 2) * scale;
-        const y = (canvas!.height / 2) - (img.height / 2) * scale;
+        const x = (renderWidth / 2) - (img.width / 2) * scale;
+        const y = (renderHeight / 2) - (img.height / 2) * scale;
 
         context!.drawImage(img, x, y, img.width * scale, img.height * scale);
       }

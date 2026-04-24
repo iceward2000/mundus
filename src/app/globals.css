@@ -1035,7 +1035,6 @@ textarea:-webkit-autofill:focus {
 .sparkling-frames-section {
   background-color: rgb(245, 245, 245);
   height: 500svh;
-  overflow: hidden;
 }
 
 .sparkling-frames-section::before {
@@ -1049,7 +1048,6 @@ textarea:-webkit-autofill:focus {
 .sparkling-frames-sticky {
   z-index: 10;
   height: 100svh;
-  overflow: hidden;
 }
 
 .sparkling-frames-canvas {
@@ -1057,13 +1055,13 @@ textarea:-webkit-autofill:focus {
   height: 100%;
 }
 
-@supports (height: 100lvh) {
+@supports (height: 100dvh) {
   .sparkling-frames-section {
-    height: 500lvh;
+    height: 500dvh;
   }
 
   .sparkling-frames-sticky {
-    height: 100lvh;
+    height: 100dvh;
   }
 }
 

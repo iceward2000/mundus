@@ -42,6 +42,7 @@ export default function Contact() {
   const hasMountedRef = useRef(false);
   const successShownAtRef = useRef(0);
   const checkmarkTimeoutRef = useRef<number | null>(null);
+  const submitLockRef = useRef(false);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -232,6 +233,8 @@ export default function Contact() {
   };
 
   const nextStep = async () => {
+    if (submitLockRef.current || isSubmitting) return;
+
     if (currentStep < formSteps.length - 1) {
       const stepData = formSteps[currentStep];
       if (stepData.id === "email" && formData.email.length > 0 && !formData.email.includes("@")) return;
@@ -267,6 +270,7 @@ export default function Contact() {
   };
 
   const handleReset = () => {
+    submitLockRef.current = false;
     if (checkmarkTimeoutRef.current !== null) {
       window.clearTimeout(checkmarkTimeoutRef.current);
       checkmarkTimeoutRef.current = null;
@@ -308,6 +312,8 @@ export default function Contact() {
   };
 
   const handleSubmit = async () => {
+    if (submitLockRef.current || isSubmitting) return;
+    submitLockRef.current = true;
     successShownAtRef.current = 0;
     setIsSubmitting(true);
     setSubmitStatus("idle");
@@ -407,6 +413,7 @@ export default function Contact() {
 
     } catch (error) {
       console.error(error);
+      submitLockRef.current = false;
       setSubmitStatus("error");
 
       // On error, revert animation
@@ -630,6 +637,7 @@ export default function Contact() {
           <button
             onClick={prevStep}
             disabled={currentStep === 0 || isSubmitting}
+            type="button"
             className="p-4 rounded-full bg-white/5 border border-white/10 text-white/70 disabled:opacity-0 transition-opacity"
           >
             <ChevronLeft size={24} />
@@ -637,6 +645,7 @@ export default function Contact() {
           <button
             onClick={nextStep}
             disabled={isSubmitting}
+            type="button"
             className="p-4 rounded-full bg-white/10 border border-white/30 text-white flex items-center gap-3 pr-6"
           >
             <span className="text-xs font-semibold uppercase tracking-widest pl-2">

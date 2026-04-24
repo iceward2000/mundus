@@ -20,7 +20,7 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
-const COMPLETED_ACTION_OFFSET_Y = 420;
+const COMPLETED_ACTION_OFFSET_Y = 340;
 
 type Phase =
   | "intro"
@@ -100,6 +100,7 @@ export default function RakiFrames() {
 
     const images: HTMLImageElement[] = [];
     const frameState = { frame: 1 };
+    const canvasSizeRef = { width: 0, height: 0, dpr: 1 };
     const setPhaseState = (nextPhase: Phase) => {
       phaseRef.current = nextPhase;
       setPhase(nextPhase);
@@ -176,26 +177,34 @@ export default function RakiFrames() {
 
     const renderFrame = (frame: number) => {
       frameState.frame = Math.max(1, Math.min(frameCount, frame));
+      const renderWidth = canvasSizeRef.width;
+      const renderHeight = canvasSizeRef.height;
+      if (!renderWidth || !renderHeight) return;
+
       context.fillStyle = getCanvasBackgroundColor();
-      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillRect(0, 0, renderWidth, renderHeight);
 
       const img = images[frameState.frame - 1];
       if (!img?.complete || !img.width || !img.height) return;
 
-      const coverScale = Math.max(canvas.width / img.width, canvas.height / img.height);
-      const containScale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const coverScale = Math.max(renderWidth / img.width, renderHeight / img.height);
+      const containScale = Math.min(renderWidth / img.width, renderHeight / img.height);
       const isMobile = window.matchMedia("(max-width: 767px)").matches;
       const scale = isMobile
         ? containScale + (coverScale - containScale) * MOBILE_FRAME_CROP_BIAS
         : coverScale;
-      const x = canvas.width / 2 - (img.width / 2) * scale;
-      const y = canvas.height / 2 - (img.height / 2) * scale;
+      const x = renderWidth / 2 - (img.width / 2) * scale;
+      const y = renderHeight / 2 - (img.height / 2) * scale;
       context.drawImage(img, x, y, img.width * scale, img.height * scale);
     };
 
     const renderBlack = () => {
+      const renderWidth = canvasSizeRef.width;
+      const renderHeight = canvasSizeRef.height;
+      if (!renderWidth || !renderHeight) return;
+
       context.fillStyle = getCanvasBackgroundColor();
-      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillRect(0, 0, renderWidth, renderHeight);
     };
 
     const clearPoemText = () => {
@@ -241,8 +250,22 @@ export default function RakiFrames() {
 
     const setCanvasSize = () => {
       // Keep sequence stable on mobile where browser chrome affects viewport height.
-      canvas.width = sticky.clientWidth;
-      canvas.height = sticky.clientHeight;
+      const cssWidth = Math.max(1, sticky.clientWidth);
+      const cssHeight = Math.max(1, sticky.clientHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvasSizeRef.width = cssWidth;
+      canvasSizeRef.height = cssHeight;
+      canvasSizeRef.dpr = dpr;
+
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
       if (phaseRef.current === "completed") {
         renderFrame(frameCount);
       } else {
