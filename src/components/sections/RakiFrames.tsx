@@ -20,7 +20,7 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
-const COMPLETED_ACTION_OFFSET_Y = 12;
+const COMPLETED_ACTION_OFFSET_Y = 40;
 
 type Phase =
   | "intro"
@@ -579,7 +579,7 @@ export default function RakiFrames() {
                 >
                   <span
                     ref={actionFlapRef}
-                    className="inline-block px-[0.16em] font-mono tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
+                    className="inline-block px-[0.16em] tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
                   >
                     <span ref={actionTextRef} className="inline-block will-change-transform">
                       {actionText}

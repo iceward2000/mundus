@@ -14,6 +14,12 @@ type TeamMember = {
   orgEn?: string;
 };
 
+type CardLightState = {
+  x: number;
+  y: number;
+  colorShift: number;
+};
+
 const TEAM_MEMBERS: TeamMember[] = [
   {
     name: "Rezzak Sezgin",
@@ -55,16 +61,25 @@ const TEAM_MEMBERS: TeamMember[] = [
   },
 ];
 
-const randomLightPosition = () => ({
+const COHESIVE_COLOR_STEPS = [-10, -6, -2, 2, 6, 10];
+
+const randomCohesiveColorShift = () => {
+  const step = COHESIVE_COLOR_STEPS[Math.floor(Math.random() * COHESIVE_COLOR_STEPS.length)];
+  const jitter = Math.random() * 3 - 1.5;
+  return Math.round((step + jitter) * 100) / 100;
+};
+
+const randomCardLightState = (): CardLightState => ({
   x: Math.round((18 + Math.random() * 64) * 100) / 100,
   y: Math.round((16 + Math.random() * 68) * 100) / 100,
+  colorShift: randomCohesiveColorShift(),
 });
 
 export default function Team() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null);
   const [cardLightPositions, setCardLightPositions] = useState(() =>
-    TEAM_MEMBERS.map(() => randomLightPosition())
+    TEAM_MEMBERS.map(() => randomCardLightState())
   );
 
   const getCardIntensity = (index: number) => {
@@ -98,7 +113,7 @@ export default function Team() {
 
   const randomizePassiveLights = (activeIndex: number) => {
     setCardLightPositions((prev) =>
-      prev.map((pos, index) => (index === activeIndex ? pos : randomLightPosition()))
+      prev.map((state, index) => (index === activeIndex ? state : randomCardLightState()))
     );
   };
 
@@ -141,11 +156,15 @@ export default function Team() {
                 }}
                 onMouseLeave={(event) => {
                   if (prefersReducedMotion) return;
-                  const fallback = cardLightPositions[index] ?? { x: 50, y: 50 };
+                  const fallback = cardLightPositions[index] ?? { x: 50, y: 50, colorShift: 0 };
                   event.currentTarget.style.setProperty("--team-mx", `${fallback.x}%`);
                   event.currentTarget.style.setProperty("--team-my", `${fallback.y}%`);
                   event.currentTarget.style.setProperty("--team-hue-shift", "0");
                   event.currentTarget.style.setProperty("--team-light-shift", "0%");
+                  event.currentTarget.style.setProperty(
+                    "--team-color-shift",
+                    fallback.colorShift.toFixed(2)
+                  );
                   setActiveCardIndex(null);
                 }}
                 onMouseMove={(event) => handleCardMouseMove(event, index)}
@@ -155,6 +174,7 @@ export default function Team() {
                     "--team-my": `${cardLightPositions[index]?.y ?? 50}%`,
                     "--team-hue-shift": 0,
                     "--team-light-shift": "0%",
+                    "--team-color-shift": cardLightPositions[index]?.colorShift ?? 0,
                     "--team-glass-intensity": getCardIntensity(index),
                   } as CSSProperties
                 }

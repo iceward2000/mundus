@@ -193,7 +193,6 @@ export default function AgeVerificationOverlay() {
 
     /** Persist verification for this tab/session. Other components listen for mundus-entered. */
     sessionStorage.setItem("mundus-age-verified", "true");
-    window.dispatchEvent(new Event("mundus-entered"));
     // Lock logo to static state so Safari tab restores do not replay intro keyframes.
     setIsStatic(true);
     setIntersectBlendActive(false);
@@ -212,6 +211,8 @@ export default function AgeVerificationOverlay() {
       duration: 0.8,
       ease: "power2.inOut",
       onComplete: () => {
+        // Start site-level experience only after overlay exit animation completes.
+        window.dispatchEvent(new Event("mundus-entered"));
         setIsOverlayVisible(false);
         // Body lock styles are removed by the useEffect cleanup on the next render.
         // Wait a tick so the layout is back to normal before resetting scroll
@@ -504,6 +505,7 @@ export default function AgeVerificationOverlay() {
                   type="button"
                   onClick={(event) => handleDecisionButtonClick(event, handleEnter)}
                   disabled={!loadComplete}
+                  data-age-decision="true"
                   className={clsx(
                     "flex-1 relative overflow-hidden group py-4 px-6 rounded-xl border transition-all duration-500",
                     loadComplete
@@ -533,6 +535,7 @@ export default function AgeVerificationOverlay() {
                 <button
                   type="button"
                   onClick={(event) => handleDecisionButtonClick(event, handleExit)}
+                  data-age-decision="true"
                   className="flex-1 py-4 px-6 rounded-xl border border-white/10 bg-transparent hover:bg-black/40 hover:border-white/40 transition-all duration-500 flex items-center justify-center cursor-pointer group"
                 >
                   <span className="text-white/60 group-hover:text-white transition-colors duration-300 tracking-[0.2em] text-sm font-medium uppercase drop-shadow-sm">
@@ -550,6 +553,7 @@ export default function AgeVerificationOverlay() {
             hidden={!showGlassContainer}
             autoplay
             allowAutoplayWhenHidden
+            autoplayRetryIgnoreSelector="[data-age-decision='true']"
             className="z-50"
           />
         </div>

@@ -11,6 +11,7 @@ type VideoAudioToggleProps = {
   hidden?: boolean;
   autoplay?: boolean;
   allowAutoplayWhenHidden?: boolean;
+  autoplayRetryIgnoreSelector?: string;
 };
 
 export default function VideoAudioToggle({
@@ -21,6 +22,7 @@ export default function VideoAudioToggle({
   hidden = false,
   autoplay = false,
   allowAutoplayWhenHidden = false,
+  autoplayRetryIgnoreSelector,
 }: VideoAudioToggleProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -52,6 +54,8 @@ export default function VideoAudioToggle({
     const audio = audioRef.current;
     if (!audio) return;
 
+    audio.muted = false;
+    audio.volume = 0.5;
     window.dispatchEvent(
       new CustomEvent("mundus-video-audio-activate", { detail: { sourceId } })
     );
@@ -121,21 +125,38 @@ export default function VideoAudioToggle({
 
     const audio = audioRef.current;
     if (!audio) return;
-    audio.volume = 0.5;
-
-    const tryAutoplay = () => {
+    const tryAutoplay = (event?: Event) => {
       if (hasAutoplayedRef.current || hasUserToggledRef.current) return;
+      if (
+        autoplayRetryIgnoreSelector &&
+        event?.target instanceof Element &&
+        event.target.closest(autoplayRetryIgnoreSelector)
+      ) {
+        return;
+      }
       window.dispatchEvent(
         new CustomEvent("mundus-video-audio-activate", { detail: { sourceId } })
       );
       syncToVideo();
+      const previousMuted = audio.muted;
+      const previousVolume = audio.volume;
+      // Warm-start with muted autoplay; then restore audible playback.
+      audio.muted = true;
+      audio.volume = 0;
       audio
         .play()
         .then(() => {
           hasAutoplayedRef.current = true;
           setIsPlaying(true);
+          requestAnimationFrame(() => {
+            if (hasUserToggledRef.current) return;
+            audio.muted = false;
+            audio.volume = 0.5;
+          });
         })
         .catch(() => {
+          audio.muted = previousMuted;
+          audio.volume = previousVolume;
           setIsPlaying(false);
         });
     };
@@ -150,7 +171,14 @@ export default function VideoAudioToggle({
       window.removeEventListener("keydown", tryAutoplay);
       window.removeEventListener("touchstart", tryAutoplay);
     };
-  }, [allowAutoplayWhenHidden, autoplay, hidden, sourceId, syncToVideo]);
+  }, [
+    allowAutoplayWhenHidden,
+    autoplay,
+    autoplayRetryIgnoreSelector,
+    hidden,
+    sourceId,
+    syncToVideo,
+  ]);
 
   useEffect(() => {
     const audio = audioRef.current;

@@ -758,6 +758,7 @@ textarea:-webkit-autofill:focus {
   isolation: isolate;
   --team-mx: 50%;
   --team-my: 50%;
+  --team-color-shift: 0;
   --team-hue-shift: 0;
   --team-light-shift: 0%;
   --team-glass-intensity: 0;
@@ -769,7 +770,7 @@ textarea:-webkit-autofill:focus {
     0 10px 38px rgba(0, 0, 0, 0.33),
     0 0 calc(36px * var(--team-glass-intensity))
       hsl(
-        calc(202 + var(--team-hue-shift))
+        calc(202 + var(--team-color-shift) + var(--team-hue-shift))
         88%
         clamp(62%, calc(70% + var(--team-light-shift)), 80%)
         / calc(0.14 * var(--team-glass-intensity))
@@ -803,25 +804,25 @@ textarea:-webkit-autofill:focus {
   background: radial-gradient(
     260px circle at var(--team-mx) var(--team-my),
     hsl(
-      calc(198 + var(--team-hue-shift))
+      calc(198 + var(--team-color-shift) + var(--team-hue-shift))
       100%
       clamp(88%, calc(94% + var(--team-light-shift)), 99%)
       / 0.78
     ) 0%,
     hsl(
-      calc(203 + var(--team-hue-shift))
+      calc(203 + var(--team-color-shift) + var(--team-hue-shift))
       86%
       clamp(72%, calc(79% + var(--team-light-shift)), 90%)
       / 0.42
     ) 26%,
     hsl(
-      calc(209 + var(--team-hue-shift))
+      calc(209 + var(--team-color-shift) + var(--team-hue-shift))
       78%
       clamp(63%, calc(70% + var(--team-light-shift)), 82%)
       / 0.23
     ) 42%,
     hsl(
-      calc(216 + var(--team-hue-shift))
+      calc(216 + var(--team-color-shift) + var(--team-hue-shift))
       72%
       clamp(56%, calc(63% + var(--team-light-shift)), 75%)
       / 0.1
