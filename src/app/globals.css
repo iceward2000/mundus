@@ -4,19 +4,19 @@
 
 @font-face {
   font-family: "Syne";
-  src: url("/font/Syne/Syne-VariableFont_wght.ttf") format("truetype");
-  font-weight: 400 800;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "MundusNumbers";
   src: url("/Syne_Mono/SyneMono-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
   unicode-range: U+0025, U+002B, U+002C, U+002D, U+002E, U+0030-0039;
+}
+
+@font-face {
+  font-family: "Syne";
+  src: url("/font/Syne/Syne-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
 }
 
 :root {
@@ -34,8 +34,8 @@
   --contact-footer: rgba(255, 255, 255, 0.3);
   --contact-input-bg: transparent;
   
-  --font-sans: 'MundusNumbers', 'Syne', sans-serif;
-  --font-serif: 'MundusNumbers', 'Syne', sans-serif;
+  --font-sans: 'Syne', sans-serif;
+  --font-serif: 'Syne', sans-serif;
   --font-mundus: 'Syne', sans-serif;
   font-weight: 500;
   
@@ -51,7 +51,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: "MundusNumbers", var(--font-sans);
+  font-family: var(--font-sans);
   letter-spacing: 0.07em;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;

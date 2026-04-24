@@ -21,10 +21,16 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
-const COMPLETED_ACTION_OFFSET_Y = 330;
+const MOBILE_COMPLETED_ACTION_OFFSET_Y = 330;
+const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 360;
 const RETURN_TO_POEM_HINT = {
-  tr: "şiire geri dönmek için tıkla",
+  tr: "şiiri görmek için tıkla",
   en: "click to return to the poem",
+};
+
+type MundusScrollLockDetail = {
+  locked: boolean;
+  y?: number;
 };
 
 type Phase =
@@ -55,6 +61,10 @@ export default function RakiFrames() {
   const [actionText, setActionText] = useState(LAST_LINE_ACTION);
   const [scrollHintLevel, setScrollHintLevel] = useState(0);
   const [isActivated, setIsActivated] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const completedActionOffsetY = isDesktop
+    ? DESKTOP_COMPLETED_ACTION_OFFSET_Y
+    : MOBILE_COMPLETED_ACTION_OFFSET_Y;
 
   const isGateActive = phase === "gate";
   const showPoem = phase === "intro" || phase === "gate";
@@ -74,6 +84,16 @@ export default function RakiFrames() {
 
     observer.observe(sectionRef.current);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
+    const applyDesktopState = () => setIsDesktop(desktopQuery.matches);
+    applyDesktopState();
+
+    desktopQuery.addEventListener("change", applyDesktopState);
+    return () => desktopQuery.removeEventListener("change", applyDesktopState);
   }, []);
 
   useEffect(() => {
@@ -277,10 +297,20 @@ export default function RakiFrames() {
 
     const createScrollLock = (fixedY: number) => {
       if (typeof document === "undefined") return () => {};
+      const root = document.documentElement;
+      const previousRootOverflow = root.style.overflow;
+      const previousRootTouchAction = root.style.touchAction;
       const previousOverflow = document.body.style.overflow;
       const previousTouchAction = document.body.style.touchAction;
+      root.style.overflow = "hidden";
+      root.style.touchAction = "none";
       document.body.style.overflow = "hidden";
       document.body.style.touchAction = "none";
+      window.dispatchEvent(
+        new CustomEvent<MundusScrollLockDetail>("mundus-scroll-lock", {
+          detail: { locked: true, y: fixedY },
+        })
+      );
 
       const bumpHint = () => {
         const now = performance.now();
@@ -317,8 +347,15 @@ export default function RakiFrames() {
       keepPosition();
 
       return () => {
+        root.style.overflow = previousRootOverflow;
+        root.style.touchAction = previousRootTouchAction;
         document.body.style.overflow = previousOverflow;
         document.body.style.touchAction = previousTouchAction;
+        window.dispatchEvent(
+          new CustomEvent<MundusScrollLockDetail>("mundus-scroll-lock", {
+            detail: { locked: false, y: fixedY },
+          })
+        );
         window.removeEventListener("wheel", preventWheel);
         window.removeEventListener("touchmove", preventTouch);
         window.removeEventListener("keydown", preventKeys);
@@ -385,7 +422,7 @@ export default function RakiFrames() {
         setActionText(SEREFE_TEXT);
         setActionFlapVisual({
           autoAlpha: 1,
-          y: COMPLETED_ACTION_OFFSET_Y,
+            y: completedActionOffsetY,
           filter: "blur(0px)",
         });
         renderFrame(frameCount);
@@ -410,7 +447,7 @@ export default function RakiFrames() {
           setActionText(SEREFE_TEXT);
           setActionFlapVisual({
             autoAlpha: 1,
-            y: COMPLETED_ACTION_OFFSET_Y,
+            y: completedActionOffsetY,
             filter: "blur(0px)",
           });
           setPhaseState("completed");
@@ -491,7 +528,7 @@ export default function RakiFrames() {
       reverseTimeline
         .to(actionFlapRef.current, {
           autoAlpha: 0,
-          y: COMPLETED_ACTION_OFFSET_Y + 14,
+          y: completedActionOffsetY + 14,
           filter: "blur(9px)",
           duration: 0.48,
           ease: "power2.inOut",
@@ -526,7 +563,7 @@ export default function RakiFrames() {
       window.removeEventListener("resize", scheduleCanvasResize);
       window.removeEventListener("orientationchange", scheduleCanvasResize);
     };
-  }, [isActivated]);
+  }, [isActivated, completedActionOffsetY]);
 
   return (
     <section
@@ -593,13 +630,13 @@ export default function RakiFrames() {
                   </span>
                 </button>
                 <span
-                  className={`mt-3 block text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
+                  className={`mt-3 block w-full text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
                     phase === "completed" ? "opacity-100" : "opacity-0"
                   }`}
                   style={{
                     transform:
                       phase === "completed"
-                        ? `translateY(${COMPLETED_ACTION_OFFSET_Y + 36}px)`
+                        ? `translateY(${completedActionOffsetY + 36}px)`
                         : "translateY(0px)",
                   }}
                 >

@@ -7,6 +7,11 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+type MundusScrollLockDetail = {
+  locked: boolean;
+  y?: number;
+};
+
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Prevent browsers from restoring previous scroll position on refresh.
@@ -57,6 +62,28 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     // Synchronize Lenis scroll with GSAP ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
 
+    const syncToPosition = (y?: number) => {
+      if (typeof y !== "number" || !Number.isFinite(y)) return;
+      lenis.scrollTo(y, { immediate: true });
+    };
+
+    const handleScrollLock = (event: Event) => {
+      const customEvent = event as CustomEvent<MundusScrollLockDetail>;
+      const detail = customEvent.detail;
+      if (!detail) return;
+
+      syncToPosition(detail.y);
+      if (detail.locked) {
+        lenis.stop();
+      } else {
+        lenis.start();
+        syncToPosition(detail.y);
+      }
+      ScrollTrigger.update();
+    };
+
+    window.addEventListener("mundus-scroll-lock", handleScrollLock as EventListener);
+
     const raf = (time: number) => {
       lenis.raf(time * 1000);
     };
@@ -66,6 +93,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     gsap.ticker.lagSmoothing(0);
 
     return () => {
+      window.removeEventListener("mundus-scroll-lock", handleScrollLock as EventListener);
       lenis.destroy();
       gsap.ticker.remove(raf);
     };
