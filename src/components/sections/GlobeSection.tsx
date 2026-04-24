@@ -126,6 +126,7 @@ export default function GlobeSection() {
               max={4.6}
               step={0.01}
               value={mobileAltitude}
+              onInput={(event) => setMobileAltitude(Number((event.target as HTMLInputElement).value))}
               onChange={(event) => setMobileAltitude(Number(event.target.value))}
               aria-label="Globe zoom"
               className="w-[72vw] max-w-[340px] min-w-[220px] h-10 accent-amber-400 cursor-pointer"

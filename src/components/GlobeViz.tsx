@@ -42,9 +42,32 @@ const MIN_ALTITUDE = 0.7;
 const MAX_ALTITUDE = 4.6;
 const DEFAULT_ALTITUDE_DESKTOP = 2.5;
 const DEFAULT_ALTITUDE_MOBILE = 2.35;
+type PerformanceTier = "low" | "balanced" | "high";
 
 const clampValue = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
+
+const simplifyRing = (
+  ring: [number, number][],
+  stride: number
+): [number, number][] => {
+  if (stride <= 1 || ring.length <= 6) return ring;
+  const simplified: [number, number][] = [];
+  for (let i = 0; i < ring.length; i += stride) {
+    simplified.push(ring[i]);
+  }
+
+  const first = simplified[0];
+  const last = simplified[simplified.length - 1];
+  if (
+    first &&
+    last &&
+    (first[0] !== last[0] || first[1] !== last[1])
+  ) {
+    simplified.push(first);
+  }
+  return simplified;
+};
 
 const isTouchDevice = () =>
   window.matchMedia("(pointer: coarse)").matches ||
@@ -66,6 +89,8 @@ export default function GlobeViz({
   const [ready, setReady] = useState(false);
   const [compactLayout, setCompactLayout] = useState(false);
   const [isMobileTouchDevice, setIsMobileTouchDevice] = useState(false);
+  const [performanceTier, setPerformanceTier] =
+    useState<PerformanceTier>("balanced");
   const [internalMobileAltitude, setInternalMobileAltitude] = useState(DEFAULT_ALTITUDE_MOBILE);
   const mobileAltitudeRef = useRef(DEFAULT_ALTITUDE_MOBILE);
   const isMobileAltitudeControlled = typeof mobileAltitude === "number";
@@ -136,9 +161,48 @@ export default function GlobeViz({
 
   const polygonAltitude = compactLayout ? 0.045 : 0.018;
   const pathPointAltitude = compactLayout ? 0.04 : 0.02;
+  const qualityProfile = useMemo(() => {
+    if (performanceTier === "low") {
+      return {
+        polygonStride: compactLayout ? 4 : 3,
+        pathEnabled: false,
+        pathResolution: 1,
+        pathStroke: 0.7,
+        pathDashLength: 0.01,
+        pathDashGap: 1,
+        pathDashAnimateTime: 0,
+        polygonCurvatureResolution: compactLayout ? 6 : 8,
+      };
+    }
+
+    if (performanceTier === "high") {
+      return {
+        polygonStride: 1,
+        pathEnabled: true,
+        pathResolution: compactLayout ? 2 : 3,
+        pathStroke: 1,
+        pathDashLength: 2,
+        pathDashGap: 0.1,
+        pathDashAnimateTime: 12000,
+        polygonCurvatureResolution: compactLayout ? 8 : 12,
+      };
+    }
+
+    return {
+      polygonStride: compactLayout ? 2 : 1,
+      pathEnabled: true,
+      pathResolution: compactLayout ? 1.5 : 2,
+      pathStroke: 0.85,
+      pathDashLength: 1.4,
+      pathDashGap: 0.2,
+      pathDashAnimateTime: 17000,
+      polygonCurvatureResolution: compactLayout ? 7 : 10,
+    };
+  }, [performanceTier, compactLayout]);
 
   // 1. Safe Initialization & Cleanup Strategy
   useEffect(() => {
+    const globeInstance = globeEl.current;
     // Delay mounting to avoid conflict with transitions/Strict Mode double-mount
     const timer = setTimeout(() => {
       setReady(true);
@@ -149,10 +213,10 @@ export default function GlobeViz({
       setReady(false);
 
       // CRITICAL FIX: Manually dispose of the WebGL context
-      if (globeEl.current) {
+      if (globeInstance) {
         try {
           // Attempt to find and dispose the renderer to free WebGL context
-          const renderer = globeEl.current.renderer();
+          const renderer = globeInstance.renderer();
           if (renderer) {
             renderer.dispose();
             renderer.forceContextLoss();
@@ -160,7 +224,7 @@ export default function GlobeViz({
           }
 
           // Also try to pause the controls
-          const controls = globeEl.current.controls();
+          const controls = globeInstance.controls();
           if (controls) {
             controls.dispose();
           }
@@ -251,6 +315,47 @@ export default function GlobeViz({
   }, []);
 
   useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const connection = (navigator as Navigator & {
+      connection?: { effectiveType?: string; saveData?: boolean };
+    }).connection;
+    const navWithMemory = navigator as Navigator & { deviceMemory?: number };
+
+    const apply = () => {
+      const cpuCores = navigator.hardwareConcurrency ?? 8;
+      const deviceMemory = navWithMemory.deviceMemory ?? 8;
+      const lowNetwork =
+        connection?.saveData || (connection?.effectiveType ?? "") === "2g";
+      const lowPower =
+        reducedMotion.matches ||
+        lowNetwork ||
+        cpuCores <= 4 ||
+        deviceMemory <= 4;
+
+      if (lowPower) {
+        setPerformanceTier("low");
+        return;
+      }
+
+      if (cpuCores <= 8 || deviceMemory <= 8) {
+        setPerformanceTier("balanced");
+        return;
+      }
+
+      setPerformanceTier("high");
+    };
+
+    apply();
+    if (typeof reducedMotion.addEventListener === "function") {
+      reducedMotion.addEventListener("change", apply);
+      return () => reducedMotion.removeEventListener("change", apply);
+    }
+
+    reducedMotion.addListener(apply);
+    return () => reducedMotion.removeListener(apply);
+  }, []);
+
+  useEffect(() => {
     if (!ready || !globeEl.current || !effectiveMobileMode) return;
     const fallbackAltitude = compactLayout
       ? DEFAULT_ALTITUDE_MOBILE
@@ -317,24 +422,24 @@ export default function GlobeViz({
     controls.enableZoom = !effectiveMobileMode;
     controls.zoomSpeed = compactLayout ? 2.2 : 1;
     controls.enablePan = false;
-    controls.enableRotate = !effectiveMobileMode;
-    controls.enabled = !effectiveMobileMode;
+    controls.enableRotate = true;
+    controls.enabled = true;
     controls.rotateSpeed = compactLayout ? 0.45 : 0.8;
     controls.minDistance = 120;
     controls.maxDistance = 1000;
 
     if ("touches" in controls) {
-      // Mobile: disable built-in touch gestures entirely.
+      // Mobile: keep one-finger rotate, block pinch zoom/pan.
       (
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.ONE = effectiveMobileMode ? 1 : 0; // THREE.TOUCH.PAN (pan disabled) or ROTATE
+      ).touches.ONE = 0; // THREE.TOUCH.ROTATE
       (
         controls as {
           touches: { ONE: number; TWO: number };
         }
-      ).touches.TWO = effectiveMobileMode ? 1 : 2; // THREE.TOUCH.PAN (disabled) or DOLLY_PAN
+      ).touches.TWO = effectiveMobileMode ? 1 : 2; // THREE.TOUCH.PAN (pan disabled) or DOLLY_PAN
     }
 
     if ("enableDamping" in controls) {
@@ -352,8 +457,7 @@ export default function GlobeViz({
 
     if (canvas) {
       canvas.style.touchAction = "none";
-      // Mobile: no direct touch interaction with globe canvas.
-      canvas.style.pointerEvents = effectiveMobileMode ? "none" : "auto";
+      canvas.style.pointerEvents = "auto";
     }
 
     controls.addEventListener("start", pauseAutoRotate);
@@ -382,21 +486,26 @@ export default function GlobeViz({
       if (!geometry || !properties) return;
 
       if (geometry.type === "Polygon") {
-        const ring = geometry.coordinates[0];
+        const ring = geometry.coordinates[0] as [number, number][];
+        const optimizedRing = simplifyRing(ring, qualityProfile.polygonStride);
         features.push({
           type: "Feature",
           properties: {
             ...properties,
             DISPLAY_ADMIN: getDisplayAdmin(properties.ADMIN, ring),
           },
-          geometry,
+          geometry: {
+            type: "Polygon",
+            coordinates: [optimizedRing],
+          },
         });
         return;
       }
 
       if (geometry.type === "MultiPolygon") {
         geometry.coordinates.forEach((polygon: any) => {
-          const ring = polygon[0];
+          const ring = polygon[0] as [number, number][];
+          const optimizedRing = simplifyRing(ring, qualityProfile.polygonStride);
           features.push({
             type: "Feature",
             properties: {
@@ -405,14 +514,14 @@ export default function GlobeViz({
             },
             geometry: {
               type: "Polygon",
-              coordinates: polygon,
+              coordinates: [optimizedRing],
             },
           });
         });
       }
     });
     return features;
-  }, [countries, getDisplayAdmin]);
+  }, [countries, getDisplayAdmin, qualityProfile.polygonStride]);
 
   // Process polygon features into paths for animated borders
   const borderPaths = useMemo(() => {
@@ -467,11 +576,15 @@ export default function GlobeViz({
           polygonStrokeColor={getPolygonStrokeColor}
 
           polygonLabel={getPolygonLabel}
-          onPolygonHover={setHoveredPolygon}
+          onPolygonHover={
+            performanceTier === "low" ? undefined : setHoveredPolygon
+          }
           polygonAltitude={polygonAltitude}
-          polygonCapCurvatureResolution={compactLayout ? 8 : 12}
+          polygonCapCurvatureResolution={
+            qualityProfile.polygonCurvatureResolution
+          }
 
-          pathsData={borderPaths}
+          pathsData={qualityProfile.pathEnabled ? borderPaths : []}
           pathPoints={getPathPoints}
           pathPointLat={getPathPointLat}
           pathPointLng={getPathPointLng}
@@ -480,11 +593,11 @@ export default function GlobeViz({
           // Bold, Beautiful Colors for Borders
           pathColor={getPathColor}
 
-          pathStroke={1}
-          pathDashLength={2} // Longer dashes to show more border simultaneously
-          pathDashGap={0.1}  // Smaller gaps
-          pathDashAnimateTime={12000} // Slower animation speed
-          pathResolution={compactLayout ? 2 : 3}
+          pathStroke={qualityProfile.pathStroke}
+          pathDashLength={qualityProfile.pathDashLength}
+          pathDashGap={qualityProfile.pathDashGap}
+          pathDashAnimateTime={qualityProfile.pathDashAnimateTime}
+          pathResolution={qualityProfile.pathResolution}
         />
       )}
 

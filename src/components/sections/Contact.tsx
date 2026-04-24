@@ -10,7 +10,6 @@ import VideoAudioToggle from "@/components/VideoAudioToggle";
 
 const formSteps = [
   { id: "fullName", label: "Ad Soyad", type: "text", placeholder: "Adınız Soyadınız" },
-  { id: "company", label: "Şirket (İsteğe Bağlı)", type: "text", placeholder: "Şirket İsmi" },
   { id: "phone", label: "Telefon", type: "tel", placeholder: "Telefon Numaranız" },
   { id: "email", label: "E-posta", type: "email", placeholder: "E-posta Adresiniz" },
   { id: "message", label: "Danışmanlık Talebi", type: "text", placeholder: "Nasıl yardımcı olabiliriz?" },
@@ -21,7 +20,6 @@ export default function Contact() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     fullName: "",
-    company: "",
     phone: "",
     email: "",
     message: "",
@@ -345,7 +343,7 @@ export default function Contact() {
         body: JSON.stringify({
           firstName,
           lastName,
-          company: formData.company,
+          company: "",
           position: "",
           phone: formData.phone,
           email: formData.email,
@@ -359,7 +357,6 @@ export default function Contact() {
       setShowCheckmark(true);
       setFormData({
         fullName: "",
-        company: "",
         phone: "",
         email: "",
         message: "",

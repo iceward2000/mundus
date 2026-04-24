@@ -61,11 +61,11 @@ const TEAM_MEMBERS: TeamMember[] = [
   },
 ];
 
-const COHESIVE_COLOR_STEPS = [-10, -6, -2, 2, 6, 10];
+const COHESIVE_COLOR_STEPS = [-2.2, -1.2, -0.4, 0.4, 1.2, 2.2];
 
 const randomCohesiveColorShift = () => {
   const step = COHESIVE_COLOR_STEPS[Math.floor(Math.random() * COHESIVE_COLOR_STEPS.length)];
-  const jitter = Math.random() * 3 - 1.5;
+  const jitter = Math.random() * 0.8 - 0.4;
   return Math.round((step + jitter) * 100) / 100;
 };
 
