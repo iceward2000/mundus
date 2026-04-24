@@ -165,11 +165,10 @@ export default function SparklingFrames() {
       ref={sectionRef}
       id="sparkling-frames"
       className="sparkling-frames-section relative z-10 w-full"
-      style={{ height: "500svh" }}
     >
       <div
         ref={stickyRef}
-        className="sparkling-frames-sticky sticky top-0 w-full h-[100svh]"
+        className="sparkling-frames-sticky sticky top-0 w-full"
       >
         <canvas
           ref={canvasRef}

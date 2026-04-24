@@ -1034,6 +1034,7 @@ textarea:-webkit-autofill:focus {
 /* SparklingFrames top veil to prevent harsh section seam */
 .sparkling-frames-section {
   background-color: rgb(245, 245, 245);
+  height: 500svh;
 }
 
 .sparkling-frames-section::before {
@@ -1046,11 +1047,22 @@ textarea:-webkit-autofill:focus {
 
 .sparkling-frames-sticky {
   z-index: 10;
+  height: 100svh;
 }
 
 .sparkling-frames-canvas {
   top: 0;
   height: 100%;
+}
+
+@supports (height: 100dvh) {
+  .sparkling-frames-section {
+    height: 500dvh;
+  }
+
+  .sparkling-frames-sticky {
+    height: 100dvh;
+  }
 }
 
 /* ——— Matematik — Timeline Elements ——— */
