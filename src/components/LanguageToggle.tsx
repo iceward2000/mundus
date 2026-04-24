@@ -27,7 +27,7 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
         onClick={() => setLang(nextLang)}
         aria-label={`Switch to ${fullLabel}`}
         className={clsx(
-          "text-[10px] tracking-[0.15em] transition-colors duration-300 py-1 px-1 rounded",
+          "text-[10px] tracking-[0.15em] [font-family:var(--font-mundus)] transition-colors duration-300 py-1 px-1 rounded",
           "focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40",
           "text-neutral-500 hover:text-neutral-200"
         )}
@@ -51,7 +51,7 @@ export default function LanguageToggle({ variant = "nav" }: Props) {
       onClick={() => setLang(nextLang)}
       aria-label={`Switch to ${navLabel}`}
       className={clsx(
-        "tracking-[0.12em] whitespace-nowrap transition-colors duration-300",
+        "tracking-[0.12em] whitespace-nowrap [font-family:var(--font-mundus)] transition-colors duration-300",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg",
         "text-white/90 hover:text-white font-extrabold",
         "text-[10px] sm:text-sm px-1.5 py-1 -mx-1.5 -my-1"
