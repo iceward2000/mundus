@@ -22,8 +22,8 @@ const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
 const MOBILE_COMPLETED_ACTION_OFFSET_Y = 330;
-const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 368;
-const COMPLETED_HINT_GAP_Y = 20;
+const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 380;
+const COMPLETED_HINT_GAP_Y = 10;
 const RETURN_TO_POEM_HINT = {
   tr: "şiire geri dönmek için tıkla",
   en: "click to return to the poem",
@@ -608,7 +608,7 @@ export default function RakiFrames() {
                   </span>
                 </button>
                 <span
-                  className={`mt-3 block w-full text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
+                  className={`mt-1 block w-full text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
                     phase === "completed" ? "opacity-100" : "opacity-0"
                   }`}
                   style={{
