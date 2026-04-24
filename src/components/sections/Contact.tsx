@@ -31,6 +31,7 @@ export default function Contact() {
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   const [useLiteVisuals, setUseLiteVisuals] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -229,6 +230,7 @@ export default function Contact() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSubmitStatus("idle");
+    setSubmitErrorMessage(null);
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -278,6 +280,7 @@ export default function Contact() {
     successShownAtRef.current = 0;
     setSubmitStatus("idle");
     setIsSubmitting(false);
+    setSubmitErrorMessage(null);
     setCurrentStep(0); // Reset to first step
     setShowCheckmark(false);
 
@@ -317,60 +320,63 @@ export default function Contact() {
     successShownAtRef.current = 0;
     setIsSubmitting(true);
     setSubmitStatus("idle");
+    setSubmitErrorMessage(null);
 
-    const tl = gsap.timeline();
-    const submitMorphStyles = isMobileViewport
-      ? {
-          maxWidth: "360px",
-          width: "92%",
-          height: "92px",
-          minHeight: "92px",
-          borderRadius: "2rem",
-          duration: 0.5,
-        }
-      : {
-          maxWidth: "80px",
-          width: "80px",
-          height: "80px",
-          minHeight: "80px",
-          borderRadius: "50%",
-          duration: 0.7,
-        };
+    if (isMobileViewport) {
+      // Keep mobile flow lightweight and stable: no morphing orb animation.
+      gsap.killTweensOf(inputContainerRef.current);
+      gsap.killTweensOf(formContentRef.current);
+      gsap.to(formContentRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: "power1.out",
+      });
+    } else {
+      const tl = gsap.timeline();
+      const submitMorphStyles = {
+        maxWidth: "80px",
+        width: "80px",
+        height: "80px",
+        minHeight: "80px",
+        borderRadius: "50%",
+        duration: 0.7,
+      };
 
-    // 0. Fade out text contents instantly to prep for shape shifting
-    tl.to(formContentRef.current, {
-      opacity: 0,
-      duration: 0.3,
-      ease: "power2.out",
-    });
+      // 0. Fade out text contents instantly to prep for shape shifting
+      tl.to(formContentRef.current, {
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.out",
+      });
 
-    // 1. Morph to a glowing liquid purple orb
-    tl.to(
-      inputContainerRef.current,
-      {
-        ...submitMorphStyles,
-        ease: "power3.inOut",
-        // Soft white inner glow to hold the glass shape, and a wide light-purple outer glow
-        boxShadow: "inset 0 0 20px rgba(255,255,255,0.4), 0 0 50px 20px rgba(168, 85, 247, 0.4)",
-        borderColor: "rgba(255,255,255,0.4)",
-        // A transparent gradient that we will animate
-        background: "linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(216, 180, 254, 0.4), rgba(168, 85, 247, 0.2))",
-        backgroundSize: "200% 200%",
-        backdropFilter: useLiteVisuals ? "none" : "blur(40px)",
-      },
-      "-=0.1"
-    );
+      // 1. Morph to a glowing liquid purple orb
+      tl.to(
+        inputContainerRef.current,
+        {
+          ...submitMorphStyles,
+          ease: "power3.inOut",
+          // Soft white inner glow to hold the glass shape, and a wide light-purple outer glow
+          boxShadow: "inset 0 0 20px rgba(255,255,255,0.4), 0 0 50px 20px rgba(168, 85, 247, 0.4)",
+          borderColor: "rgba(255,255,255,0.4)",
+          // A transparent gradient that we will animate
+          background: "linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(216, 180, 254, 0.4), rgba(168, 85, 247, 0.2))",
+          backgroundSize: "200% 200%",
+          backdropFilter: useLiteVisuals ? "none" : "blur(40px)",
+        },
+        "-=0.1"
+      );
 
-    // 2. Levitate slightly, gather energy infinitely + shift gradient
-    tl.to(inputContainerRef.current, {
-      y: isMobileViewport ? -8 : -20,
-      scale: isMobileViewport ? 1.03 : 1.1,
-      backgroundPosition: "100% 100%",
-      duration: isMobileViewport ? 0.9 : 1.5,
-      ease: "sine.inOut",
-      yoyo: true,
-      repeat: isMobileViewport ? 0 : -1,
-    });
+      // 2. Levitate slightly, gather energy infinitely + shift gradient
+      tl.to(inputContainerRef.current, {
+        y: -20,
+        scale: 1.1,
+        backgroundPosition: "100% 100%",
+        duration: 1.5,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1,
+      });
+    }
 
     try {
       const nameParts = formData.fullName.trim().split(" ");
@@ -391,7 +397,16 @@ export default function Contact() {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to send");
+      if (!response.ok) {
+        const errorPayload = await response
+          .json()
+          .catch(() => ({ error: "Mesaj gönderilemedi" }));
+        const errorText =
+          typeof errorPayload?.error === "string"
+            ? errorPayload.error
+            : "Mesaj gönderilemedi";
+        throw new Error(errorText);
+      }
 
       setSubmitStatus("success");
       successShownAtRef.current = Date.now();
@@ -415,33 +430,47 @@ export default function Contact() {
       console.error(error);
       submitLockRef.current = false;
       setSubmitStatus("error");
+      setSubmitErrorMessage(
+        error instanceof Error && error.message
+          ? error.message
+          : "Mesaj gönderilemedi"
+      );
 
       // On error, revert animation
       gsap.killTweensOf(inputContainerRef.current);
       gsap.killTweensOf(formContentRef.current);
 
-      gsap.to(inputContainerRef.current, {
-        maxWidth: "672px",
-        width: "100%",
-        minHeight: "140px",
-        height: "140px",
-        borderRadius: "3rem",
-        y: 0,
-        scale: 1,
-        duration: 0.6,
-        ease: "power3.out",
-        boxShadow: "inset 0 0 20px rgba(255,255,255,0.1), 0 20px 50px rgba(0,0,0,0.5)",
-        borderColor: "rgba(255,255,255,0.2)",
-        background: "rgba(255,255,255,0.01)", // ensure we map back to static string, clearing the linear-gradient
-        onComplete: () => {
-          gsap.set(inputContainerRef.current, { clearProps: "all" });
-        }
-      });
+      if (isMobileViewport) {
+        gsap.to(formContentRef.current, {
+          opacity: 1,
+          duration: 0.2,
+          ease: "power1.out",
+          clearProps: "all",
+        });
+      } else {
+        gsap.to(inputContainerRef.current, {
+          maxWidth: "672px",
+          width: "100%",
+          minHeight: "140px",
+          height: "140px",
+          borderRadius: "3rem",
+          y: 0,
+          scale: 1,
+          duration: 0.6,
+          ease: "power3.out",
+          boxShadow: "inset 0 0 20px rgba(255,255,255,0.1), 0 20px 50px rgba(0,0,0,0.5)",
+          borderColor: "rgba(255,255,255,0.2)",
+          background: "rgba(255,255,255,0.01)", // ensure we map back to static string, clearing the linear-gradient
+          onComplete: () => {
+            gsap.set(inputContainerRef.current, { clearProps: "all" });
+          }
+        });
 
-      gsap.fromTo(formContentRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.4, delay: 0.4, clearProps: "all" }
-      );
+        gsap.fromTo(formContentRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.4, delay: 0.4, clearProps: "all" }
+        );
+      }
       setIsSubmitting(false);
     }
   };
@@ -658,6 +687,12 @@ export default function Contact() {
             )}
           </button>
         </div>
+
+        {submitStatus === "error" && submitErrorMessage && (
+          <p className="mt-4 text-xs sm:text-sm text-red-300 text-center">
+            {submitErrorMessage}
+          </p>
+        )}
       </div>
 
       <div className="absolute bottom-5 left-5 sm:bottom-8 sm:left-8 z-[3]">

@@ -11,15 +11,19 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
-  const limited = checkContactRateLimit(ip);
-  if (!limited.allowed) {
-    return NextResponse.json(
-      { error: "Çok fazla deneme. Lütfen daha sonra tekrar deneyin." },
-      {
-        status: 429,
-        headers: { "Retry-After": String(limited.retryAfterSec) },
-      }
-    );
+  const shouldRateLimit =
+    process.env.NODE_ENV === "production" && ip !== "unknown";
+  if (shouldRateLimit) {
+    const limited = checkContactRateLimit(ip);
+    if (!limited.allowed) {
+      return NextResponse.json(
+        { error: "Çok fazla deneme. Lütfen daha sonra tekrar deneyin." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limited.retryAfterSec) },
+        }
+      );
+    }
   }
 
   if (!process.env.RESEND_API_KEY) {
