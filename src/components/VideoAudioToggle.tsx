@@ -64,7 +64,10 @@ export default function VideoAudioToggle({
     const playPromise = audio.play();
     if (playPromise) {
       playPromise
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          hasAutoplayedRef.current = true;
+          setIsPlaying(true);
+        })
         .catch(() => setIsPlaying(false));
     }
   }, [sourceId, syncToVideo]);
@@ -125,6 +128,31 @@ export default function VideoAudioToggle({
 
     const audio = audioRef.current;
     if (!audio) return;
+    const restoreAudibleState = () => {
+      if (hasUserToggledRef.current) return;
+      audio.muted = false;
+      audio.volume = 0.5;
+    };
+
+    const tryMutedAutoplay = () => {
+      const previousMuted = audio.muted;
+      const previousVolume = audio.volume;
+      audio.muted = true;
+      audio.volume = 0;
+      return audio.play().then(
+        () => {
+          hasAutoplayedRef.current = true;
+          setIsPlaying(true);
+          window.setTimeout(restoreAudibleState, 0);
+        },
+        () => {
+          audio.muted = previousMuted;
+          audio.volume = previousVolume;
+          setIsPlaying(false);
+        }
+      );
+    };
+
     const tryAutoplay = (event?: Event) => {
       if (hasAutoplayedRef.current || hasUserToggledRef.current) return;
       if (
@@ -138,26 +166,18 @@ export default function VideoAudioToggle({
         new CustomEvent("mundus-video-audio-activate", { detail: { sourceId } })
       );
       syncToVideo();
-      const previousMuted = audio.muted;
-      const previousVolume = audio.volume;
-      // Warm-start with muted autoplay; then restore audible playback.
-      audio.muted = true;
-      audio.volume = 0;
+      // First try audible autoplay; some browsers allow it and this avoids silent starts.
+      audio.muted = false;
+      audio.volume = 0.5;
       audio
         .play()
         .then(() => {
           hasAutoplayedRef.current = true;
           setIsPlaying(true);
-          requestAnimationFrame(() => {
-            if (hasUserToggledRef.current) return;
-            audio.muted = false;
-            audio.volume = 0.5;
-          });
         })
         .catch(() => {
-          audio.muted = previousMuted;
-          audio.volume = previousVolume;
-          setIsPlaying(false);
+          // Fallback for strict policies: start muted, then attempt to restore audible output.
+          void tryMutedAutoplay();
         });
     };
 

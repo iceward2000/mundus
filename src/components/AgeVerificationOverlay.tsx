@@ -193,6 +193,8 @@ export default function AgeVerificationOverlay() {
 
     /** Persist verification for this tab/session. Other components listen for mundus-entered. */
     sessionStorage.setItem("mundus-age-verified", "true");
+    // Trigger main-site startup immediately to avoid audible delay in loop audio.
+    window.dispatchEvent(new Event("mundus-entered"));
     // Lock logo to static state so Safari tab restores do not replay intro keyframes.
     setIsStatic(true);
     setIntersectBlendActive(false);
@@ -211,8 +213,6 @@ export default function AgeVerificationOverlay() {
       duration: 0.8,
       ease: "power2.inOut",
       onComplete: () => {
-        // Start site-level experience only after overlay exit animation completes.
-        window.dispatchEvent(new Event("mundus-entered"));
         setIsOverlayVisible(false);
         // Body lock styles are removed by the useEffect cleanup on the next render.
         // Wait a tick so the layout is back to normal before resetting scroll
