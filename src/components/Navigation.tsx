@@ -11,6 +11,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useLanguage, type TranslationKey } from "@/context/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import { StableLocaleText } from "@/components/StableLocaleText";
+import { useLenisRefOptional } from "@/context/LenisContext";
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -25,6 +26,8 @@ export default function Navigation() {
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
   const { t } = useLanguage();
+
+  const lenisRef = useLenisRefOptional();
 
   const [playing, setPlaying] = useState(false);
   const [showAudioToggle, setShowAudioToggle] = useState(false);
@@ -293,20 +296,47 @@ export default function Navigation() {
     };
   }, [isAccordionOpen]);
 
-  const handleScrollTo = useCallback((id: string) => {
-    setIsAccordionOpen(false);
-    if (prefersReducedMotion) {
-      const element = document.getElementById(id);
-      element?.scrollIntoView({ behavior: "auto" });
-      return;
-    }
+  const handleScrollTo = useCallback(
+    (id: string) => {
+      setIsAccordionOpen(false);
+      const target = `#${id}`;
+      const lenis = lenisRef?.current;
 
-    gsap.to(window, {
-      duration: 1.5,
-      scrollTo: { y: `#${id}`, autoKill: false },
-      ease: "power3.inOut",
-    });
-  }, [prefersReducedMotion]);
+      const finishScrollSync = () => {
+        ScrollTrigger.refresh();
+      };
+
+      // Lenis owns scroll on desktop; GSAP ScrollTo on `window` fights it and can
+      // strand the viewport (blank canvas strips) deep in tall sections.
+      if (lenis) {
+        if (prefersReducedMotion) {
+          lenis.scrollTo(target, { immediate: true, programmatic: true });
+          requestAnimationFrame(finishScrollSync);
+          return;
+        }
+        lenis.scrollTo(target, {
+          duration: 1.5,
+          programmatic: true,
+          onComplete: finishScrollSync,
+        });
+        return;
+      }
+
+      if (prefersReducedMotion) {
+        document.getElementById(id)?.scrollIntoView({ behavior: "auto" });
+        finishScrollSync();
+        return;
+      }
+
+      gsap.to(window, {
+        duration: 1.5,
+        scrollTo: { y: target, autoKill: false },
+        ease: "power3.inOut",
+        onComplete: finishScrollSync,
+      });
+    },
+    [prefersReducedMotion, lenisRef]
+  );
 
   // Mobile: remove section navigation and keep only language access
   if (!isHydrated) {

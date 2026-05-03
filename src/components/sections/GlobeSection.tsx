@@ -81,18 +81,17 @@ export default function GlobeSection() {
           )}
         </div>
 
-        <div className="absolute bottom-[6%] inset-x-0 z-10 flex flex-col items-center gap-3 px-4">
+        <div className="pointer-events-none absolute bottom-[6%] inset-x-0 z-10 flex flex-col items-center gap-3 px-4">
           <h2
-            className="pointer-events-none text-center text-lg sm:text-xl md:text-2xl
-                       font-['Syne'] select-none text-white/90 mix-blend-difference"
+            className="mix-blend-difference text-center font-['Syne'] text-lg select-none text-white sm:text-xl md:text-2xl"
             style={{
               letterSpacing: "0.25em",
               fontWeight: 300,
+              color: "#ffffff",
             }}
           >
             <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />
           </h2>
-
         </div>
       </div>
     </SectionWrapper>

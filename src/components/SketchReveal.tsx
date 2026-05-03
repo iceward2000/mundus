@@ -804,8 +804,8 @@ const SketchReveal = () => {
           className="sketch-panel-toggle"
         >
           <svg
-            width="16"
-            height="16"
+            width="22"
+            height="22"
             viewBox="0 0 16 16"
             fill="none"
             style={{
@@ -816,7 +816,7 @@ const SketchReveal = () => {
             <path
               d="M10 3L5 8L10 13"
               stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="1.75"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
