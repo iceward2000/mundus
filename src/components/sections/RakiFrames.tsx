@@ -21,9 +21,10 @@ const FLAP_CYCLE = "abcdefghijklmnoprstuvyzcgisouşçğıöü";
 const FRAME_EASE = "none";
 const MOBILE_FRAME_CROP_BIAS = 0.78;
 const HINT_BUMP_COOLDOWN_MS = 260;
-const MOBILE_COMPLETED_ACTION_OFFSET_Y = 330;
-const DESKTOP_COMPLETED_ACTION_OFFSET_Y = 450;
-const COMPLETED_HINT_GAP_Y = 1;
+/** Extra translate relative to flap for reverse exit tween (pixels) */
+const REVERSE_FLAP_EXIT_DELTA_Y = 14;
+/** Downward tween before frame reel (pixels) — relative to anchored row */
+const FORWARD_FLAP_HIDING_DELTA_Y = 14;
 const RETURN_TO_POEM_HINT = {
   tr: "şiire geri dönmek için tıkla",
   en: "click to return to the poem",
@@ -57,13 +58,15 @@ export default function RakiFrames() {
   const [actionText, setActionText] = useState(LAST_LINE_ACTION);
   const [scrollHintLevel, setScrollHintLevel] = useState(0);
   const [isActivated, setIsActivated] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
 
   const isGateActive = phase === "gate";
   const showPoem = phase === "intro" || phase === "gate";
-  const completedActionOffsetY = isDesktop
-    ? DESKTOP_COMPLETED_ACTION_OFFSET_Y
-    : MOBILE_COMPLETED_ACTION_OFFSET_Y;
+  const collapsePoemForCentering =
+    phase === "completed" || phase === "animating-reverse";
+  /** Keeps typed prefix aligned; hide once flap leaves “bi tık” so şerefe stays centered */
+  const reservePrefixWidth =
+    actionText === LAST_LINE_ACTION &&
+    (phase === "intro" || phase === "gate" || phase === "animating-forward");
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -80,15 +83,6 @@ export default function RakiFrames() {
 
     observer.observe(sectionRef.current);
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const desktopQuery = window.matchMedia("(min-width: 768px)");
-    const syncDesktop = () => setIsDesktop(desktopQuery.matches);
-    syncDesktop();
-    desktopQuery.addEventListener("change", syncDesktop);
-    return () => desktopQuery.removeEventListener("change", syncDesktop);
   }, []);
 
   useEffect(() => {
@@ -400,7 +394,7 @@ export default function RakiFrames() {
         setActionText(SEREFE_TEXT);
         setActionFlapVisual({
           autoAlpha: 1,
-          y: completedActionOffsetY,
+          y: 0,
           filter: "blur(0px)",
         });
         renderFrame(frameCount);
@@ -425,7 +419,7 @@ export default function RakiFrames() {
           setActionText(SEREFE_TEXT);
           setActionFlapVisual({
             autoAlpha: 1,
-            y: completedActionOffsetY,
+            y: 0,
             filter: "blur(0px)",
           });
           setPhaseState("completed");
@@ -453,7 +447,7 @@ export default function RakiFrames() {
           actionFlapRef.current,
           {
             autoAlpha: 0,
-            y: -14,
+            y: -FORWARD_FLAP_HIDING_DELTA_Y,
             filter: "blur(9px)",
             duration: 1.05,
             ease: "power2.inOut",
@@ -506,7 +500,7 @@ export default function RakiFrames() {
       reverseTimeline
         .to(actionFlapRef.current, {
           autoAlpha: 0,
-          y: completedActionOffsetY + 14,
+          y: REVERSE_FLAP_EXIT_DELTA_Y,
           filter: "blur(9px)",
           duration: 0.48,
           ease: "power2.inOut",
@@ -541,7 +535,7 @@ export default function RakiFrames() {
       window.removeEventListener("resize", scheduleCanvasResize);
       window.removeEventListener("orientationchange", scheduleCanvasResize);
     };
-  }, [isActivated, completedActionOffsetY]);
+  }, [isActivated]);
 
   return (
     <section
@@ -554,92 +548,103 @@ export default function RakiFrames() {
         <canvas ref={canvasRef} className="absolute left-0 h-full w-full" />
         <div
           ref={introOverlayRef}
-          className="pointer-events-none absolute inset-0 flex items-center justify-center px-5 sm:px-10"
+          className="pointer-events-none absolute inset-0 flex flex-col px-5 sm:px-10"
         >
-          <div className="relative mx-auto h-[min(80vh,760px)] w-full max-w-[min(98vw,1500px)] text-[clamp(0.66rem,1.95vw,2.9rem)] font-semibold leading-[1.28] text-white [text-shadow:0_0_26px_rgba(0,0,0,0.75)]">
-            <div className="absolute left-1/2 top-1/2 w-[min(92vw,1200px)] -translate-x-1/2 -translate-y-[108%] text-left">
-              <div className={showPoem ? "opacity-100" : "opacity-0"}>
-                {INTRO_LINES.map((line, index) => (
-                  <p
-                    key={`raki-intro-${index}`}
-                    ref={(el) => {
-                      lineRefs.current[index] = el;
-                    }}
-                    className="min-h-[1.3em] whitespace-nowrap"
-                  />
-                ))}
-              </div>
+          {/* Poem + “bi tık” anchored to viewport center; hint fixed to viewport of overlay */}
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <div className="relative mx-auto w-full max-w-[min(98vw,1500px)] text-[clamp(0.66rem,1.95vw,2.9rem)] font-semibold leading-[1.28] text-white [text-shadow:0_0_26px_rgba(0,0,0,0.75)]">
+              <div className="relative mx-auto w-[min(92vw,1200px)] max-w-full">
+                <div
+                  className={`absolute bottom-full left-0 right-0 mb-0 flex w-full flex-col gap-0 text-left [&>p]:m-0 ${
+                    collapsePoemForCentering
+                      ? "pointer-events-none max-h-0 min-h-0 overflow-hidden p-0"
+                      : ""
+                  } ${showPoem ? "opacity-100" : "opacity-0"}`}
+                >
+                  {INTRO_LINES.map((line, index) => (
+                    <p
+                      key={`raki-intro-${index}`}
+                      ref={(el) => {
+                        lineRefs.current[index] = el;
+                      }}
+                      className={`whitespace-nowrap ${
+                        collapsePoemForCentering ? "min-h-0" : "min-h-[1.3em]"
+                      }`}
+                    />
+                  ))}
+                </div>
 
-              <p className="min-h-[1.3em] whitespace-nowrap">
-                <span className="relative inline-block">
-                  <span aria-hidden className="invisible">
-                    {LAST_LINE_PREFIX}
-                  </span>
-                  <span
-                    ref={lastPrefixRef}
-                    className={`absolute inset-0 transition-opacity duration-150 ${showPoem ? "opacity-100" : "opacity-0"}`}
-                  />
-                </span>
-                <span className="relative inline-flex flex-col items-center align-baseline">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (phase === "completed") reverseActionRef.current();
-                      else unlockActionRef.current();
-                    }}
-                    className={`pointer-events-auto inline bg-transparent px-0 align-baseline font-bold leading-[1.28] transition duration-200 ${
-                      isGateActive || phase === "animating-forward" || phase === "animating-reverse" || phase === "completed"
-                        ? "opacity-100"
-                        : "opacity-0"
-                    } ${
-                      phase === "completed"
-                        ? "cursor-pointer text-[#ffe39a]"
-                        : isGateActive
-                          ? "cursor-pointer text-[#f5d27a] animate-pulse"
-                          : "cursor-default text-[#f5d27a]"
-                    }`}
-                  >
-                    <span
-                      ref={actionFlapRef}
-                      className="inline-block px-[0.16em] tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
-                    >
-                      <span ref={actionTextRef} className="inline-block will-change-transform">
-                        {actionText}
+                <p
+                  className={`relative m-0 mt-0 flex max-w-full flex-nowrap items-baseline gap-0 whitespace-nowrap ${
+                    reservePrefixWidth ? "w-full justify-start" : "justify-center"
+                  }`}
+                >
+                  {reservePrefixWidth ? (
+                    <span className="relative inline-flex shrink-0 items-baseline">
+                      <span aria-hidden className="invisible whitespace-pre">
+                        {LAST_LINE_PREFIX}
                       </span>
+                      <span
+                        ref={lastPrefixRef}
+                        className={`absolute inset-y-0 left-0 whitespace-pre transition-opacity duration-150 ${
+                          showPoem ? "opacity-100" : "opacity-0"
+                        }`}
+                      />
                     </span>
-                  </button>
-                  <span
-                    className={`mt-1 block whitespace-nowrap text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-[opacity,transform] duration-250 ${
-                      phase === "completed" ? "opacity-100" : "opacity-0"
-                    }`}
-                    style={{
-                      transform:
+                  ) : null}
+                  <span className="relative inline-flex flex-col items-center align-baseline leading-[1.28]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (phase === "completed") reverseActionRef.current();
+                        else unlockActionRef.current();
+                      }}
+                      className={`pointer-events-auto inline bg-transparent px-0 align-baseline font-bold leading-[1.28] transition duration-200 ${
+                        isGateActive || phase === "animating-forward" || phase === "animating-reverse" || phase === "completed"
+                          ? "opacity-100"
+                          : "opacity-0"
+                      } ${
                         phase === "completed"
-                          ? `translateY(${completedActionOffsetY + COMPLETED_HINT_GAP_Y}px)`
-                          : "translateY(0px)",
-                    }}
-                  >
-                    {RETURN_TO_POEM_HINT[lang]}
+                          ? "cursor-pointer text-[#ffe39a]"
+                          : isGateActive
+                            ? "cursor-pointer text-[#f5d27a] animate-pulse"
+                            : "cursor-default text-[#f5d27a]"
+                      }`}
+                    >
+                      <span
+                        ref={actionFlapRef}
+                        className="inline-block px-[0.16em] tracking-[0.06em] [perspective:1000px] [transform-style:preserve-3d]"
+                      >
+                        <span ref={actionTextRef} className="inline-block will-change-transform">
+                          {actionText}
+                        </span>
+                      </span>
+                    </button>
+                    <span
+                      className={`mt-3 block whitespace-nowrap text-center text-[clamp(0.74rem,1.15vw,0.95rem)] font-medium leading-tight tracking-[0.02em] text-white/78 transition-opacity duration-250 ${
+                        phase === "completed" ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      {RETURN_TO_POEM_HINT[lang]}
+                    </span>
                   </span>
-                </span>
-              </p>
+                </p>
+              </div>
             </div>
-
-            <p
-              className={`absolute left-1/2 top-[calc(50%+4.8rem)] mx-auto w-full max-w-[min(92vw,920px)] -translate-x-1/2 text-[clamp(0.78rem,1.4vw,1.03rem)] font-medium tracking-[0.04em] text-white/85 transition-all duration-300 ${
-                isGateActive ? "opacity-100" : "opacity-0"
-              } ${scrollHintLevel > 0 ? "scale-[1.03] text-[#f5d27a]" : ""} ${
-                scrollHintLevel > 1 ? "animate-pulse text-[#ffd67f]" : ""
-              }`}
-            >
-              {scrollHintLevel === 0 &&
-                'bu bölümü geçmek için "bi tık"a tıkla'}
-              {scrollHintLevel === 1 &&
-                'hadi anam, tıkla şuna'}
-              {scrollHintLevel === 2 &&
-                'iyi sen bilirsin, sabaha kadar kaydırabilirsin, tıklamadan geçemeyeceksin'}
-            </p>
           </div>
+
+          <p
+            className={`pointer-events-none absolute left-1/2 top-[calc(50%+5.75rem)] mx-auto w-full max-w-[min(92vw,920px)] -translate-x-1/2 text-center text-[clamp(0.78rem,1.4vw,1.03rem)] font-medium tracking-[0.04em] text-white/85 transition-all duration-300 ${
+              isGateActive ? "opacity-100" : "opacity-0"
+            } ${scrollHintLevel > 0 ? "scale-[1.03] text-[#f5d27a]" : ""} ${
+              scrollHintLevel > 1 ? "animate-pulse text-[#ffd67f]" : ""
+            }`}
+          >
+            {scrollHintLevel === 0 && 'bu bölümü geçmek için "bi tık"a tıkla'}
+            {scrollHintLevel === 1 && "hadi anam, tıkla şuna"}
+            {scrollHintLevel === 2 &&
+              "iyi sen bilirsin, sabaha kadar kaydırabilirsin, tıklamadan geçemeyeceksin"}
+          </p>
         </div>
       </div>
     </section>

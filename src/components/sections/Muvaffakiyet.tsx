@@ -105,7 +105,12 @@ export default function Muvaffakiyet() {
             <StableLocaleText tKey="muvaffakiyet.title" fill className="text-inherit" />
           </h2>
           <p className="mx-0 mt-4 max-w-xl text-center text-white/60 md:mx-auto md:text-center">
-            <StableLocaleText tKey="muvaffakiyet.subtitle" fill className="text-inherit" />
+            <StableLocaleText
+              tKey="muvaffakiyet.subtitle"
+              fill
+              className="text-inherit"
+              digitClassName="font-normal text-inherit"
+            />
           </p>
         </div>
 
