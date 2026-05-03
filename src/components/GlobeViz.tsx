@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  type MutableRefObject,
+} from "react";
 import dynamic from "next/dynamic";
+import type { GlobeMethods } from "react-globe.gl";
 import { getCheersForCountry } from "@/lib/cheersData";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -17,6 +25,7 @@ const Globe = dynamic(() => import("react-globe.gl"), {
 
 interface GlobeVizProps {
   markers?: any[];
+  globeApiRef?: MutableRefObject<GlobeMethods | null>;
 }
 
 // Static colors for stable rendering
@@ -40,6 +49,7 @@ const DEFAULT_ALTITUDE_MOBILE = 2.35;
 
 export default function GlobeViz({
   markers = [],
+  globeApiRef,
 }: GlobeVizProps) {
   const { lang } = useLanguage();
   const globeEl = useRef<any>(undefined);
@@ -339,6 +349,32 @@ export default function GlobeViz({
   const canRenderGlobe =
     ready && dimensions.width > 0 && dimensions.height > 0;
 
+  useEffect(() => {
+    if (!globeApiRef) return;
+
+    if (!canRenderGlobe) {
+      globeApiRef.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    const sync = () => {
+      if (cancelled) return;
+      const inst = globeEl.current as GlobeMethods | undefined;
+      if (inst) {
+        globeApiRef.current = inst;
+        return;
+      }
+      requestAnimationFrame(sync);
+    };
+    sync();
+
+    return () => {
+      cancelled = true;
+      globeApiRef.current = null;
+    };
+  }, [canRenderGlobe, globeApiRef]);
+
   return (
     <div
       ref={containerRef}
@@ -353,6 +389,7 @@ export default function GlobeViz({
           rendererConfig={{
             antialias: false,
             alpha: true,
+            preserveDrawingBuffer: true,
             failIfMajorPerformanceCaveat: false,
             powerPreference: "high-performance",
           }}

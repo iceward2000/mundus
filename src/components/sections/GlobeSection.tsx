@@ -1,9 +1,85 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import clsx from "clsx";
+import type { GlobeMethods } from "react-globe.gl";
 import GlobeViz from "../GlobeViz";
 import SectionWrapper from "../SectionWrapper";
 import { StableLocaleText } from "@/components/StableLocaleText";
+
+/** WCAG relative luminance helper for one sRGB channel (0–255). */
+function linearizeChannel(c: number) {
+  const v = c / 255;
+  return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+function pixelRelativeLuminance(r: number, g: number, b: number) {
+  return (
+    0.2126 * linearizeChannel(r) +
+    0.7152 * linearizeChannel(g) +
+    0.0722 * linearizeChannel(b)
+  );
+}
+
+/**
+ * Reads pixels from the WebGL canvas behind the headline (CSS blend modes often
+ * cannot use WebGL as a backdrop, so we sample explicitly).
+ */
+function averageBackdropLuminance(
+  canvas: HTMLCanvasElement,
+  titleEl: HTMLElement
+): number | null {
+  const canvasRect = canvas.getBoundingClientRect();
+  const titleRect = titleEl.getBoundingClientRect();
+
+  const cx = (titleRect.left + titleRect.right) * 0.5;
+  const cy = (titleRect.top + titleRect.bottom) * 0.5;
+
+  const lx = cx - canvasRect.left;
+  const ly = cy - canvasRect.top;
+  if (
+    lx < 0 ||
+    ly < 0 ||
+    lx >= canvasRect.width ||
+    ly >= canvasRect.height
+  ) {
+    return null;
+  }
+
+  const sx = Math.floor(lx * (canvas.width / canvasRect.width));
+  const sy = Math.floor(ly * (canvas.height / canvasRect.height));
+
+  const probeW = Math.min(48, canvas.width - sx);
+  const probeH = Math.min(28, canvas.height - sy);
+  if (probeW < 1 || probeH < 1) return null;
+
+  const probe = document.createElement("canvas");
+  probe.width = probeW;
+  probe.height = probeH;
+  const ctx = probe.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+
+  try {
+    ctx.drawImage(canvas, sx, sy, probeW, probeH, 0, 0, probeW, probeH);
+  } catch {
+    return null;
+  }
+
+  let imageData: ImageData;
+  try {
+    imageData = ctx.getImageData(0, 0, probeW, probeH);
+  } catch {
+    return null;
+  }
+
+  const { data } = imageData;
+  let sum = 0;
+  const n = probeW * probeH;
+  for (let i = 0; i < data.length; i += 4) {
+    sum += pixelRelativeLuminance(data[i], data[i + 1], data[i + 2]);
+  }
+  return sum / n;
+}
 
 const MARKERS = [
   { lat: 37.0902, lng: -95.7129, label: "Amerika Birleşik Devletleri", description: "Küresel Merkez & Teknoloji Üssü" },
@@ -44,7 +120,11 @@ const MARKERS = [
 
 export default function GlobeSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const globeApiRef = useRef<GlobeMethods | null>(null);
+  const smoothedLumaRef = useRef(0);
   const [mountGlobe, setMountGlobe] = useState(false);
+  const [lightBackdrop, setLightBackdrop] = useState(false);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -63,6 +143,45 @@ export default function GlobeSection() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (!mountGlobe) return;
+
+    let rafId = 0;
+    let frame = 0;
+
+    const loop = () => {
+      rafId = requestAnimationFrame(loop);
+      frame += 1;
+      if (frame % 3 !== 0) return;
+
+      const api = globeApiRef.current;
+      const title = titleRef.current;
+      if (!api || !title) return;
+
+      let renderer;
+      try {
+        renderer = api.renderer();
+      } catch {
+        return;
+      }
+
+      const luma = averageBackdropLuminance(renderer.domElement, title);
+      if (luma === null) return;
+
+      smoothedLumaRef.current =
+        smoothedLumaRef.current * 0.82 + luma * 0.18;
+
+      const light = smoothedLumaRef.current > 0.47;
+      setLightBackdrop((prev) => (prev === light ? prev : light));
+    };
+
+    rafId = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(rafId);
+      smoothedLumaRef.current = 0;
+    };
+  }, [mountGlobe]);
+
   return (
     <SectionWrapper
       id="global-presence"
@@ -75,7 +194,7 @@ export default function GlobeSection() {
       >
         <div className="w-full h-full">
           {mountGlobe ? (
-            <GlobeViz markers={MARKERS} />
+            <GlobeViz markers={MARKERS} globeApiRef={globeApiRef} />
           ) : (
             <div className="w-full h-full bg-slate-950" />
           )}
@@ -83,11 +202,14 @@ export default function GlobeSection() {
 
         <div className="pointer-events-none absolute bottom-[6%] inset-x-0 z-10 flex flex-col items-center gap-3 px-4">
           <h2
-            className="mix-blend-difference text-center font-['Syne'] text-lg select-none text-white sm:text-xl md:text-2xl"
+            ref={titleRef}
+            className={clsx(
+              "text-center font-['Syne'] text-lg select-none sm:text-xl md:text-2xl",
+              lightBackdrop ? "text-neutral-950" : "text-white"
+            )}
             style={{
               letterSpacing: "0.25em",
               fontWeight: 300,
-              color: "#ffffff",
             }}
           >
             <StableLocaleText tKey="globe.cheersTitle" nowrap className="text-inherit" />
